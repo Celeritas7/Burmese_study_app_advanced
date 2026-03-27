@@ -267,20 +267,17 @@ export class HubExplorer {
               <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
                 ${spokes.map(s => {
                   const sDev = toDev(s.burmese_word);
-                  // Highlight the hub portion within the spoke word
-                  const highlighted = s.burmese_word.replace(
-                    anchor.burmese_word,
-                    `<strong style="color:var(--green);">${anchor.burmese_word}</strong>`
-                  );
+                  const containsHub = s.burmese_word.includes(anchor.burmese_word);
                   return `
                     <div style="
                       padding:8px 12px; border-radius:10px;
                       background:var(--surface); border:2px solid var(--border);
                       transition:all 0.15s;
                     ">
-                      <div style="font-size:15px; font-weight:600; color:var(--text);">${highlighted}</div>
+                      <div style="font-size:15px; font-weight:600; color:var(--text);">${s.burmese_word}</div>
                       <div style="font-size:10px; color:var(--yellow); margin-top:2px;">${sDev}</div>
                       <div style="font-size:10px; color:var(--text-muted); margin-top:1px;">${s.english_meaning || ''}</div>
+                      ${containsHub ? `<div style="font-size:9px; color:var(--green); margin-top:3px; font-weight:700;">contains: ${anchor.burmese_word}</div>` : ''}
                     </div>
                   `;
                 }).join('')}
