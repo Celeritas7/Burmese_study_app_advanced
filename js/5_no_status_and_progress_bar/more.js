@@ -45,10 +45,7 @@ export class MoreTab {
     container.querySelectorAll('[data-item]').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.item);
-        if (idx === 0) {
-          // Stats & Progress
-          this.app.showStats();
-        } else if (idx === 1) {
+        if (idx === 1) {
           // Dialogues
           this.app.showDialogues();
         } else if (idx === 3) {

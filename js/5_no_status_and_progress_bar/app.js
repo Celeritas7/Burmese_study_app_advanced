@@ -5,7 +5,6 @@ import { SRSTab } from './srs.js';
 import { MoreTab } from './more.js';
 import { DialoguesTab } from './dialogues.js';
 import { HubExplorer } from './hubexplorer.js';
-import { StatsPage } from './stats.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -41,7 +40,6 @@ class BurmeseStudyApp {
     this.tabs.more = new MoreTab(this);
     this.tabs.dialogues = new DialoguesTab(this);
     this.tabs.hubExplorer = new HubExplorer(this);
-    this.tabs.stats = new StatsPage(this);
 
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
@@ -76,11 +74,6 @@ class BurmeseStudyApp {
   showHubExplorer() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     this.tabs.hubExplorer.render(this.contentEl);
-  }
-
-  showStats() {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    this.tabs.stats.render(this.contentEl);
   }
 }
 
