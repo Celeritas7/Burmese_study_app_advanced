@@ -2,7 +2,6 @@
 import { db } from './supabase.js';
 import { toDev } from './burmese.js';
 import { Modal } from './modal.js';
-import { Quiz } from './quiz.js';
 
 const MODES = [
   { id: 'burmese', icon: 'မ', label: 'Myanmar→EN' },
@@ -41,7 +40,6 @@ export class StudyTab {
     this.ratings = {};
     this.wordCounts = {};
     this.anchorsCache = {};
-    this.quiz = null;
   }
 
   async init() {
@@ -53,8 +51,6 @@ export class StudyTab {
   render(container) {
     if (this.phase === 'setup') {
       this.renderSetup(container);
-    } else if (this.phase === 'quiz') {
-      this.quiz.render(container);
     } else {
       this.renderSession(container);
     }
@@ -105,7 +101,6 @@ export class StudyTab {
         </div>
 
         <button class="btn-primary" id="start-btn">Start Session →</button>
-        <button class="btn-primary" id="quiz-btn" style="background:var(--purple); margin-top:8px;">🧠 Quiz Mode →</button>
       </div>
     `;
 
@@ -134,33 +129,6 @@ export class StudyTab {
     });
 
     container.querySelector('#start-btn').addEventListener('click', () => this.startSession(container));
-    container.querySelector('#quiz-btn').addEventListener('click', () => this.startQuiz(container));
-  }
-
-  // ─── START QUIZ ───
-  async startQuiz(container) {
-    container.innerHTML = '<div class="pad text-center" style="padding-top:40vh;"><div style="font-size:24px;">Loading...</div></div>';
-    try {
-      const opts = {};
-      if (this.selectedSource) opts.source = this.selectedSource;
-      const words = await db.getWords(opts);
-      if (words.length < 4) {
-        container.innerHTML = '<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--text-muted);">Need at least 4 words for quiz.</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>';
-        container.querySelector('#back-btn').addEventListener('click', () => { this.phase = 'setup'; this.render(container); });
-        return;
-      }
-      this.quiz = new Quiz(this.app, words, () => {
-        this.phase = 'setup';
-        this.quiz = null;
-        this.render(this.app.contentEl);
-      });
-      this.phase = 'quiz';
-      this.quiz.render(container);
-    } catch (err) {
-      console.error('Quiz load error:', err);
-      container.innerHTML = `<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--pink);">Connection error</div><div style="font-size:13px;color:var(--text-muted);margin-top:8px;">${err.message}</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>`;
-      container.querySelector('#back-btn').addEventListener('click', () => { this.phase = 'setup'; this.render(container); });
-    }
   }
 
   // ─── START SESSION ───
