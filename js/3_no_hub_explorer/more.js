@@ -48,9 +48,6 @@ export class MoreTab {
         if (idx === 1) {
           // Dialogues
           this.app.showDialogues();
-        } else if (idx === 3) {
-          // Hub Explorer
-          this.app.showHubExplorer();
         } else if (idx === 5) {
           this.showSupabaseModal();
         }

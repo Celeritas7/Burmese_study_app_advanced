@@ -1,10 +1,12 @@
 // ═══ BURMESE STUDY APP ═══
+// Main application class — single-page architecture
+// Mirrors JLPTStudyApp pattern from Japanese app
+
 import { db } from './supabase.js';
 import { StudyTab } from './study.js';
 import { SRSTab } from './srs.js';
 import { MoreTab } from './more.js';
 import { DialoguesTab } from './dialogues.js';
-import { HubExplorer } from './hubexplorer.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -39,7 +41,6 @@ class BurmeseStudyApp {
     this.tabs.srs = new SRSTab(this);
     this.tabs.more = new MoreTab(this);
     this.tabs.dialogues = new DialoguesTab(this);
-    this.tabs.hubExplorer = new HubExplorer(this);
 
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
@@ -55,28 +56,28 @@ class BurmeseStudyApp {
       this.tabs.study.phase = 'setup';
     }
     this.activeTab = tabId;
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
+
     this.renderTab();
   }
 
   renderTab() {
     const tab = this.tabs[this.activeTab];
-    if (tab) tab.render(this.contentEl);
+    if (tab) {
+      tab.render(this.contentEl);
+    }
   }
 
   showDialogues() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     this.tabs.dialogues.render(this.contentEl);
   }
-
-  showHubExplorer() {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    this.tabs.hubExplorer.render(this.contentEl);
-  }
 }
 
+// ─── BOOT ───
 const app = new BurmeseStudyApp();
 app.init().catch(err => {
   console.error('App init failed:', err);
