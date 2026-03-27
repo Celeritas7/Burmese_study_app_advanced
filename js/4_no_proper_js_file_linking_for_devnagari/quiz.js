@@ -3,7 +3,7 @@
 // Launched from Study tab setup screen
 
 import { db } from './supabase.js';
-import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
+import { toDev } from './burmese.js';
 
 const QUIZ_MODES = [
   { id: 'mcq', label: 'Multiple Choice', icon: '🔘', color: '#1CB0F6', desc: 'Pick the correct answer' },

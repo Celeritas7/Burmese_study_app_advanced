@@ -3,7 +3,7 @@
 // Launches as a sub-page from More tab
 
 import { db } from './supabase.js';
-import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
+import { toDev } from './burmese.js';
 
 const UNIT_INFO = [
   { unit: 0, title: 'Preliminary', subtitle: 'Greetings, script and numbers', color: '#1CB0F6', icon: '🔤' },

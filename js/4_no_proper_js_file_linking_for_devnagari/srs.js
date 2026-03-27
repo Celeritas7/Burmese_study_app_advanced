@@ -1,6 +1,6 @@
 // ═══ SRS TAB ═══
 import { db } from './supabase.js';
-import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
+import { toDev } from './burmese.js';
 
 export class SRSTab {
   constructor(app) {
