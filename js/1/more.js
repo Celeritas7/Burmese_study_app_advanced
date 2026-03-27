@@ -1,6 +1,6 @@
 // ═══ MORE TAB ═══
-import { db } from './supabase.js';
-import { Modal } from './modal.js';
+import { db } from '../supabase.js';
+import { Modal } from '../components/modal.js';
 
 const ITEMS = [
   { icon: '📊', label: 'Stats & Progress', desc: 'Learning analytics', color: '#1CB0F6' },
@@ -41,16 +41,11 @@ export class MoreTab {
       </div>
     `;
 
-    // Item click handlers
+    // Supabase connection modal
     container.querySelectorAll('[data-item]').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.item);
-        if (idx === 1) {
-          // Dialogues
-          this.app.showDialogues();
-        } else if (idx === 5) {
-          this.showSupabaseModal();
-        }
+        if (idx === 5) this.showSupabaseModal();
       });
     });
   }

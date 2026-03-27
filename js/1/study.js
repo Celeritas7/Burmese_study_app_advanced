@@ -1,7 +1,7 @@
 // ═══ STUDY TAB ═══
-import { db } from './supabase.js';
-import { toDev } from './burmese.js';
-import { Modal } from './modal.js';
+import { db } from '../supabase.js';
+import { toDev } from '../burmese.js';
+import { Modal } from '../components/modal.js';
 
 const MODES = [
   { id: 'burmese', icon: 'မ', label: 'Myanmar→EN' },

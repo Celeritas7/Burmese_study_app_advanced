@@ -3,10 +3,9 @@
 // Mirrors JLPTStudyApp pattern from Japanese app
 
 import { db } from './supabase.js';
-import { StudyTab } from './study.js';
-import { SRSTab } from './srs.js';
-import { MoreTab } from './more.js';
-import { DialoguesTab } from './dialogues.js';
+import { StudyTab } from './tabs/study.js';
+import { SRSTab } from './tabs/srs.js';
+import { MoreTab } from './tabs/more.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -16,6 +15,7 @@ class BurmeseStudyApp {
   }
 
   async init() {
+    // Render shell
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="tab-content" id="tab-content"></div>
@@ -37,26 +37,34 @@ class BurmeseStudyApp {
 
     this.contentEl = document.getElementById('tab-content');
 
+    // Initialize tabs
     this.tabs.study = new StudyTab(this);
     this.tabs.srs = new SRSTab(this);
     this.tabs.more = new MoreTab(this);
-    this.tabs.dialogues = new DialoguesTab(this);
 
+    // Tab bar events
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
     });
 
+    // Try connecting to Supabase
     await db.testConnection();
+
+    // Initialize study tab data
     await this.tabs.study.init();
+
+    // Render initial tab
     this.renderTab();
   }
 
   switchTab(tabId) {
     if (tabId === this.activeTab && tabId === 'study') {
+      // If already on study tab, go back to setup
       this.tabs.study.phase = 'setup';
     }
     this.activeTab = tabId;
 
+    // Update tab bar
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
@@ -69,11 +77,6 @@ class BurmeseStudyApp {
     if (tab) {
       tab.render(this.contentEl);
     }
-  }
-
-  showDialogues() {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    this.tabs.dialogues.render(this.contentEl);
   }
 }
 

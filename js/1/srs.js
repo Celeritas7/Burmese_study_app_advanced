@@ -1,6 +1,6 @@
 // ═══ SRS TAB ═══
-import { db } from './supabase.js';
-import { toDev } from './burmese.js';
+import { db } from '../supabase.js';
+import { toDev } from '../burmese.js';
 
 export class SRSTab {
   constructor(app) {
