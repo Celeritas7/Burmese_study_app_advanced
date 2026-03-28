@@ -1,5 +1,5 @@
 // ═══ WRITING PRACTICE ═══
-// Grid-based practice sheet — grouped by Devanagari equivalent
+// Fixed square cells, auto-fit characters, scrollable grid
 
 import { db } from './supabase.js';
 import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
@@ -7,7 +7,7 @@ import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
 export class WritingPractice {
   constructor(app) {
     this.app = app;
-    this.groups = []; // [{chars: [{burmese, dev, roman}], dev, id}]
+    this.groups = [];
     this.loaded = false;
     this.showGuide = true;
     this.canvases = {};
@@ -17,13 +17,11 @@ export class WritingPractice {
   async loadData() {
     try {
       const raw = await db.getConsonants();
-      // Group consonants by their Devanagari equivalent
-      const devMap = new Map(); // dev → [{burmese_char, romanization, id}]
+      const devMap = new Map();
       for (const c of raw) {
         const dev = toDev(c.burmese_char);
         const key = dev || c.burmese_char;
         if (!devMap.has(key)) devMap.set(key, []);
-        // Avoid duplicate burmese_char within same group
         const existing = devMap.get(key);
         if (!existing.some(e => e.burmese_char === c.burmese_char)) {
           existing.push(c);
@@ -33,13 +31,8 @@ export class WritingPractice {
       let idx = 0;
       for (const [dev, chars] of devMap) {
         this.groups.push({
-          id: idx,
-          dev,
-          chars: chars.map(c => ({
-            burmese: c.burmese_char,
-            roman: c.romanization || '',
-            cid: c.id
-          }))
+          id: idx, dev,
+          chars: chars.map(c => ({ burmese: c.burmese_char, roman: c.romanization || '', cid: c.id }))
         });
         idx++;
       }
@@ -53,9 +46,12 @@ export class WritingPractice {
       await this.loadData();
     }
 
+    const CELL = 150; // fixed square size in px
+
     container.innerHTML = `
       <div style="padding:10px 6px 80px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;position:sticky;top:0;z-index:10;background:var(--bg);padding-top:6px;padding-bottom:6px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <button id="wr-back" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
               color:var(--text-muted);cursor:pointer;font-size:11px;padding:6px 10px;font-weight:700;font-family:var(--font);">←</button>
@@ -73,9 +69,9 @@ export class WritingPractice {
           </div>
         </div>
 
-        <div id="wr-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;
-          border:2px solid #ddd;border-radius:6px;overflow:hidden;background:#fff;">
-          ${this.groups.map((g, i) => this.renderCell(g, i)).join('')}
+        <!-- Grid: fixed cell size, wraps naturally -->
+        <div id="wr-grid" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+          ${this.groups.map((g, i) => this.renderCell(g, i, CELL)).join('')}
         </div>
       </div>
     `;
@@ -84,53 +80,61 @@ export class WritingPractice {
     this.bindEvents(container);
   }
 
-  renderCell(group, idx) {
+  renderCell(group, idx, size) {
     const isChecked = this.checked[idx];
-    const isSingle = group.chars.length === 1;
-
-    // Build guide text: show all burmese chars stacked or side by side
     const guideChars = group.chars.map(c => c.burmese).join(' ');
-    const guideFontSize = guideChars.length > 6 ? 30 : guideChars.length > 3 ? 45 : 65;
+    const totalLen = [...guideChars.replace(/ /g, '')].length;
+    const guideFontSize = totalLen > 4 ? 36 : totalLen > 2 ? 50 : 72;
+    const canvasH = size - 36; // leave room for label
 
-    // Build label: show each burmese + roman pair
     const labelParts = group.chars.map(c =>
-      `<span style="white-space:nowrap;">${c.burmese}${c.roman ? ` <span style="font-size:8px;color:#aaa;">${c.roman}</span>` : ''}</span>`
-    ).join('<span style="color:#ccc;margin:0 2px;">·</span>');
+      `<span style="white-space:nowrap;font-size:11px;font-weight:700;color:#444;font-family:'Noto Sans Myanmar',sans-serif;">${c.burmese}</span>`
+    ).join(' ');
 
     return `
       <div class="wr-cell" data-idx="${idx}" style="
-        position:relative;border-right:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;
-        background:#FAFAF8;
+        position:relative;width:${size}px;height:${size}px;
+        border-radius:8px;overflow:hidden;
+        background:#FAFAF8;border:2px solid #e0e0e0;
+        flex-shrink:0;
       ">
+        <!-- Clear -->
         <button class="wr-cell-clear" data-cidx="${idx}" style="
-          position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:3px;
-          background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);
-          color:rgba(0,0,0,0.25);font-size:8px;cursor:pointer;font-family:var(--font);
+          position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:4px;
+          background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);
+          color:rgba(0,0,0,0.3);font-size:9px;cursor:pointer;font-family:var(--font);
           display:flex;align-items:center;justify-content:center;z-index:5;
         ">✕</button>
 
+        <!-- Checkbox -->
         <button class="wr-cell-check" data-chidx="${idx}" style="
-          position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:4px;
-          background:${isChecked ? '#58CC02' : 'rgba(0,0,0,0.03)'};
-          border:2px solid ${isChecked ? '#58CC02' : 'rgba(0,0,0,0.12)'};
+          position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:5px;
+          background:${isChecked ? '#58CC02' : 'rgba(0,0,0,0.04)'};
+          border:2px solid ${isChecked ? '#58CC02' : 'rgba(0,0,0,0.14)'};
           cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;
-          font-size:11px;color:#fff;
+          font-size:12px;color:#fff;
         ">${isChecked ? '✓' : ''}</button>
 
+        <!-- Guide -->
         <div class="wr-guide-char" style="
-          position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+          position:absolute;top:0;left:0;right:0;height:${canvasH}px;
+          display:flex;align-items:center;justify-content:center;
           font-size:${guideFontSize}px;font-weight:700;color:rgba(0,0,0,0.07);pointer-events:none;
-          font-family:'Noto Sans Myanmar',sans-serif;padding-bottom:28px;
+          font-family:'Noto Sans Myanmar',sans-serif;
           ${this.showGuide ? '' : 'display:none;'}
         ">${guideChars}</div>
 
-        <canvas class="wr-canvas" data-canvasid="${idx}" width="200" height="160"
-          style="width:100%;height:120px;display:block;cursor:crosshair;touch-action:none;"></canvas>
+        <!-- Canvas -->
+        <canvas class="wr-canvas" data-canvasid="${idx}" width="${size * 2}" height="${canvasH * 2}"
+          style="width:${size}px;height:${canvasH}px;display:block;cursor:crosshair;touch-action:none;"></canvas>
 
-        <div style="text-align:center;padding:2px 2px 4px;background:rgba(0,0,0,0.03);border-top:1px solid rgba(0,0,0,0.06);
-          display:flex;justify-content:center;align-items:baseline;gap:2px;flex-wrap:wrap;">
+        <!-- Label -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:36px;
+          background:rgba(0,0,0,0.04);border-top:1px solid rgba(0,0,0,0.08);
+          display:flex;align-items:center;justify-content:center;gap:4px;padding:0 4px;">
           ${labelParts}
-          <span style="font-size:10px;color:#888;margin-left:2px;">${group.dev}</span>
+          <span style="font-size:11px;color:#999;font-weight:600;">${group.dev}</span>
+          ${group.chars[0].roman ? `<span style="font-size:9px;color:#bbb;">${group.chars.map(c=>c.roman).join('/')}</span>` : ''}
         </div>
       </div>
     `;
@@ -140,12 +144,9 @@ export class WritingPractice {
     this.canvases = {};
     container.querySelectorAll('.wr-canvas').forEach(canvas => {
       const idx = canvas.dataset.canvasid;
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = 120 * dpr;
       const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
+      // Canvas already sized via width/height attributes (2x for retina)
+      ctx.scale(2, 2);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = '#222';
@@ -161,25 +162,24 @@ export class WritingPractice {
 
       const startDraw = (e) => {
         e.preventDefault();
-        const data = this.canvases[idx];
-        data.isDrawing = true;
+        const d = this.canvases[idx];
+        d.isDrawing = true;
         const pos = getPos(e);
-        data.strokes.push([pos]);
-        data.ctx.beginPath();
-        data.ctx.moveTo(pos.x, pos.y);
+        d.strokes.push([pos]);
+        d.ctx.beginPath();
+        d.ctx.moveTo(pos.x, pos.y);
       };
 
       const draw = (e) => {
-        const data = this.canvases[idx];
-        if (!data.isDrawing) return;
+        const d = this.canvases[idx];
+        if (!d.isDrawing) return;
         e.preventDefault();
         const pos = getPos(e);
-        const stroke = data.strokes[data.strokes.length - 1];
-        stroke.push(pos);
-        data.ctx.lineTo(pos.x, pos.y);
-        data.ctx.stroke();
-        data.ctx.beginPath();
-        data.ctx.moveTo(pos.x, pos.y);
+        d.strokes[d.strokes.length - 1].push(pos);
+        d.ctx.lineTo(pos.x, pos.y);
+        d.ctx.stroke();
+        d.ctx.beginPath();
+        d.ctx.moveTo(pos.x, pos.y);
       };
 
       const endDraw = (e) => {
@@ -199,11 +199,10 @@ export class WritingPractice {
   }
 
   clearCanvas(idx) {
-    const data = this.canvases[idx];
-    if (!data) return;
-    const dpr = window.devicePixelRatio || 1;
-    data.ctx.clearRect(0, 0, data.canvas.width / dpr, data.canvas.height / dpr);
-    data.strokes = [];
+    const d = this.canvases[idx];
+    if (!d) return;
+    d.ctx.clearRect(0, 0, d.canvas.width / 2, d.canvas.height / 2);
+    d.strokes = [];
   }
 
   bindEvents(container) {
@@ -226,8 +225,8 @@ export class WritingPractice {
       for (const idx of Object.keys(this.canvases)) this.clearCanvas(idx);
       this.checked = {};
       container.querySelectorAll('.wr-cell-check').forEach(btn => {
-        btn.style.background = 'rgba(0,0,0,0.03)';
-        btn.style.borderColor = 'rgba(0,0,0,0.12)';
+        btn.style.background = 'rgba(0,0,0,0.04)';
+        btn.style.borderColor = 'rgba(0,0,0,0.14)';
         btn.textContent = '';
       });
     });
@@ -240,8 +239,8 @@ export class WritingPractice {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.chidx);
         this.checked[idx] = !this.checked[idx];
-        btn.style.background = this.checked[idx] ? '#58CC02' : 'rgba(0,0,0,0.03)';
-        btn.style.borderColor = this.checked[idx] ? '#58CC02' : 'rgba(0,0,0,0.12)';
+        btn.style.background = this.checked[idx] ? '#58CC02' : 'rgba(0,0,0,0.04)';
+        btn.style.borderColor = this.checked[idx] ? '#58CC02' : 'rgba(0,0,0,0.14)';
         btn.textContent = this.checked[idx] ? '✓' : '';
       });
     });
