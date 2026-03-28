@@ -1,6 +1,5 @@
 // ═══ WRITING PRACTICE ═══
-// Grid-based practice sheet — all consonants visible at once
-// Each cell has its own canvas for tracing
+// Grid-based practice sheet — deduplicated consonants
 
 import { db } from './supabase.js';
 import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
@@ -17,7 +16,16 @@ export class WritingPractice {
 
   async loadData() {
     try {
-      this.consonants = await db.getConsonants();
+      const raw = await db.getConsonants();
+      // Deduplicate: keep only one entry per unique burmese_char
+      const seen = new Set();
+      this.consonants = [];
+      for (const c of raw) {
+        if (!seen.has(c.burmese_char)) {
+          seen.add(c.burmese_char);
+          this.consonants.push(c);
+        }
+      }
       this.loaded = true;
     } catch (err) { console.error('Writing load error:', err); }
   }
@@ -29,32 +37,29 @@ export class WritingPractice {
     }
 
     container.innerHTML = `
-      <div style="padding:12px 8px 80px;">
+      <div style="padding:10px 6px 80px;">
         <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 6px;">
-          <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;">
+          <div style="display:flex;align-items:center;gap:8px;">
             <button id="wr-back" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
-              color:var(--text-muted);cursor:pointer;font-size:12px;padding:6px 12px;font-weight:700;font-family:var(--font);">← Back</button>
-            <div style="font-size:16px;font-weight:800;">📝 Consonants Practice Sheet</div>
+              color:var(--text-muted);cursor:pointer;font-size:11px;padding:6px 10px;font-weight:700;font-family:var(--font);">←</button>
+            <div style="font-size:14px;font-weight:800;">📝 Practice Sheet</div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <!-- Guide toggle -->
-            <button id="wr-guide-toggle" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button id="wr-guide-toggle" style="padding:6px 10px;border-radius:8px;
               background:${this.showGuide ? 'var(--green)' : 'var(--surface)'};
               border:2px solid ${this.showGuide ? 'var(--green)' : 'var(--border)'};
               color:${this.showGuide ? '#fff' : 'var(--text-muted)'};
-              font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">
-              Show Guide
-            </button>
-            <!-- Clear All -->
-            <button id="wr-clear-all" style="padding:6px 12px;border-radius:10px;background:var(--surface);
-              border:2px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:700;
-              cursor:pointer;font-family:var(--font);">🗑 Clear All</button>
+              font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);">Guide</button>
+            <button id="wr-clear-all" style="padding:6px 10px;border-radius:8px;background:var(--surface);
+              border:2px solid var(--border);color:var(--text-muted);font-size:10px;font-weight:700;
+              cursor:pointer;font-family:var(--font);">🗑 Clear</button>
           </div>
         </div>
 
         <!-- Grid -->
-        <div id="wr-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:2px solid var(--border-light);border-radius:4px;overflow:hidden;">
+        <div id="wr-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;
+          border:2px solid #ddd;border-radius:6px;overflow:hidden;background:#fff;">
           ${this.consonants.map((c, i) => this.renderCell(c, i)).join('')}
         </div>
       </div>
@@ -66,50 +71,58 @@ export class WritingPractice {
 
   renderCell(consonant, idx) {
     const dev = toDev(consonant.burmese_char);
+    const roman = consonant.romanization || '';
     const isChecked = this.checked[consonant.id];
+
+    // Calculate font size based on character length
+    const charLen = [...consonant.burmese_char].length;
+    const guideFontSize = charLen > 2 ? 40 : charLen > 1 ? 55 : 70;
+
     return `
-      <div class="wr-cell" data-idx="${idx}" data-cid="${consonant.id}" style="
-        position:relative;border-right:1px solid var(--border-light);border-bottom:1px solid var(--border-light);
+      <div class="wr-cell" data-idx="${idx}" style="
+        position:relative;border-right:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;
         background:#FAFAF8;
       ">
-        <!-- Clear cell button -->
+        <!-- Clear -->
         <button class="wr-cell-clear" data-cidx="${idx}" style="
-          position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:4px;
-          background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);
-          color:rgba(0,0,0,0.3);font-size:10px;cursor:pointer;font-family:var(--font);
+          position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:3px;
+          background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);
+          color:rgba(0,0,0,0.25);font-size:8px;cursor:pointer;font-family:var(--font);
           display:flex;align-items:center;justify-content:center;z-index:5;
         ">✕</button>
 
         <!-- Checkbox -->
         <button class="wr-cell-check" data-chid="${consonant.id}" style="
-          position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:4px;
-          background:${isChecked ? 'var(--green)' : 'rgba(0,0,0,0.04)'};
-          border:2px solid ${isChecked ? 'var(--green)' : 'rgba(0,0,0,0.15)'};
+          position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:4px;
+          background:${isChecked ? '#58CC02' : 'rgba(0,0,0,0.03)'};
+          border:2px solid ${isChecked ? '#58CC02' : 'rgba(0,0,0,0.12)'};
           cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;
-          font-size:12px;color:#fff;
+          font-size:11px;color:#fff;
         ">${isChecked ? '✓' : ''}</button>
 
         <!-- Guide character -->
         <div class="wr-guide-char" style="
           position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-          font-size:80px;font-weight:700;color:rgba(0,0,0,0.08);pointer-events:none;
-          font-family:'Noto Sans Myanmar',sans-serif;padding-bottom:24px;
+          font-size:${guideFontSize}px;font-weight:700;color:rgba(0,0,0,0.07);pointer-events:none;
+          font-family:'Noto Sans Myanmar',sans-serif;padding-bottom:28px;
           ${this.showGuide ? '' : 'display:none;'}
         ">${consonant.burmese_char}</div>
 
         <!-- Canvas -->
-        <canvas class="wr-canvas" data-canvasid="${idx}" width="200" height="180"
-          style="width:100%;height:140px;display:block;cursor:crosshair;touch-action:none;"></canvas>
+        <canvas class="wr-canvas" data-canvasid="${idx}" width="200" height="160"
+          style="width:100%;height:120px;display:block;cursor:crosshair;touch-action:none;"></canvas>
 
-        <!-- Label -->
-        <div style="text-align:center;padding:3px 0 6px;background:rgba(0,0,0,0.03);border-top:1px solid rgba(0,0,0,0.06);">
-          <span style="font-size:12px;font-weight:600;color:#555;">${dev}</span>
+        <!-- Label bar -->
+        <div style="text-align:center;padding:2px 2px 4px;background:rgba(0,0,0,0.03);border-top:1px solid rgba(0,0,0,0.06);
+          display:flex;justify-content:center;gap:4px;align-items:baseline;">
+          <span style="font-size:13px;font-weight:700;color:#444;font-family:'Noto Sans Myanmar',sans-serif;">${consonant.burmese_char}</span>
+          <span style="font-size:10px;color:#888;">${dev}</span>
+          ${roman ? `<span style="font-size:9px;color:#aaa;">${roman}</span>` : ''}
         </div>
       </div>
     `;
   }
 
-  // ─── CANVAS INIT ───
   initAllCanvases(container) {
     this.canvases = {};
     container.querySelectorAll('.wr-canvas').forEach(canvas => {
@@ -117,13 +130,13 @@ export class WritingPractice {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
-      canvas.height = 140 * dpr;
+      canvas.height = 120 * dpr;
       const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 2.5;
 
       this.canvases[idx] = { canvas, ctx, strokes: [], isDrawing: false };
 
@@ -180,13 +193,11 @@ export class WritingPractice {
     data.strokes = [];
   }
 
-  // ─── EVENTS ───
   bindEvents(container) {
     container.querySelector('#wr-back').addEventListener('click', () => {
       this.app.tabs.more.render(this.app.contentEl);
     });
 
-    // Guide toggle
     container.querySelector('#wr-guide-toggle').addEventListener('click', () => {
       this.showGuide = !this.showGuide;
       container.querySelectorAll('.wr-guide-char').forEach(el => {
@@ -198,33 +209,26 @@ export class WritingPractice {
       btn.style.color = this.showGuide ? '#fff' : 'var(--text-muted)';
     });
 
-    // Clear All
     container.querySelector('#wr-clear-all').addEventListener('click', () => {
-      for (const idx of Object.keys(this.canvases)) {
-        this.clearCanvas(idx);
-      }
+      for (const idx of Object.keys(this.canvases)) this.clearCanvas(idx);
       this.checked = {};
       container.querySelectorAll('.wr-cell-check').forEach(btn => {
-        btn.style.background = 'rgba(0,0,0,0.04)';
-        btn.style.borderColor = 'rgba(0,0,0,0.15)';
+        btn.style.background = 'rgba(0,0,0,0.03)';
+        btn.style.borderColor = 'rgba(0,0,0,0.12)';
         btn.textContent = '';
       });
     });
 
-    // Individual cell clear
     container.querySelectorAll('.wr-cell-clear').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.clearCanvas(btn.dataset.cidx);
-      });
+      btn.addEventListener('click', () => this.clearCanvas(btn.dataset.cidx));
     });
 
-    // Checkboxes
     container.querySelectorAll('.wr-cell-check').forEach(btn => {
       btn.addEventListener('click', () => {
         const cid = parseInt(btn.dataset.chid);
         this.checked[cid] = !this.checked[cid];
-        btn.style.background = this.checked[cid] ? 'var(--green)' : 'rgba(0,0,0,0.04)';
-        btn.style.borderColor = this.checked[cid] ? 'var(--green)' : 'rgba(0,0,0,0.15)';
+        btn.style.background = this.checked[cid] ? '#58CC02' : 'rgba(0,0,0,0.03)';
+        btn.style.borderColor = this.checked[cid] ? '#58CC02' : 'rgba(0,0,0,0.12)';
         btn.textContent = this.checked[cid] ? '✓' : '';
       });
     });
