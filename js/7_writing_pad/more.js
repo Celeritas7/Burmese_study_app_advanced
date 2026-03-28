@@ -51,9 +51,6 @@ export class MoreTab {
         } else if (idx === 1) {
           // Dialogues
           this.app.showDialogues();
-        } else if (idx === 2) {
-          // Writing Practice
-          this.app.showWriting();
         } else if (idx === 3) {
           // Hub Explorer
           this.app.showHubExplorer();
