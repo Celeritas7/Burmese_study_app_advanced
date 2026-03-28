@@ -1,5 +1,5 @@
 // ═══ WRITING PRACTICE ═══
-// Grid-based practice sheet — deduplicated consonants
+// Grid-based practice sheet — grouped by Devanagari equivalent
 
 import { db } from './supabase.js';
 import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
@@ -7,7 +7,7 @@ import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
 export class WritingPractice {
   constructor(app) {
     this.app = app;
-    this.consonants = [];
+    this.groups = []; // [{chars: [{burmese, dev, roman}], dev, id}]
     this.loaded = false;
     this.showGuide = true;
     this.canvases = {};
@@ -17,14 +17,31 @@ export class WritingPractice {
   async loadData() {
     try {
       const raw = await db.getConsonants();
-      // Deduplicate: keep only one entry per unique burmese_char
-      const seen = new Set();
-      this.consonants = [];
+      // Group consonants by their Devanagari equivalent
+      const devMap = new Map(); // dev → [{burmese_char, romanization, id}]
       for (const c of raw) {
-        if (!seen.has(c.burmese_char)) {
-          seen.add(c.burmese_char);
-          this.consonants.push(c);
+        const dev = toDev(c.burmese_char);
+        const key = dev || c.burmese_char;
+        if (!devMap.has(key)) devMap.set(key, []);
+        // Avoid duplicate burmese_char within same group
+        const existing = devMap.get(key);
+        if (!existing.some(e => e.burmese_char === c.burmese_char)) {
+          existing.push(c);
         }
+      }
+      this.groups = [];
+      let idx = 0;
+      for (const [dev, chars] of devMap) {
+        this.groups.push({
+          id: idx,
+          dev,
+          chars: chars.map(c => ({
+            burmese: c.burmese_char,
+            roman: c.romanization || '',
+            cid: c.id
+          }))
+        });
+        idx++;
       }
       this.loaded = true;
     } catch (err) { console.error('Writing load error:', err); }
@@ -38,7 +55,6 @@ export class WritingPractice {
 
     container.innerHTML = `
       <div style="padding:10px 6px 80px;">
-        <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <button id="wr-back" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
@@ -57,10 +73,9 @@ export class WritingPractice {
           </div>
         </div>
 
-        <!-- Grid -->
         <div id="wr-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;
           border:2px solid #ddd;border-radius:6px;overflow:hidden;background:#fff;">
-          ${this.consonants.map((c, i) => this.renderCell(c, i)).join('')}
+          ${this.groups.map((g, i) => this.renderCell(g, i)).join('')}
         </div>
       </div>
     `;
@@ -69,21 +84,24 @@ export class WritingPractice {
     this.bindEvents(container);
   }
 
-  renderCell(consonant, idx) {
-    const dev = toDev(consonant.burmese_char);
-    const roman = consonant.romanization || '';
-    const isChecked = this.checked[consonant.id];
+  renderCell(group, idx) {
+    const isChecked = this.checked[idx];
+    const isSingle = group.chars.length === 1;
 
-    // Calculate font size based on character length
-    const charLen = [...consonant.burmese_char].length;
-    const guideFontSize = charLen > 2 ? 40 : charLen > 1 ? 55 : 70;
+    // Build guide text: show all burmese chars stacked or side by side
+    const guideChars = group.chars.map(c => c.burmese).join(' ');
+    const guideFontSize = guideChars.length > 6 ? 30 : guideChars.length > 3 ? 45 : 65;
+
+    // Build label: show each burmese + roman pair
+    const labelParts = group.chars.map(c =>
+      `<span style="white-space:nowrap;">${c.burmese}${c.roman ? ` <span style="font-size:8px;color:#aaa;">${c.roman}</span>` : ''}</span>`
+    ).join('<span style="color:#ccc;margin:0 2px;">·</span>');
 
     return `
       <div class="wr-cell" data-idx="${idx}" style="
         position:relative;border-right:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;
         background:#FAFAF8;
       ">
-        <!-- Clear -->
         <button class="wr-cell-clear" data-cidx="${idx}" style="
           position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:3px;
           background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);
@@ -91,8 +109,7 @@ export class WritingPractice {
           display:flex;align-items:center;justify-content:center;z-index:5;
         ">✕</button>
 
-        <!-- Checkbox -->
-        <button class="wr-cell-check" data-chid="${consonant.id}" style="
+        <button class="wr-cell-check" data-chidx="${idx}" style="
           position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:4px;
           background:${isChecked ? '#58CC02' : 'rgba(0,0,0,0.03)'};
           border:2px solid ${isChecked ? '#58CC02' : 'rgba(0,0,0,0.12)'};
@@ -100,24 +117,20 @@ export class WritingPractice {
           font-size:11px;color:#fff;
         ">${isChecked ? '✓' : ''}</button>
 
-        <!-- Guide character -->
         <div class="wr-guide-char" style="
           position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
           font-size:${guideFontSize}px;font-weight:700;color:rgba(0,0,0,0.07);pointer-events:none;
           font-family:'Noto Sans Myanmar',sans-serif;padding-bottom:28px;
           ${this.showGuide ? '' : 'display:none;'}
-        ">${consonant.burmese_char}</div>
+        ">${guideChars}</div>
 
-        <!-- Canvas -->
         <canvas class="wr-canvas" data-canvasid="${idx}" width="200" height="160"
           style="width:100%;height:120px;display:block;cursor:crosshair;touch-action:none;"></canvas>
 
-        <!-- Label bar -->
         <div style="text-align:center;padding:2px 2px 4px;background:rgba(0,0,0,0.03);border-top:1px solid rgba(0,0,0,0.06);
-          display:flex;justify-content:center;gap:4px;align-items:baseline;">
-          <span style="font-size:13px;font-weight:700;color:#444;font-family:'Noto Sans Myanmar',sans-serif;">${consonant.burmese_char}</span>
-          <span style="font-size:10px;color:#888;">${dev}</span>
-          ${roman ? `<span style="font-size:9px;color:#aaa;">${roman}</span>` : ''}
+          display:flex;justify-content:center;align-items:baseline;gap:2px;flex-wrap:wrap;">
+          ${labelParts}
+          <span style="font-size:10px;color:#888;margin-left:2px;">${group.dev}</span>
         </div>
       </div>
     `;
@@ -225,11 +238,11 @@ export class WritingPractice {
 
     container.querySelectorAll('.wr-cell-check').forEach(btn => {
       btn.addEventListener('click', () => {
-        const cid = parseInt(btn.dataset.chid);
-        this.checked[cid] = !this.checked[cid];
-        btn.style.background = this.checked[cid] ? '#58CC02' : 'rgba(0,0,0,0.03)';
-        btn.style.borderColor = this.checked[cid] ? '#58CC02' : 'rgba(0,0,0,0.12)';
-        btn.textContent = this.checked[cid] ? '✓' : '';
+        const idx = parseInt(btn.dataset.chidx);
+        this.checked[idx] = !this.checked[idx];
+        btn.style.background = this.checked[idx] ? '#58CC02' : 'rgba(0,0,0,0.03)';
+        btn.style.borderColor = this.checked[idx] ? '#58CC02' : 'rgba(0,0,0,0.12)';
+        btn.textContent = this.checked[idx] ? '✓' : '';
       });
     });
   }
