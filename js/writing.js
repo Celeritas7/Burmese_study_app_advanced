@@ -1,5 +1,6 @@
 // ═══ WRITING PRACTICE ═══
-// 5-column grid, pinch-to-zoom + scroll on mobile
+// 5-column grid that fits screen width at max zoom-out
+// Pinch to zoom IN to write, header stays fixed
 
 import { db } from './supabase.js';
 import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
@@ -36,21 +37,17 @@ export class WritingPractice {
     } catch (err) { console.error('Writing load error:', err); }
   }
 
-  // Enable pinch-to-zoom when entering this page
   enableZoom() {
     const meta = document.querySelector('meta[name="viewport"]');
     if (meta) {
       this.originalViewport = meta.getAttribute('content');
-      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=4.0, user-scalable=yes');
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes');
     }
   }
 
-  // Restore original viewport when leaving
   disableZoom() {
     const meta = document.querySelector('meta[name="viewport"]');
-    if (meta && this.originalViewport) {
-      meta.setAttribute('content', this.originalViewport);
-    }
+    if (meta && this.originalViewport) meta.setAttribute('content', this.originalViewport);
   }
 
   async render(container) {
@@ -61,100 +58,142 @@ export class WritingPractice {
 
     this.enableZoom();
 
-    const CELL = 150;
-    const COLS = 5;
-    const gridW = COLS * CELL + (COLS - 1) * 4; // 5 cells + 4 gaps
+    // Cell size = fit exactly 5 columns in viewport width
+    // gap=2px, padding=6px each side → available = 100vw - 12px - 8px(4 gaps)
+    // On desktop, cap at 150px per cell
 
     container.innerHTML = `
-      <div style="padding:10px 0 80px;">
-        <!-- Sticky header -->
-        <div style="position:sticky;top:0;z-index:20;background:var(--bg);padding:6px 10px 8px;
-          display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button id="wr-back" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
-              color:var(--text-muted);cursor:pointer;font-size:11px;padding:6px 10px;font-weight:700;font-family:var(--font);">←</button>
-            <div style="font-size:14px;font-weight:800;">📝 Practice Sheet</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button id="wr-guide-toggle" style="padding:6px 10px;border-radius:8px;
-              background:${this.showGuide ? 'var(--green)' : 'var(--surface)'};
-              border:2px solid ${this.showGuide ? 'var(--green)' : 'var(--border)'};
-              color:${this.showGuide ? '#fff' : 'var(--text-muted)'};
-              font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);">Guide</button>
-            <button id="wr-clear-all" style="padding:6px 10px;border-radius:8px;background:var(--surface);
-              border:2px solid var(--border);color:var(--text-muted);font-size:10px;font-weight:700;
-              cursor:pointer;font-family:var(--font);">🗑 Clear</button>
-          </div>
-        </div>
+      <style>
+        #wr-header {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+          background: var(--bg); padding: 8px 10px;
+          display: flex; align-items: center; justify-content: space-between;
+          border-bottom: 2px solid var(--border);
+        }
+        #wr-body { padding-top: 52px; padding-bottom: 80px; }
+        .wr-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 2px;
+          padding: 4px 6px;
+          max-width: 770px;
+          margin: 0 auto;
+        }
+        .wr-sq {
+          position: relative;
+          width: 100%;
+          padding-bottom: 100%; /* square aspect ratio */
+          border-radius: 6px;
+          overflow: hidden;
+          background: #FAFAF8;
+          border: 2px solid #ddd;
+        }
+        .wr-sq-inner {
+          position: absolute; inset: 0;
+          display: flex; flex-direction: column;
+        }
+        .wr-sq-canvas-area {
+          flex: 1; position: relative; overflow: hidden;
+        }
+        .wr-sq-label {
+          height: 28px; min-height: 28px;
+          background: rgba(0,0,0,0.04); border-top: 1px solid rgba(0,0,0,0.08);
+          display: flex; align-items: center; justify-content: center;
+          gap: 3px; padding: 0 2px; overflow: hidden;
+        }
+        .wr-sq-label span { white-space: nowrap; }
+        .wr-guide-ch {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 700; color: rgba(0,0,0,0.07); pointer-events: none;
+          font-family: 'Noto Sans Myanmar', sans-serif;
+        }
+        .wr-cv {
+          position: absolute; inset: 0;
+          display: block; width: 100%; height: 100%;
+          cursor: crosshair; touch-action: none;
+        }
+        .wr-btn-x {
+          position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+          border-radius: 3px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1);
+          color: rgba(0,0,0,0.3); font-size: 7px; cursor: pointer; font-family: var(--font);
+          display: flex; align-items: center; justify-content: center; z-index: 5;
+        }
+        .wr-btn-chk {
+          position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+          border-radius: 4px; cursor: pointer; z-index: 5;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 10px; color: #fff;
+        }
+      </style>
 
-        <!-- Hint -->
-        <div style="text-align:center;padding:4px 0 8px;font-size:10px;color:var(--text-muted);">
-          Pinch to zoom · Scroll to navigate
+      <!-- Fixed header -->
+      <div id="wr-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button id="wr-back" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
+            color:var(--text-muted);cursor:pointer;font-size:11px;padding:5px 10px;font-weight:700;font-family:var(--font);">←</button>
+          <div style="font-size:14px;font-weight:800;">📝 Practice Sheet</div>
         </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button id="wr-guide-toggle" style="padding:5px 10px;border-radius:8px;
+            background:${this.showGuide ? 'var(--green)' : 'var(--surface)'};
+            border:2px solid ${this.showGuide ? 'var(--green)' : 'var(--border)'};
+            color:${this.showGuide ? '#fff' : 'var(--text-muted)'};
+            font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);">Guide</button>
+          <button id="wr-clear-all" style="padding:5px 10px;border-radius:8px;background:var(--surface);
+            border:2px solid var(--border);color:var(--text-muted);font-size:10px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">🗑 Clear</button>
+        </div>
+      </div>
 
-        <!-- Scrollable grid container -->
-        <div id="wr-scroll" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:0 6px;">
-          <div id="wr-grid" style="display:grid;grid-template-columns:repeat(${COLS}, ${CELL}px);gap:4px;
-            width:${gridW}px;margin:0 auto;">
-            ${this.groups.map((g, i) => this.renderCell(g, i, CELL)).join('')}
-          </div>
+      <!-- Scrollable body -->
+      <div id="wr-body">
+        <div style="text-align:center;padding:2px 0 6px;font-size:9px;color:var(--text-muted);">
+          Pinch to zoom in · Write · Pinch out to see all
+        </div>
+        <div class="wr-grid">
+          ${this.groups.map((g, i) => this.renderCell(g, i)).join('')}
         </div>
       </div>
     `;
 
-    this.initAllCanvases(container);
+    // Wait for layout, then init canvases
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.initAllCanvases(container);
+      });
+    });
     this.bindEvents(container);
   }
 
-  renderCell(group, idx, size) {
+  renderCell(group, idx) {
     const isChecked = this.checked[idx];
     const guideChars = group.chars.map(c => c.burmese).join(' ');
     const totalLen = [...guideChars.replace(/ /g, '')].length;
-    const guideFontSize = totalLen > 4 ? 36 : totalLen > 2 ? 50 : 72;
-    const canvasH = size - 34;
+    // Font as percentage of cell — works at any zoom level
+    const guideFontPct = totalLen > 4 ? 35 : totalLen > 2 ? 45 : 60;
 
     const labelParts = group.chars.map(c =>
-      `<span style="white-space:nowrap;font-size:11px;font-weight:700;color:#444;font-family:'Noto Sans Myanmar',sans-serif;">${c.burmese}</span>`
+      `<span style="font-size:9px;font-weight:700;color:#444;font-family:'Noto Sans Myanmar',sans-serif;">${c.burmese}</span>`
     ).join(' ');
 
     return `
-      <div class="wr-cell" data-idx="${idx}" style="
-        position:relative;width:${size}px;height:${size}px;
-        border-radius:6px;overflow:hidden;
-        background:#FAFAF8;border:2px solid #ddd;
-      ">
-        <button class="wr-cell-clear" data-cidx="${idx}" style="
-          position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:3px;
-          background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);
-          color:rgba(0,0,0,0.3);font-size:8px;cursor:pointer;font-family:var(--font);
-          display:flex;align-items:center;justify-content:center;z-index:5;
-        ">✕</button>
-
-        <button class="wr-cell-check" data-chidx="${idx}" style="
-          position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:4px;
-          background:${isChecked ? '#58CC02' : 'rgba(0,0,0,0.04)'};
-          border:2px solid ${isChecked ? '#58CC02' : 'rgba(0,0,0,0.14)'};
-          cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;
-          font-size:11px;color:#fff;
-        ">${isChecked ? '✓' : ''}</button>
-
-        <div class="wr-guide-char" style="
-          position:absolute;top:0;left:0;right:0;height:${canvasH}px;
-          display:flex;align-items:center;justify-content:center;
-          font-size:${guideFontSize}px;font-weight:700;color:rgba(0,0,0,0.07);pointer-events:none;
-          font-family:'Noto Sans Myanmar',sans-serif;
-          ${this.showGuide ? '' : 'display:none;'}
-        ">${guideChars}</div>
-
-        <canvas class="wr-canvas" data-canvasid="${idx}" width="${size * 2}" height="${canvasH * 2}"
-          style="width:${size}px;height:${canvasH}px;display:block;cursor:crosshair;touch-action:none;"></canvas>
-
-        <div style="position:absolute;bottom:0;left:0;right:0;height:34px;
-          background:rgba(0,0,0,0.04);border-top:1px solid rgba(0,0,0,0.08);
-          display:flex;align-items:center;justify-content:center;gap:4px;padding:0 4px;">
-          ${labelParts}
-          <span style="font-size:10px;color:#999;font-weight:600;">${group.dev}</span>
-          ${group.chars[0].roman ? `<span style="font-size:9px;color:#bbb;">${group.chars.map(c => c.roman).join('/')}</span>` : ''}
+      <div class="wr-sq">
+        <div class="wr-sq-inner">
+          <div class="wr-sq-canvas-area">
+            <button class="wr-btn-x" data-cidx="${idx}">✕</button>
+            <button class="wr-btn-chk" data-chidx="${idx}" style="
+              background:${isChecked ? '#58CC02' : 'rgba(0,0,0,0.04)'};
+              border:2px solid ${isChecked ? '#58CC02' : 'rgba(0,0,0,0.14)'};
+            ">${isChecked ? '✓' : ''}</button>
+            <div class="wr-guide-ch" style="font-size:${guideFontPct}%;${this.showGuide ? '' : 'display:none;'}">${guideChars}</div>
+            <canvas class="wr-cv" data-canvasid="${idx}"></canvas>
+          </div>
+          <div class="wr-sq-label">
+            ${labelParts}
+            <span style="font-size:9px;color:#999;font-weight:600;">${group.dev}</span>
+            ${group.chars[0].roman ? `<span style="font-size:7px;color:#bbb;">${group.chars.map(c => c.roman).join('/')}</span>` : ''}
+          </div>
         </div>
       </div>
     `;
@@ -162,28 +201,29 @@ export class WritingPractice {
 
   initAllCanvases(container) {
     this.canvases = {};
-    container.querySelectorAll('.wr-canvas').forEach(canvas => {
+    container.querySelectorAll('.wr-cv').forEach(canvas => {
       const idx = canvas.dataset.canvasid;
+      // Size canvas to actual rendered size
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
       const ctx = canvas.getContext('2d');
-      ctx.scale(2, 2);
+      ctx.scale(dpr, dpr);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = '#222';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
 
-      this.canvases[idx] = { canvas, ctx, strokes: [], isDrawing: false };
+      this.canvases[idx] = { canvas, ctx, strokes: [], isDrawing: false, dpr };
 
       const getPos = (e) => {
         const r = canvas.getBoundingClientRect();
         const t = e.touches ? e.touches[0] : e;
-        // Account for zoom: use scale factor
-        const scaleX = canvas.width / 2 / r.width;
-        const scaleY = canvas.height / 2 / r.height;
-        return { x: (t.clientX - r.left) * scaleX, y: (t.clientY - r.top) * scaleY };
+        return { x: (t.clientX - r.left) * (canvas.width / dpr / r.width), y: (t.clientY - r.top) * (canvas.height / dpr / r.height) };
       };
 
       const startDraw = (e) => {
-        // Only draw with single finger, let 2-finger pinch through for zoom
         if (e.touches && e.touches.length > 1) return;
         e.preventDefault();
         const d = this.canvases[idx];
@@ -226,19 +266,23 @@ export class WritingPractice {
   clearCanvas(idx) {
     const d = this.canvases[idx];
     if (!d) return;
-    d.ctx.clearRect(0, 0, d.canvas.width / 2, d.canvas.height / 2);
+    const { dpr } = d;
+    d.ctx.clearRect(0, 0, d.canvas.width / dpr, d.canvas.height / dpr);
     d.strokes = [];
   }
 
   bindEvents(container) {
     container.querySelector('#wr-back').addEventListener('click', () => {
       this.disableZoom();
+      // Remove injected style
+      container.querySelector('style')?.remove();
+      container.querySelector('#wr-header')?.remove();
       this.app.tabs.more.render(this.app.contentEl);
     });
 
     container.querySelector('#wr-guide-toggle').addEventListener('click', () => {
       this.showGuide = !this.showGuide;
-      container.querySelectorAll('.wr-guide-char').forEach(el => {
+      container.querySelectorAll('.wr-guide-ch').forEach(el => {
         el.style.display = this.showGuide ? 'flex' : 'none';
       });
       const btn = container.querySelector('#wr-guide-toggle');
@@ -250,18 +294,18 @@ export class WritingPractice {
     container.querySelector('#wr-clear-all').addEventListener('click', () => {
       for (const idx of Object.keys(this.canvases)) this.clearCanvas(idx);
       this.checked = {};
-      container.querySelectorAll('.wr-cell-check').forEach(btn => {
+      container.querySelectorAll('.wr-btn-chk').forEach(btn => {
         btn.style.background = 'rgba(0,0,0,0.04)';
         btn.style.borderColor = 'rgba(0,0,0,0.14)';
         btn.textContent = '';
       });
     });
 
-    container.querySelectorAll('.wr-cell-clear').forEach(btn => {
+    container.querySelectorAll('.wr-btn-x').forEach(btn => {
       btn.addEventListener('click', () => this.clearCanvas(btn.dataset.cidx));
     });
 
-    container.querySelectorAll('.wr-cell-check').forEach(btn => {
+    container.querySelectorAll('.wr-btn-chk').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.chidx);
         this.checked[idx] = !this.checked[idx];
