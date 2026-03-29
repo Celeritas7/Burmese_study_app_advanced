@@ -95,7 +95,6 @@ class SupabaseClient {
   }
 
   async getAnchorForWord(wordText) {
-    // Find anchors that are substrings of the word
     const anchors = await this.query('burmese_app_anchor_words');
     return anchors.filter(a => wordText.includes(a.burmese_word));
   }
@@ -109,9 +108,28 @@ class SupabaseClient {
     return this.query('burmese_app_sentences', { order: 'id' });
   }
 
-  async getSentencesForWord(wordText) {
-    const sentences = await this.getSentences();
-    return sentences.filter(s => s.burmese_text.includes(wordText));
+  // ─── JUNCTION TABLE QUERIES ───
+
+  // Get sentences linked to a word via junction table
+  async getSentencesForWord(wordId) {
+    return this.query('burmese_app_word_sentences', {
+      select: 'sentence_id,burmese_app_sentences(id,burmese_text,english_text,category)',
+      filters: [`word_id=eq.${wordId}`]
+    });
+  }
+
+  // Batch: get sentence counts for multiple word IDs
+  async getSentenceCountsForWords(wordIds) {
+    if (!wordIds || wordIds.length === 0) return {};
+    const links = await this.query('burmese_app_word_sentences', {
+      select: 'word_id,sentence_id',
+      filters: [`word_id=in.(${wordIds.join(',')})`]
+    });
+    const counts = {};
+    for (const link of links) {
+      counts[link.word_id] = (counts[link.word_id] || 0) + 1;
+    }
+    return counts;
   }
 
   async getUserState() {
@@ -129,19 +147,18 @@ class SupabaseClient {
   }
 
   async upsertUserState(wordId, rating) {
-    // Try to find existing state
     const existing = await this.query('burmese_app_user_state', {
       filters: [`word_id=eq.${wordId}`],
       single: true
     });
 
-    const isCorrect = [1, 3].includes(rating); // "Got it" or "Easy"
+    const isCorrect = [1, 3].includes(rating);
     const now = new Date().toISOString();
 
     if (existing) {
       const streak = isCorrect ? (existing.streak || 0) + 1 : 0;
       const mastery = Math.min(5, Math.max(0, (existing.mastery_level || 0) + (isCorrect ? 1 : -1)));
-      const intervals = [0, 4, 8, 24, 72, 168]; // hours
+      const intervals = [0, 4, 8, 24, 72, 168];
       const nextReview = new Date(Date.now() + intervals[mastery] * 3600000).toISOString();
 
       return this.update('burmese_app_user_state', existing.id, {

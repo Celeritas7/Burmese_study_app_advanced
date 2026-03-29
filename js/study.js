@@ -40,6 +40,7 @@ export class StudyTab {
     this.revealLevel = 0;
     this.ratings = {};
     this.wordCounts = {};
+    this.sentenceCounts = {};
     this.anchorsCache = {};
     this.quiz = null;
   }
@@ -188,7 +189,14 @@ export class StudyTab {
       this.currentIdx = 0;
       this.revealLevel = 0;
       this.ratings = {};
+      this.sentenceCounts = {};
       this.phase = 'session';
+
+      // Batch load sentence counts for all words in session
+      try {
+        this.sentenceCounts = await db.getSentenceCountsForWords(words.map(w => w.id));
+      } catch { /* offline, skip */ }
+
       this.render(container);
     } catch (err) {
       console.error('Failed to load words:', err);
@@ -309,7 +317,7 @@ export class StudyTab {
         </div>
 
         <!-- Sentences -->
-        <button class="sentences-toggle" id="btn-sentences">💬 Sentences${w.sentence ? ' (1 linked)' : ''} ▼</button>
+        <button class="sentences-toggle" id="btn-sentences">💬 Sentences${(this.sentenceCounts?.[w.id] || 0) > 0 ? ` (${this.sentenceCounts[w.id]} linked)` : ''} ▼</button>
       </div>
     `;
 
@@ -548,12 +556,16 @@ export class StudyTab {
   async showSentencesModal(word) {
     let sentences = [];
     try {
-      sentences = await db.getSentencesForWord(word.burmese_word);
+      const links = await db.getSentencesForWord(word.id);
+      // Extract sentence data from junction response
+      sentences = links
+        .map(link => link.burmese_app_sentences)
+        .filter(s => s && s.burmese_text);
     } catch { /* offline */ }
 
     Modal.show(`
       <div class="modal-header">
-        <div class="modal-title" style="color:var(--blue);">💬 Sentences</div>
+        <div class="modal-title" style="color:var(--blue);">💬 Sentences (${sentences.length})</div>
         <button class="modal-close" data-modal-close>✕ Close</button>
       </div>
       <div style="background:var(--bg); border-radius:12px; padding:10px 14px; margin-bottom:14px; border:1px solid var(--border);">
@@ -563,10 +575,9 @@ export class StudyTab {
       ${sentences.length > 0 ? sentences.map(s => `
         <div style="padding:12px; border-radius:12px; background:var(--bg); border:1px solid var(--border); margin-bottom:8px;">
           <div style="font-size:15px; font-weight:600; color:var(--text); margin-bottom:4px;">${s.burmese_text}</div>
-          <div style="font-size:13px; color:var(--text-muted);">${s.english_text}</div>
+          <div style="font-size:13px; color:var(--text-muted);">${s.english_text || ''}</div>
         </div>
       `).join('') : '<div style="color:var(--text-muted); text-align:center; padding:20px; font-size:13px;">No sentences linked</div>'}
-      <button style="width:100%; padding:12px; border-radius:12px; background:rgba(28,176,246,0.08); border:1px solid rgba(28,176,246,0.2); color:var(--blue); font-size:13px; font-weight:700; cursor:pointer; margin-top:8px; font-family:var(--font);">+ Add Sentence</button>
     `, { borderColor: 'var(--blue)' });
   }
 }
