@@ -410,7 +410,7 @@ export class Quiz {
 
     // MCQ options
     container.querySelectorAll('.mcq-opt').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const idx = parseInt(btn.dataset.opt);
         if (this.answers[this.currentIdx] !== undefined) return;
 
@@ -433,7 +433,7 @@ export class Quiz {
     const typeInput = container.querySelector('#type-input');
     const typeSubmit = container.querySelector('#type-submit');
     if (typeInput && typeSubmit) {
-      const doSubmit = () => {
+      const doSubmit = async () => {
         if (this.answers[this.currentIdx] !== undefined) return;
         this.typedAnswer = typeInput.value.trim();
         const isCorrect = this.checkTypedAnswer(this.typedAnswer, q.answer);
