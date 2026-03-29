@@ -215,22 +215,24 @@ export class StudyTab {
     const progress = ((this.currentIdx + 1) / total * 100);
 
     // Determine what to show based on mode
-    let primaryText, primaryLabel;
+    let primaryText;
     switch (this.mode) {
       case 'meaning': case 'writing':
         primaryText = w.english_meaning || '(no meaning)';
-        primaryLabel = 'English';
         break;
       case 'deva':
         primaryText = dev;
-        primaryLabel = 'Devanagari';
         break;
       default:
         primaryText = w.burmese_word;
-        primaryLabel = 'Burmese';
     }
 
     const fontSize = (this.mode === 'meaning' || this.mode === 'writing') ? '24px' : '42px';
+
+    // Show sentence in word card after reveal level 2+
+    const sentenceInCard = (this.revealLevel >= 2 && w.sentence)
+      ? `<div style="font-size:14px;color:rgba(0,0,0,0.4);margin-top:8px;font-weight:400;">${w.sentence}</div>`
+      : '';
 
     container.innerHTML = `
       <div class="pad-sm">
@@ -254,11 +256,8 @@ export class StudyTab {
 
         <!-- Word card -->
         <div class="word-card">
-          <div class="word-card-badges">
-            <span style="background:rgba(88,204,2,0.15); color:#58CC02;">≈ synonyms</span>
-            <span style="background:rgba(206,130,255,0.15); color:#CE82FF;">🌿 spokes</span>
-          </div>
           <div class="word-card-text" style="font-size:${fontSize};">${primaryText}</div>
+          ${sentenceInCard}
         </div>
 
         <!-- Reveal box -->
@@ -309,7 +308,7 @@ export class StudyTab {
         </div>
 
         <!-- Sentences -->
-        <button class="sentences-toggle" id="btn-sentences">💬 Sentences ▼</button>
+        <button class="sentences-toggle" id="btn-sentences">💬 Sentences${w.sentence ? ' (1 linked)' : ''} ▼</button>
       </div>
     `;
 
@@ -321,28 +320,32 @@ export class StudyTab {
       return '<div class="reveal-placeholder">👆 Tap to reveal hint</div>';
     }
 
-    const layers = [
-      { label: 'Hint', value: w.hint || 'No hint — tap ✏️ to add one', color: 'var(--blue)', size: '14px', weight: '500' },
-      { label: 'Sentence', value: w.sentence || 'No sentence linked', color: 'var(--text)', size: '14px', weight: '400' },
-      { label: 'Devanagari', value: dev, color: 'var(--yellow)', size: '22px', weight: '700' },
-      { label: 'Meaning', value: w.english_meaning || '(unknown)', color: 'var(--green)', size: '20px', weight: '700' }
-    ];
-
     let html = '';
-    for (let i = 0; i < Math.min(this.revealLevel, 4); i++) {
-      const l = layers[i];
-      html += `
-        <div class="reveal-layer">
-          <div class="reveal-label" style="color:${l.color};">
-            <div class="reveal-bar" style="background:${l.color};"></div>${l.label}
-          </div>
-          <div class="reveal-value" style="font-size:${l.size}; color:${l.color}; font-weight:${l.weight};">${l.value}</div>
-        </div>
-      `;
+
+    // Level 1: Hint
+    if (this.revealLevel >= 1) {
+      const hint = w.hint || w.english_meaning?.split(',')[0] || '';
+      if (hint) {
+        html += `<div style="text-align:center;font-size:14px;color:#1CB0F6;margin-bottom:6px;">💡 ${hint}</div>`;
+      }
     }
-    if (this.revealLevel < 4) {
-      html += '<div class="reveal-more">👆 tap for more</div>';
+
+    // Level 2: Devanagari reading
+    if (this.revealLevel >= 2) {
+      html += `<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>`;
     }
+
+    // Level 3: Meaning
+    if (this.revealLevel >= 3) {
+      html += `<div style="text-align:center;font-size:20px;font-weight:700;color:var(--green);">${w.english_meaning || '(unknown)'}</div>`;
+    }
+
+    // Prompt for next level
+    if (this.revealLevel < 3) {
+      const nextLabel = this.revealLevel === 1 ? 'reading' : 'meaning';
+      html += `<div class="reveal-more">👆 tap to reveal ${nextLabel}</div>`;
+    }
+
     return html;
   }
 
@@ -363,11 +366,13 @@ export class StudyTab {
 
     // Reveal
     container.querySelector('#reveal-box').addEventListener('click', () => {
-      if (this.revealLevel < 4) {
+      if (this.revealLevel < 3) {
         this.revealLevel++;
         const box = container.querySelector('#reveal-box');
         box.innerHTML = this.renderReveal(word, dev);
-        if (this.revealLevel >= 4) box.classList.add('revealed');
+        if (this.revealLevel >= 3) box.classList.add('revealed');
+        // Re-render word card to show sentence at level 2+
+        if (this.revealLevel === 2) this.render(container);
       }
     });
 
@@ -403,13 +408,6 @@ export class StudyTab {
       this.currentIdx = Math.floor(Math.random() * this.words.length);
       this.revealLevel = 0;
       this.render(container);
-    });
-
-    // Hub-spoke modal (tap the 🌿 badge on word card)
-    container.querySelector('.word-card').addEventListener('click', (e) => {
-      if (e.target.closest('.word-card-badges span:last-child')) {
-        this.showHubSpokeModal(word);
-      }
     });
 
     // Story modal
