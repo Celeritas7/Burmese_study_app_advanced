@@ -602,7 +602,6 @@ export class StudyTab {
             <div style="display:flex;align-items:start;gap:8px;">
               <div style="flex:1;min-width:0;">
                 <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
-                <div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>
                 <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
               </div>
               <button class="sent-unlink" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;
@@ -619,7 +618,6 @@ export class StudyTab {
             <div style="display:flex;align-items:start;gap:8px;">
               <div style="flex:1;min-width:0;">
                 <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
-                <div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>
                 <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
               </div>
               <button class="sent-link" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;
