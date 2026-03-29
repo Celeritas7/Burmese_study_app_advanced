@@ -274,15 +274,26 @@ export class StudyTab {
         </div>
 
         <!-- Rating -->
-        <div class="rating-title">RATE</div>
-        <div class="rating-row">
-          ${RATINGS.map((r, i) => `
-            <button class="rating-btn ${rating === i ? 'active' : ''}" data-rating="${i}"
-              style="color:${r.color}; border-color:${rating === i ? r.color : 'var(--border)'};
-                     background:${rating === i ? r.color : `${r.color}18`};">
-              ${r.icon}<span class="rating-label">${r.label}</span>
-            </button>
-          `).join('')}
+        <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:8px;">Change Rating</div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">
+          ${RATINGS.map((r, i) => {
+            const isActive = rating === i;
+            const isNope = i === 5;
+            const size = '44px';
+            const bg = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.15)' : `${r.color}15`);
+            const border = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.4)' : 'var(--border)');
+            const iconColor = isActive ? '#fff' : r.color;
+            const radius = isNope ? '12px' : '22px';
+            return `
+              <button data-rating="${i}" style="
+                width:${size};height:${size};border-radius:${radius};
+                display:flex;align-items:center;justify-content:center;
+                font-size:${isNope ? '18px' : '17px'};cursor:pointer;
+                background:${bg};border:2px solid ${border};
+                color:${iconColor};transition:all 0.15s;font-family:var(--font);
+              ">${r.icon}</button>
+            `;
+          }).join('')}
         </div>
 
         <!-- Navigation -->

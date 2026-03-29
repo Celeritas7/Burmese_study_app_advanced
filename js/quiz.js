@@ -421,8 +421,9 @@ export class Quiz {
 
         // Log to Supabase
         try {
-          db.logProgress({ type: 'quiz_mcq', wordId: q.word.id, result: isCorrect ? 'correct' : 'incorrect' });
-        } catch {}
+          await db.logProgress({ type: 'quiz_mcq', wordId: q.word.id, result: isCorrect ? 'correct' : 'incorrect' });
+          await db.upsertUserState(q.word.id, isCorrect ? 1 : 5);
+        } catch (err) { console.error('Quiz save error:', err); }
 
         this.render(container);
       });
@@ -440,8 +441,9 @@ export class Quiz {
         this.answers[this.currentIdx] = { typed: this.typedAnswer, correct: isCorrect, word: q.word };
 
         try {
-          db.logProgress({ type: 'quiz_typing', wordId: q.word.id, result: isCorrect ? 'correct' : 'incorrect' });
-        } catch {}
+          await db.logProgress({ type: 'quiz_typing', wordId: q.word.id, result: isCorrect ? 'correct' : 'incorrect' });
+          await db.upsertUserState(q.word.id, isCorrect ? 1 : 5);
+        } catch (err) { console.error('Quiz save error:', err); }
 
         this.render(container);
       };
@@ -521,12 +523,21 @@ export class Quiz {
       ms.selectedLeft = null;
       ms.selectedRight = null;
       this.score++;
+      // Save correct match to Supabase
+      try {
+        db.logProgress({ type: 'quiz_matching', wordId: leftId, result: 'correct' });
+        db.upsertUserState(leftId, 1);
+      } catch {}
     } else {
       ms.wrongLeft = ms.selectedLeft;
       ms.wrongRight = ms.selectedRight;
       ms.errors = (ms.errors || 0) + 1;
       ms.selectedLeft = null;
       ms.selectedRight = null;
+      // Save wrong match to Supabase
+      try {
+        db.logProgress({ type: 'quiz_matching', wordId: leftId, result: 'incorrect' });
+      } catch {}
 
       // Flash wrong then clear
       this.render(container);
