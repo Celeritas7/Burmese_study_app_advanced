@@ -8,6 +8,7 @@ import { HubExplorer } from './hubexplorer.js';
 import { StatsPage } from './stats.js';
 import { WritingPractice } from './writing.js';
 import { SentencesPage } from './sentences.js';
+import { SettingsPage } from './settings.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -44,6 +45,7 @@ class BurmeseStudyApp {
     this.tabs.stats = new StatsPage(this);
     this.tabs.writing = new WritingPractice(this);
     this.tabs.sentences = new SentencesPage(this);
+    this.tabs.settings = new SettingsPage(this);
 
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
@@ -72,6 +74,7 @@ class BurmeseStudyApp {
   showStats() { this.showSubPage('stats'); }
   showWriting() { this.showSubPage('writing'); }
   showSentences() { this.showSubPage('sentences'); }
+  showSettings() { this.showSubPage('settings'); }
 }
 
 const app = new BurmeseStudyApp();

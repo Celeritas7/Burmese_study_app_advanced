@@ -62,6 +62,8 @@ export class MoreTab {
           this.app.showSentences();
         } else if (idx === 5) {
           this.showSupabaseModal();
+        } else if (idx === 6) {
+          this.app.showSettings();
         }
       });
     });
