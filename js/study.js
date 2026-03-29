@@ -229,8 +229,9 @@ export class StudyTab {
 
     const fontSize = (this.mode === 'meaning' || this.mode === 'writing') ? '24px' : '42px';
 
-    // Show sentence in word card after reveal level 2+
-    const sentenceInCard = (this.revealLevel >= 2 && w.sentence)
+    // Show sentence in word card after reading is revealed
+    const devaLevel = w.hint ? 2 : 1; // deva is at level 2 if hint exists, level 1 if not
+    const sentenceInCard = (this.revealLevel >= devaLevel && w.sentence)
       ? `<div style="font-size:14px;color:rgba(0,0,0,0.4);margin-top:8px;font-weight:400;">${w.sentence}</div>`
       : '';
 
@@ -317,36 +318,33 @@ export class StudyTab {
 
   renderReveal(w, dev) {
     if (this.revealLevel === 0) {
-      return '<div class="reveal-placeholder">👆 Tap to reveal hint</div>';
+      return '<div class="reveal-placeholder">👆 Tap to reveal</div>';
     }
 
+    const hasHint = !!w.hint;
+    // Build reveal layers dynamically
+    const layers = [];
+    if (hasHint) layers.push({ type: 'hint', html: `<div style="text-align:center;font-size:14px;color:#1CB0F6;margin-bottom:6px;">💡 ${w.hint}</div>` });
+    layers.push({ type: 'deva', html: `<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>` });
+    layers.push({ type: 'meaning', html: `<div style="text-align:center;font-size:20px;font-weight:700;color:var(--green);">${w.english_meaning || '(unknown)'}</div>` });
+
+    const maxLevel = layers.length;
     let html = '';
-
-    // Level 1: Hint
-    if (this.revealLevel >= 1) {
-      const hint = w.hint || w.english_meaning?.split(',')[0] || '';
-      if (hint) {
-        html += `<div style="text-align:center;font-size:14px;color:#1CB0F6;margin-bottom:6px;">💡 ${hint}</div>`;
-      }
+    for (let i = 0; i < Math.min(this.revealLevel, maxLevel); i++) {
+      html += layers[i].html;
     }
 
-    // Level 2: Devanagari reading
-    if (this.revealLevel >= 2) {
-      html += `<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>`;
-    }
-
-    // Level 3: Meaning
-    if (this.revealLevel >= 3) {
-      html += `<div style="text-align:center;font-size:20px;font-weight:700;color:var(--green);">${w.english_meaning || '(unknown)'}</div>`;
-    }
-
-    // Prompt for next level
-    if (this.revealLevel < 3) {
-      const nextLabel = this.revealLevel === 1 ? 'reading' : 'meaning';
-      html += `<div class="reveal-more">👆 tap to reveal ${nextLabel}</div>`;
+    if (this.revealLevel < maxLevel) {
+      const next = layers[this.revealLevel]?.type;
+      const label = next === 'deva' ? 'reading' : next === 'meaning' ? 'meaning' : '';
+      html += `<div class="reveal-more">👆 tap to reveal ${label}</div>`;
     }
 
     return html;
+  }
+
+  getMaxRevealLevel(w) {
+    return (w.hint ? 1 : 0) + 2; // hint(optional) + deva + meaning
   }
 
   bindSessionEvents(container, word, dev) {
@@ -366,13 +364,12 @@ export class StudyTab {
 
     // Reveal
     container.querySelector('#reveal-box').addEventListener('click', () => {
-      if (this.revealLevel < 3) {
+      const maxLevel = this.getMaxRevealLevel(word);
+      if (this.revealLevel < maxLevel) {
         this.revealLevel++;
         const box = container.querySelector('#reveal-box');
         box.innerHTML = this.renderReveal(word, dev);
-        if (this.revealLevel >= 3) box.classList.add('revealed');
-        // Re-render word card to show sentence at level 2+
-        if (this.revealLevel === 2) this.render(container);
+        if (this.revealLevel >= maxLevel) box.classList.add('revealed');
       }
     });
 
