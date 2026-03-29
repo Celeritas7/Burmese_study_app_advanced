@@ -571,8 +571,8 @@ export class StudyTab {
     try {
       const links = await db.getSentencesForWord(word.id);
       linkedSentences = links
-        .map(link => link.burmese_app_sentences)
-        .filter(s => s && s.burmese_text);
+        .filter(link => link.burmese_app_sentences?.burmese_text)
+        .map(link => ({ ...link.burmese_app_sentences, rating: link.rating || 0 }));
       linkedIds = new Set(linkedSentences.map(s => s.id));
     } catch { /* junction table may not have RLS yet */ }
 
@@ -582,6 +582,11 @@ export class StudyTab {
     } catch { /* offline */ }
 
     const total = linkedSentences.length + textMatched.length;
+    const renderStars = (sid, rating) => [1,2,3].map(n =>
+      `<button class="sent-star" data-sid="${sid}" data-star="${n}" style="
+        font-size:16px;background:none;border:none;cursor:pointer;padding:2px;color:${n <= rating ? '#FFC800' : 'var(--border)'};
+      ">${n <= rating ? '★' : '☆'}</button>`
+    ).join('');
 
     // Close loading modal, open real one
     Modal.close();
@@ -605,8 +610,11 @@ export class StudyTab {
                 <div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>
                 <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
               </div>
-              <button class="sent-unlink" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;
-                background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:var(--pink);cursor:pointer;font-family:var(--font);white-space:nowrap;">✕</button>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <div class="sent-stars" data-sid="${s.id}">${renderStars(s.id, s.rating)}</div>
+                <button class="sent-unlink" data-sid="${s.id}" style="padding:2px 6px;border-radius:6px;font-size:9px;font-weight:700;
+                  background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:var(--pink);cursor:pointer;font-family:var(--font);">✕</button>
+              </div>
             </div>
           </div>
         `).join('')}
@@ -674,6 +682,29 @@ export class StudyTab {
         } catch (e) {
           btn.textContent = 'Err';
         }
+      });
+    });
+
+    // Star rating buttons
+    box.querySelectorAll('.sent-star').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = parseInt(btn.dataset.sid);
+        const star = parseInt(btn.dataset.star);
+        // Toggle: if tapping the same star that's already the rating, set to 0
+        const starsContainer = btn.closest('.sent-stars');
+        const currentStars = starsContainer.querySelectorAll('.sent-star');
+        const currentRating = Array.from(currentStars).filter(s => s.textContent === '★').length;
+        const newRating = (star === currentRating) ? 0 : star;
+
+        try {
+          await db.rateSentenceLink(word.id, sid, newRating);
+          // Update star display
+          currentStars.forEach(s => {
+            const n = parseInt(s.dataset.star);
+            s.textContent = n <= newRating ? '★' : '☆';
+            s.style.color = n <= newRating ? '#FFC800' : 'var(--border)';
+          });
+        } catch { /* offline */ }
       });
     });
   }

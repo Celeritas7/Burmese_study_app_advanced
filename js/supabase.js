@@ -113,9 +113,22 @@ class SupabaseClient {
   // Get sentences linked to a word via junction table
   async getSentencesForWord(wordId) {
     return this.query('burmese_app_word_sentences', {
-      select: 'sentence_id,burmese_app_sentences(id,burmese_text,english_text,category)',
+      select: 'sentence_id,rating,burmese_app_sentences(id,burmese_text,english_text,category)',
       filters: [`word_id=eq.${wordId}`]
     });
+  }
+
+  // Rate a word↔sentence link (0-3 stars)
+  async rateSentenceLink(wordId, sentenceId, rating) {
+    const res = await fetch(
+      `${this.url}/rest/v1/burmese_app_word_sentences?word_id=eq.${wordId}&sentence_id=eq.${sentenceId}`,
+      {
+        method: 'PATCH',
+        headers: this.headers,
+        body: JSON.stringify({ rating })
+      }
+    );
+    if (!res.ok) throw new Error(`Rate error: ${res.status}`);
   }
 
   // Batch: get sentence counts for multiple word IDs
