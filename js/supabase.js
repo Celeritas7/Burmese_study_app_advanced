@@ -132,6 +132,30 @@ class SupabaseClient {
     return counts;
   }
 
+  // Search sentences containing a word (text match)
+  async searchSentencesByText(wordText) {
+    if (!wordText || wordText.length < 2) return [];
+    const all = await this.getSentences();
+    return all.filter(s => s.burmese_text && s.burmese_text.includes(wordText));
+  }
+
+  // Link a word to a sentence
+  async linkWordSentence(wordId, sentenceId) {
+    return this.insert('burmese_app_word_sentences', {
+      word_id: wordId,
+      sentence_id: sentenceId
+    });
+  }
+
+  // Unlink a word from a sentence
+  async unlinkWordSentence(wordId, sentenceId) {
+    const res = await fetch(
+      `${this.url}/rest/v1/burmese_app_word_sentences?word_id=eq.${wordId}&sentence_id=eq.${sentenceId}`,
+      { method: 'DELETE', headers: this.headers }
+    );
+    if (!res.ok) throw new Error(`Delete error: ${res.status}`);
+  }
+
   async getUserState() {
     return this.query('burmese_app_user_state', { order: 'next_review_at' });
   }

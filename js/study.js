@@ -554,30 +554,125 @@ export class StudyTab {
   }
 
   async showSentencesModal(word) {
-    let sentences = [];
-    try {
-      const links = await db.getSentencesForWord(word.id);
-      // Extract sentence data from junction response
-      sentences = links
-        .map(link => link.burmese_app_sentences)
-        .filter(s => s && s.burmese_text);
-    } catch { /* offline */ }
-
+    // Show loading
     Modal.show(`
       <div class="modal-header">
-        <div class="modal-title" style="color:var(--blue);">💬 Sentences (${sentences.length})</div>
+        <div class="modal-title" style="color:var(--blue);">💬 Sentences</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</div>
+    `, { borderColor: 'var(--blue)' });
+
+    // Load data
+    let linkedIds = new Set();
+    let linkedSentences = [];
+    let textMatched = [];
+
+    try {
+      const links = await db.getSentencesForWord(word.id);
+      linkedSentences = links
+        .map(link => link.burmese_app_sentences)
+        .filter(s => s && s.burmese_text);
+      linkedIds = new Set(linkedSentences.map(s => s.id));
+    } catch { /* junction table may not have RLS yet */ }
+
+    try {
+      textMatched = await db.searchSentencesByText(word.burmese_word);
+      textMatched = textMatched.filter(s => !linkedIds.has(s.id));
+    } catch { /* offline */ }
+
+    const total = linkedSentences.length + textMatched.length;
+
+    // Close loading modal, open real one
+    Modal.close();
+    const box = Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--blue);">💬 Sentences (${total})</div>
         <button class="modal-close" data-modal-close>✕ Close</button>
       </div>
       <div style="background:var(--bg); border-radius:12px; padding:10px 14px; margin-bottom:14px; border:1px solid var(--border);">
         <span style="font-size:16px; font-weight:700;">${word.burmese_word}</span>
         <span style="font-size:12px; color:var(--green); margin-left:6px;">${word.english_meaning || ''}</span>
       </div>
-      ${sentences.length > 0 ? sentences.map(s => `
-        <div style="padding:12px; border-radius:12px; background:var(--bg); border:1px solid var(--border); margin-bottom:8px;">
-          <div style="font-size:15px; font-weight:600; color:var(--text); margin-bottom:4px;">${s.burmese_text}</div>
-          <div style="font-size:13px; color:var(--text-muted);">${s.english_text || ''}</div>
-        </div>
-      `).join('') : '<div style="color:var(--text-muted); text-align:center; padding:20px; font-size:13px;">No sentences linked</div>'}
+
+      ${linkedSentences.length > 0 ? `
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">✓ Linked (${linkedSentences.length})</div>
+        ${linkedSentences.map(s => `
+          <div class="sent-card" data-sid="${s.id}" style="padding:10px 12px;border-radius:12px;background:rgba(88,204,2,0.06);border:2px solid rgba(88,204,2,0.2);margin-bottom:6px;">
+            <div style="display:flex;align-items:start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
+                <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
+              </div>
+              <button class="sent-unlink" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;
+                background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:var(--pink);cursor:pointer;font-family:var(--font);white-space:nowrap;">✕</button>
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+
+      ${textMatched.length > 0 ? `
+        <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin:${linkedSentences.length > 0 ? '12px' : '0'} 0 6px;">Found in text (${textMatched.length})</div>
+        ${textMatched.map(s => `
+          <div class="sent-card" data-sid="${s.id}" style="padding:10px 12px;border-radius:12px;background:var(--surface);border:2px solid var(--border);margin-bottom:6px;">
+            <div style="display:flex;align-items:start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
+                <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
+              </div>
+              <button class="sent-link" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;
+                background:rgba(28,176,246,0.1);border:1px solid rgba(28,176,246,0.25);color:var(--blue);cursor:pointer;font-family:var(--font);white-space:nowrap;">+ Link</button>
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+
+      ${total === 0 ? '<div style="color:var(--text-muted);text-align:center;padding:20px;font-size:13px;">No sentences contain this word</div>' : ''}
     `, { borderColor: 'var(--blue)' });
+
+    if (!box) return;
+
+    // Link buttons
+    box.querySelectorAll('.sent-link').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = parseInt(btn.dataset.sid);
+        try {
+          await db.linkWordSentence(word.id, sid);
+          btn.textContent = '✓';
+          btn.style.color = 'var(--green)';
+          btn.style.borderColor = 'rgba(88,204,2,0.25)';
+          btn.style.background = 'rgba(88,204,2,0.1)';
+          btn.disabled = true;
+          // Update card style
+          const card = btn.closest('.sent-card');
+          if (card) {
+            card.style.borderColor = 'rgba(88,204,2,0.2)';
+            card.style.background = 'rgba(88,204,2,0.06)';
+          }
+          this.sentenceCounts[word.id] = (this.sentenceCounts[word.id] || 0) + 1;
+        } catch (e) {
+          btn.textContent = 'Error';
+          btn.style.color = 'var(--pink)';
+        }
+      });
+    });
+
+    // Unlink buttons
+    box.querySelectorAll('.sent-unlink').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = parseInt(btn.dataset.sid);
+        try {
+          await db.unlinkWordSentence(word.id, sid);
+          const card = btn.closest('.sent-card');
+          if (card) {
+            card.style.opacity = '0.3';
+            card.style.pointerEvents = 'none';
+          }
+          this.sentenceCounts[word.id] = Math.max(0, (this.sentenceCounts[word.id] || 0) - 1);
+        } catch (e) {
+          btn.textContent = 'Err';
+        }
+      });
+    });
   }
 }
