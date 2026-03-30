@@ -3,6 +3,7 @@ import { db } from './supabase.js';
 import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
 import { Modal } from './modal.js';
 import { Quiz } from './quiz.js';
+import { getSettings } from './settings.js';
 
 const MODES = [
   { id: 'burmese', icon: 'မ', label: 'Myanmar→EN' },
@@ -13,10 +14,9 @@ const MODES = [
 
 const SOURCES = [
   { id: 'kg_book', name: 'KG Book', icon: '🪷', color: '#FF6B8A' },
-  { id: 'main_words', name: 'Main Words', icon: '💬', color: '#58CC02' },
-  { id: 'dictionary', name: 'Dictionary', icon: '📚', color: '#FFC800' },
+  { id: 'words', name: 'Main Words', icon: '💬', color: '#58CC02' },
   { id: 'recipes', name: 'Recipes', icon: '🍜', color: '#CE82FF' },
-  { id: 'colloquial', name: 'Colloquial Burmese', icon: '🎓', color: '#5A7A88', disabled: true }
+  { id: 'colloquial', name: 'Colloquial Burmese', icon: '🎓', color: '#FFC800' }
 ];
 
 const RATINGS = [
@@ -56,6 +56,8 @@ export class StudyTab {
       this.renderSetup(container);
     } else if (this.phase === 'quiz') {
       this.quiz.render(container);
+    } else if (this.phase === 'results') {
+      this.renderResults(container);
     } else {
       this.renderSession(container);
     }
@@ -217,7 +219,8 @@ export class StudyTab {
     const w = this.words[this.currentIdx];
     if (!w) return;
 
-    const dev = toDev(w.burmese_word);
+    const settings = getSettings();
+    const dev = settings.showDevanagari ? toDev(w.burmese_word) : '';
     const rating = this.ratings[w.id];
     const total = this.words.length;
     const progress = ((this.currentIdx + 1) / total * 100);
@@ -229,13 +232,14 @@ export class StudyTab {
         primaryText = w.english_meaning || '(no meaning)';
         break;
       case 'deva':
-        primaryText = dev;
+        primaryText = settings.showDevanagari ? toDev(w.burmese_word) : w.burmese_word;
         break;
       default:
         primaryText = w.burmese_word;
     }
 
-    const fontSize = (this.mode === 'meaning' || this.mode === 'writing') ? '24px' : '42px';
+    const fontSizeMap = { small: '32px', normal: '42px', large: '52px' };
+    const fontSize = (this.mode === 'meaning' || this.mode === 'writing') ? '24px' : (fontSizeMap[settings.fontSize] || '42px');
 
     // Show sentence in word card after reading is revealed
     const devaLevel = w.hint ? 2 : 1; // deva is at level 2 if hint exists, level 1 if not
@@ -247,7 +251,7 @@ export class StudyTab {
       <div class="pad-sm">
         <!-- Top bar -->
         <div class="fc-top">
-          <div class="fc-title">📖 ${w.burmese_word} <span>${dev}</span></div>
+          <div class="fc-title">📖 ${w.burmese_word} ${dev ? `<span>${dev}</span>` : ''}</div>
           <button class="fc-close" id="fc-close">✕</button>
         </div>
         <div class="fc-counter">${this.currentIdx + 1} / ${total}</div>
@@ -308,7 +312,7 @@ export class StudyTab {
         <div class="nav-row">
           <button class="btn-nav btn-prev" id="btn-prev" ${this.currentIdx === 0 ? 'disabled' : ''}>← Prev</button>
           <button class="btn-nav btn-shuffle" id="btn-shuffle">🎲</button>
-          <button class="btn-nav btn-next" id="btn-next">Next →</button>
+          <button class="btn-nav btn-next" id="btn-next">${this.currentIdx === this.words.length - 1 ? 'Finish ✓' : 'Next →'}</button>
         </div>
 
         <!-- Progress -->
@@ -329,11 +333,14 @@ export class StudyTab {
       return '<div class="reveal-placeholder">👆 Tap to reveal</div>';
     }
 
+    const settings = getSettings();
     const hasHint = !!w.hint;
     // Build reveal layers dynamically
     const layers = [];
     if (hasHint) layers.push({ type: 'hint', html: `<div style="text-align:center;font-size:14px;color:#1CB0F6;margin-bottom:6px;">💡 ${w.hint}</div>` });
-    layers.push({ type: 'deva', html: `<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>` });
+    if (settings.showDevanagari && dev) {
+      layers.push({ type: 'deva', html: `<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>` });
+    }
     layers.push({ type: 'meaning', html: `<div style="text-align:center;font-size:20px;font-weight:700;color:var(--green);">${w.english_meaning || '(unknown)'}</div>` });
 
     const maxLevel = layers.length;
@@ -352,7 +359,8 @@ export class StudyTab {
   }
 
   getMaxRevealLevel(w) {
-    return (w.hint ? 1 : 0) + 2; // hint(optional) + deva + meaning
+    const settings = getSettings();
+    return (w.hint ? 1 : 0) + (settings.showDevanagari ? 1 : 0) + 1; // hint(optional) + deva(optional) + meaning
   }
 
   bindSessionEvents(container, word, dev) {
@@ -404,7 +412,13 @@ export class StudyTab {
     });
 
     container.querySelector('#btn-next').addEventListener('click', () => {
-      this.currentIdx = Math.min(this.words.length - 1, this.currentIdx + 1);
+      if (this.currentIdx >= this.words.length - 1) {
+        // Last card → show session results
+        this.phase = 'results';
+        this.render(container);
+        return;
+      }
+      this.currentIdx++;
       this.revealLevel = 0;
       this.render(container);
     });
@@ -426,6 +440,89 @@ export class StudyTab {
 
     // Sentences
     container.querySelector('#btn-sentences').addEventListener('click', () => this.showSentencesModal(word));
+  }
+
+  // ─── SESSION RESULTS ───
+  renderResults(container) {
+    const total = this.words.length;
+    const rated = Object.keys(this.ratings).length;
+    const gotIt = Object.values(this.ratings).filter(r => r === 1 || r === 3).length; // Got it + Easy
+    const fuzzy = Object.values(this.ratings).filter(r => r === 4).length;
+    const nope = Object.values(this.ratings).filter(r => r === 5).length;
+    const pct = total > 0 ? Math.round((gotIt / total) * 100) : 0;
+    const emoji = pct >= 90 ? '🌟' : pct >= 70 ? '👏' : pct >= 50 ? '💪' : '📚';
+    const msg = pct >= 90 ? 'Excellent!' : pct >= 70 ? 'Good job!' : pct >= 50 ? 'Keep going!' : 'Keep practicing!';
+    const barColor = pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--pink)';
+
+    container.innerHTML = `
+      <div class="pad">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:48px;margin-bottom:8px;">${emoji}</div>
+          <div style="font-size:24px;font-weight:800;color:var(--text);">${msg}</div>
+          <div style="font-size:14px;color:var(--text-muted);margin-top:4px;">
+            ${rated} of ${total} words rated
+          </div>
+        </div>
+
+        <div style="height:12px;background:var(--surface);border-radius:6px;margin-bottom:24px;padding:2px;border:2px solid var(--border);">
+          <div style="height:100%;border-radius:4px;background:${barColor};width:${pct}%;transition:width 0.6s;"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px;">
+          <div class="srs-stat">
+            <div class="srs-stat-num" style="color:var(--green);">${gotIt}</div>
+            <div class="srs-stat-label">Got it / Easy</div>
+          </div>
+          <div class="srs-stat">
+            <div class="srs-stat-num" style="color:var(--purple);">${fuzzy}</div>
+            <div class="srs-stat-label">Fuzzy</div>
+          </div>
+          <div class="srs-stat">
+            <div class="srs-stat-num" style="color:var(--pink);">${nope}</div>
+            <div class="srs-stat-label">Nope</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--text-muted);">Words</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
+          ${this.words.map(w => {
+            const r = this.ratings[w.id];
+            const rInfo = r !== undefined ? RATINGS[r] : null;
+            const color = rInfo ? rInfo.color : 'var(--text-muted)';
+            const label = rInfo ? rInfo.label : 'Not rated';
+            const dev = toDev(w.burmese_word);
+            return `
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;
+                background:var(--surface);border:2px solid var(--border);">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:16px;font-weight:700;color:var(--text);">${w.burmese_word}</div>
+                  <div style="font-size:11px;color:var(--yellow);">${dev}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:13px;font-weight:700;color:${color};">${rInfo ? rInfo.icon : '—'} ${label}</div>
+                  <div style="font-size:11px;color:var(--green);">${w.english_meaning || ''}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button id="res-new" class="btn-nav btn-prev" style="flex:1;">New Session</button>
+          <button id="res-done" class="btn-nav btn-next" style="flex:1;">Done ✓</button>
+        </div>
+      </div>
+    `;
+
+    container.querySelector('#res-new').addEventListener('click', () => {
+      this.phase = 'setup';
+      this.render(container);
+    });
+
+    container.querySelector('#res-done').addEventListener('click', () => {
+      this.phase = 'setup';
+      this.render(container);
+    });
   }
 
   // ─── MODALS ───
@@ -554,6 +651,7 @@ export class StudyTab {
   }
 
   async showSentencesModal(word) {
+    const settings = getSettings();
     // Show loading
     Modal.show(`
       <div class="modal-header">
@@ -607,7 +705,7 @@ export class StudyTab {
             <div style="display:flex;align-items:start;gap:8px;">
               <div style="flex:1;min-width:0;">
                 <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
-                <div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>
+                ${settings.showDevanagari ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>` : ''}
                 <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
               </div>
               <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
@@ -627,7 +725,7 @@ export class StudyTab {
             <div style="display:flex;align-items:start;gap:8px;">
               <div style="flex:1;min-width:0;">
                 <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
-                <div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>
+                ${settings.showDevanagari ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toDev(s.burmese_text)}</div>` : ''}
                 <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
               </div>
               <button class="sent-link" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;

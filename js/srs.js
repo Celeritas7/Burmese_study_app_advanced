@@ -1,6 +1,7 @@
 // ═══ SRS TAB ═══
 import { db } from './supabase.js';
 import { toDev } from 'https://celeritas7.github.io/language-utils/burmese.js';
+import { getSettings } from './settings.js';
 
 const SRS_RESPONSES = [
   { label: 'Again', icon: '✗', color: '#FF6B8A', mastery: -2 },
@@ -165,12 +166,16 @@ export class SRSTab {
     const w = this.wordMap[card.wordId];
     if (!w) { this.phase = 'results'; return this.render(container); }
 
-    const dev = toDev(w.burmese_word);
+    const settings = getSettings();
+    const dev = settings.showDevanagari ? toDev(w.burmese_word) : '';
     const total = this.reviewCards.length;
     const progress = ((this.currentIdx) / total * 100);
     const hasHint = !!w.hint;
-    const maxLevel = (hasHint ? 1 : 0) + 2;
+    const showDeva = settings.showDevanagari;
+    const maxLevel = (hasHint ? 1 : 0) + (showDeva ? 1 : 0) + 1;
     const fullyRevealed = this.revealLevel >= maxLevel;
+    const fontSizeMap = { small: '32px', normal: '42px', large: '52px' };
+    const cardFontSize = fontSizeMap[settings.fontSize] || '42px';
 
     container.innerHTML = `
       <div class="pad-sm">
@@ -195,7 +200,7 @@ export class SRSTab {
 
         <!-- Word card -->
         <div class="word-card">
-          <div class="word-card-text" style="font-size:42px;">${w.burmese_word}</div>
+          <div class="word-card-text" style="font-size:${cardFontSize};">${w.burmese_word}</div>
         </div>
 
         <!-- Reveal box -->
@@ -289,7 +294,7 @@ export class SRSTab {
 
     const layers = [];
     if (hasHint) layers.push(`<div style="text-align:center;font-size:14px;color:#1CB0F6;margin-bottom:6px;">💡 ${w.hint}</div>`);
-    layers.push(`<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>`);
+    if (dev) layers.push(`<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>`);
     layers.push(`<div style="text-align:center;font-size:20px;font-weight:700;color:var(--green);">${w.english_meaning || '(unknown)'}</div>`);
 
     let html = '';
@@ -298,7 +303,8 @@ export class SRSTab {
     }
 
     if (this.revealLevel < maxLevel) {
-      const nextLabel = this.revealLevel === 1 && hasHint ? 'reading' : 'meaning';
+      const nextIdx = this.revealLevel;
+      const nextLabel = (hasHint && nextIdx === 1 && dev) ? 'reading' : 'meaning';
       html += `<div class="reveal-more">👆 tap to reveal ${nextLabel}</div>`;
     }
 
@@ -307,6 +313,7 @@ export class SRSTab {
 
   // ─── RESULTS ───
   renderResults(container) {
+    const settings = getSettings();
     const total = this.sessionResults.length;
     const correct = this.sessionResults.filter(r => r.correct).length;
     const wrong = total - correct;
@@ -356,7 +363,7 @@ export class SRSTab {
                 background:var(--surface);border:2px solid var(--border);">
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:16px;font-weight:700;color:var(--text);">${r.word}</div>
-                  <div style="font-size:11px;color:var(--yellow);">${toDev(r.word)}</div>
+                  ${settings.showDevanagari ? `<div style="font-size:11px;color:var(--yellow);">${toDev(r.word)}</div>` : ''}
                 </div>
                 <div style="text-align:right;">
                   <div style="font-size:12px;font-weight:700;color:${color};">${r.response}</div>
