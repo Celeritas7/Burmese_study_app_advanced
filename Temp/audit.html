@@ -112,7 +112,7 @@ let KEY = '';
 let allWords = [];
 let allSentences = [];
 let currentTab = 'words';
-let filterStatus = 'unmarked'; // 'all' | 'ok' | 'fix' | 'unmarked'
+let filterStatus = ''; // '' | 'ok' | 'fix' | 'unmarked'
 
 // Marks stored as { wordId: { status: 'ok'|'fix'|'', note: '' } }
 let marks = {};
@@ -169,8 +169,8 @@ function updateProgress() {
 
   const pills = document.getElementById('stat-pills');
   pills.innerHTML = `
-    <div class="stat-pill ${filterStatus === 'unmarked' ? 'active' : ''}" style="border-color:var(--blue);color:var(--blue);${filterStatus === 'unmarked' ? 'background:var(--blue);' : ''}" onclick="window.setFilter('unmarked')">
-      📋 To Review ${unmarked}
+    <div class="stat-pill ${filterStatus === '' ? 'active' : ''}" style="border-color:var(--blue);color:var(--blue);${filterStatus === '' ? 'background:var(--blue);' : ''}" onclick="window.setFilter('')">
+      All ${total}
     </div>
     <div class="stat-pill ${filterStatus === 'ok' ? 'active' : ''}" style="border-color:var(--green);color:var(--green);${filterStatus === 'ok' ? 'background:var(--green);' : ''}" onclick="window.setFilter('ok')">
       ✓ Perfect ${okCount}
@@ -178,8 +178,8 @@ function updateProgress() {
     <div class="stat-pill ${filterStatus === 'fix' ? 'active' : ''}" style="border-color:var(--pink);color:var(--pink);${filterStatus === 'fix' ? 'background:var(--pink);' : ''}" onclick="window.setFilter('fix')">
       ✗ Needs Fix ${fixCount}
     </div>
-    <div class="stat-pill ${filterStatus === 'all' ? 'active' : ''}" style="border-color:var(--muted);color:var(--muted);${filterStatus === 'all' ? 'background:var(--muted);' : ''}" onclick="window.setFilter('all')">
-      All ${total}
+    <div class="stat-pill ${filterStatus === 'unmarked' ? 'active' : ''}" style="border-color:var(--muted);color:var(--muted);${filterStatus === 'unmarked' ? 'background:var(--muted);' : ''}" onclick="window.setFilter('unmarked')">
+      ○ Unmarked ${unmarked}
     </div>
   `;
 }
@@ -246,7 +246,7 @@ window.renderTable = function() {
     data = allWords.filter(w => {
       if (source && w.source !== source) return false;
       if (search && !w.burmese_word.includes(search) && !(w.english_meaning||'').toLowerCase().includes(search) && !w.devanagari.includes(search)) return false;
-      if (filterStatus !== 'all') {
+      if (filterStatus) {
         const m = getMark(w.id);
         if (filterStatus === 'unmarked' && m.status) return false;
         if (filterStatus === 'ok' && m.status !== 'ok') return false;
