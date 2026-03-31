@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Burmese → Devanagari Audit</title>
+<style>
+  :root { --bg: #131F24; --surface: #1A2C33; --border: #1E2D33; --text: #EAEEF3; --muted: #5A7A88; --yellow: #FFC800; --green: #58CC02; --pink: #FF6B8A; --blue: #1CB0F6; --purple: #CE82FF; --orange: #FF9600; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Noto Sans Myanmar', -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 16px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+  .controls select, .controls input { background: var(--surface); border: 2px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text); font-size: 13px; font-family: inherit; }
+  .controls input { flex: 1; min-width: 120px; }
+  .controls button { border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; color: #fff; }
+  .btn-blue { background: var(--blue); }
+  .btn-green { background: var(--green); }
+  .btn-pink { background: var(--pink); }
+  .btn-orange { background: var(--orange); }
+
+  .stats { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .stat-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stat-pill { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; border: 2px solid; cursor: pointer; }
+  .stat-pill.active { color: #fff !important; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 8px 6px; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover { background: rgba(28,176,246,0.05); }
+  tr.mark-ok { background: rgba(88,204,2,0.06); }
+  tr.mark-fix { background: rgba(255,107,138,0.06); }
+
+  .num { font-size: 11px; color: var(--muted); width: 32px; }
+  .bur { font-size: 18px; font-weight: 700; }
+  .dev { font-size: 16px; font-weight: 600; color: var(--yellow); }
+  .eng { font-size: 12px; color: var(--muted); max-width: 140px; }
+  .src { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--muted); }
+  .vowel-tag { font-size: 9px; padding: 1px 4px; border-radius: 3px; background: rgba(206,130,255,0.15); color: #CE82FF; margin: 1px; display: inline-block; }
+
+  .mark-btns { display: flex; gap: 4px; align-items: center; }
+  .mark-btn { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--border); background: transparent; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .mark-btn:hover { opacity: 0.8; }
+  .mark-btn.ok-active { background: var(--green); border-color: var(--green); color: #fff; }
+  .mark-btn.fix-active { background: var(--pink); border-color: var(--pink); color: #fff; }
+
+  .note-input { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; color: var(--orange); font-size: 11px; width: 120px; font-family: inherit; }
+  .note-input:focus { border-color: var(--orange); outline: none; }
+  .note-input::placeholder { color: var(--muted); opacity: 0.5; }
+
+  #status { text-align: center; padding: 40px; color: var(--muted); }
+  .setup { background: var(--surface); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid var(--border); }
+  .setup label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .setup input { width: 100%; margin-bottom: 12px; background: var(--bg); border: 2px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-size: 13px; font-family: inherit; }
+  .setup button { width: 100%; padding: 12px; font-size: 14px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+  .tab-btns { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tab-btn { padding: 6px 14px; border-radius: 8px; border: 2px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; }
+  .tab-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(28,176,246,0.08); }
+
+  .sentence-row .bur { font-size: 14px; font-weight: 500; }
+  .sentence-row .dev { font-size: 13px; }
+
+  .progress-bar { height: 6px; background: var(--surface); border-radius: 3px; margin-bottom: 16px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+</style>
+</head>
+<body>
+
+<h1>🔍 Devanagari Audit Tool</h1>
+<div class="sub">Review toDev() output · Mark ✓ correct or ✗ needs fix · Export results</div>
+
+<div class="setup" id="setup">
+  <label>Supabase Anon Key</label>
+  <input type="password" id="sb-key" placeholder="Paste your anon key..." />
+  <button onclick="loadData()">Load Data →</button>
+</div>
+
+<div id="main" style="display:none;">
+  <div class="tab-btns">
+    <button class="tab-btn active" onclick="showTab('words')">Words</button>
+    <button class="tab-btn" onclick="showTab('sentences')">Sentences</button>
+    <button class="tab-btn" onclick="showTab('vowels')">Vowel Coverage</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <!-- Filter pills -->
+  <div class="stat-pills" id="stat-pills"></div>
+
+  <div class="controls">
+    <select id="source-filter" onchange="renderTable()"><option value="">All sources</option></select>
+    <input type="text" id="search" placeholder="Search Burmese, Devanagari, or English..." oninput="renderTable()" />
+    <button class="btn-green" onclick="exportCSV('all')">📥 All CSV</button>
+    <button class="btn-pink" onclick="exportCSV('fix')">📥 Fixes CSV</button>
+    <button class="btn-blue" onclick="exportCSV('ok')">📥 Perfect CSV</button>
+    <button class="btn-orange" onclick="saveMarks()">💾 Save</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="table-container"></div>
+</div>
+
+<div id="status">Enter your Supabase key above to load data.</div>
+
+<script type="module">
+import { toDev, breakSyllables } from 'https://celeritas7.github.io/language-utils/burmese.js';
+
+const SUPABASE_URL = 'https://ulgrfumbwjovbjzjiems.supabase.co';
+let KEY = '';
+let allWords = [];
+let allSentences = [];
+let currentTab = 'words';
+let filterStatus = ''; // '' | 'ok' | 'fix' | 'unmarked'
+
+// Marks stored as { wordId: { status: 'ok'|'fix'|'', note: '' } }
+let marks = {};
+const MARKS_KEY = 'burmese_audit_marks';
+
+function loadMarks() {
+  try { marks = JSON.parse(localStorage.getItem(MARKS_KEY) || '{}'); } catch { marks = {}; }
+}
+
+window.saveMarks = function() {
+  localStorage.setItem(MARKS_KEY, JSON.stringify(marks));
+  alert(`Saved ${Object.keys(marks).length} marks to localStorage.`);
+};
+
+function detectVowels(text) {
+  const vowelMap = {
+    '\u102C': 'ာ (-a)', '\u102B': 'ါ (-a)', '\u102D': 'ိ (-i)', '\u102E': 'ီ (-ii)',
+    '\u102F': 'ု (-u)', '\u1030': 'ူ (-uu)', '\u1031': 'ေ (e-)', '\u1032': 'ဲ (-ai)',
+    '\u1036': 'ံ (anusvara)', '\u1037': '့ (auk myit)', '\u1038': 'း (visarga)',
+    '\u103A': '် (asat/virama)',
+    '\u103B': 'ျ (ya medial)', '\u103C': 'ြ (ra medial)', '\u103D': 'ွ (wa medial)', '\u103E': 'ှ (ha medial)',
+  };
+  const found = [];
+  for (const [code, label] of Object.entries(vowelMap)) {
+    if (text.includes(code)) found.push(label);
+  }
+  return found;
+}
+
+function getMark(id) { return marks[id] || { status: '', note: '' }; }
+
+function setMark(id, status) {
+  if (!marks[id]) marks[id] = { status: '', note: '' };
+  marks[id].status = marks[id].status === status ? '' : status; // toggle
+  renderTable();
+}
+
+function setNote(id, note) {
+  if (!marks[id]) marks[id] = { status: '', note: '' };
+  marks[id].note = note;
+}
+
+function updateProgress() {
+  const total = allWords.length;
+  const marked = Object.values(marks).filter(m => m.status).length;
+  const okCount = Object.values(marks).filter(m => m.status === 'ok').length;
+  const fixCount = Object.values(marks).filter(m => m.status === 'fix').length;
+  const unmarked = total - marked;
+  const pct = total > 0 ? (marked / total * 100) : 0;
+
+  const bar = document.getElementById('progress-fill');
+  bar.style.width = pct + '%';
+  bar.style.background = `linear-gradient(90deg, var(--green) ${okCount/total*100}%, var(--pink) ${okCount/total*100}%)`;
+
+  const pills = document.getElementById('stat-pills');
+  pills.innerHTML = `
+    <div class="stat-pill ${filterStatus === '' ? 'active' : ''}" style="border-color:var(--blue);color:var(--blue);${filterStatus === '' ? 'background:var(--blue);' : ''}" onclick="window.setFilter('')">
+      All ${total}
+    </div>
+    <div class="stat-pill ${filterStatus === 'ok' ? 'active' : ''}" style="border-color:var(--green);color:var(--green);${filterStatus === 'ok' ? 'background:var(--green);' : ''}" onclick="window.setFilter('ok')">
+      ✓ Perfect ${okCount}
+    </div>
+    <div class="stat-pill ${filterStatus === 'fix' ? 'active' : ''}" style="border-color:var(--pink);color:var(--pink);${filterStatus === 'fix' ? 'background:var(--pink);' : ''}" onclick="window.setFilter('fix')">
+      ✗ Needs Fix ${fixCount}
+    </div>
+    <div class="stat-pill ${filterStatus === 'unmarked' ? 'active' : ''}" style="border-color:var(--muted);color:var(--muted);${filterStatus === 'unmarked' ? 'background:var(--muted);' : ''}" onclick="window.setFilter('unmarked')">
+      ○ Unmarked ${unmarked}
+    </div>
+  `;
+}
+
+window.setFilter = function(status) {
+  filterStatus = status;
+  renderTable();
+};
+
+window.loadData = async function() {
+  KEY = document.getElementById('sb-key').value.trim();
+  if (!KEY) return;
+  const headers = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` };
+  document.getElementById('status').textContent = 'Loading words...';
+
+  try {
+    const wRes = await fetch(`${SUPABASE_URL}/rest/v1/burmese_app_words?select=id,burmese_word,english_meaning,source,is_loanword&order=id&limit=1000`, { headers });
+    allWords = await wRes.json();
+
+    document.getElementById('status').textContent = 'Loading sentences...';
+    const sRes = await fetch(`${SUPABASE_URL}/rest/v1/burmese_app_sentences?select=id,burmese_text,english_text,category&order=id&limit=500`, { headers });
+    allSentences = await sRes.json();
+
+    for (const w of allWords) {
+      w.devanagari = toDev(w.burmese_word, w.is_loanword || false);
+      w.vowels = detectVowels(w.burmese_word);
+    }
+    for (const s of allSentences) {
+      s.devanagari = toDev(s.burmese_text);
+      s.vowels = detectVowels(s.burmese_text);
+    }
+
+    const sources = [...new Set(allWords.map(w => w.source).filter(Boolean))];
+    const sel = document.getElementById('source-filter');
+    sources.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+
+    loadMarks();
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('status').style.display = 'none';
+    renderTable();
+  } catch(e) {
+    document.getElementById('status').textContent = `Error: ${e.message}`;
+  }
+};
+
+window.showTab = function(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="showTab('${tab}')"]`).classList.add('active');
+  renderTable();
+};
+
+window.renderTable = function() {
+  updateProgress();
+  if (currentTab === 'vowels') return renderVowelCoverage();
+
+  const source = document.getElementById('source-filter').value;
+  const search = document.getElementById('search').value.toLowerCase();
+  const isWord = currentTab === 'words';
+
+  let data;
+  if (isWord) {
+    data = allWords.filter(w => {
+      if (source && w.source !== source) return false;
+      if (search && !w.burmese_word.includes(search) && !(w.english_meaning||'').toLowerCase().includes(search) && !w.devanagari.includes(search)) return false;
+      if (filterStatus) {
+        const m = getMark(w.id);
+        if (filterStatus === 'unmarked' && m.status) return false;
+        if (filterStatus === 'ok' && m.status !== 'ok') return false;
+        if (filterStatus === 'fix' && m.status !== 'fix') return false;
+      }
+      return true;
+    });
+  } else {
+    data = allSentences.filter(s => {
+      if (search && !s.burmese_text.includes(search) && !(s.english_text||'').toLowerCase().includes(search) && !(s.category||'').toLowerCase().includes(search)) return false;
+      return true;
+    });
+  }
+
+  document.getElementById('stats').textContent = `Showing ${data.length} ${currentTab}`;
+
+  let html = `<table><thead><tr>
+    <th>#</th><th>Burmese</th><th>Devanagari</th><th>${isWord ? 'Meaning' : 'English'}</th>
+    <th>${isWord ? 'Source' : 'Category'}</th>
+    ${isWord ? '<th>Mark</th><th>Note</th>' : ''}
+    <th>Vowels</th>
+  </tr></thead><tbody>`;
+
+  data.forEach((item, idx) => {
+    const id = item.id;
+    const bur = isWord ? item.burmese_word : item.burmese_text;
+    const dev = item.devanagari;
+    const eng = isWord ? (item.english_meaning || '') : (item.english_text || '');
+    const meta = isWord ? (item.source || '') : (item.category || '');
+    const vowels = item.vowels;
+    const m = isWord ? getMark(id) : { status: '', note: '' };
+    const rowClass = m.status === 'ok' ? 'mark-ok' : m.status === 'fix' ? 'mark-fix' : '';
+
+    html += `<tr class="${rowClass} ${!isWord ? 'sentence-row' : ''}">
+      <td class="num">${idx + 1}</td>
+      <td class="bur">${bur}</td>
+      <td class="dev">${dev}</td>
+      <td class="eng">${eng}</td>
+      <td><span class="src">${meta}</span></td>
+      ${isWord ? `
+        <td>
+          <div class="mark-btns">
+            <button class="mark-btn ${m.status === 'ok' ? 'ok-active' : ''}" onclick="window.markWord(${id}, 'ok')" title="Perfect">✓</button>
+            <button class="mark-btn ${m.status === 'fix' ? 'fix-active' : ''}" onclick="window.markWord(${id}, 'fix')" title="Needs fix">✗</button>
+          </div>
+        </td>
+        <td>
+          <input class="note-input" placeholder="correction..." value="${(m.note||'').replace(/"/g,'&quot;')}" onchange="window.noteWord(${id}, this.value)" />
+        </td>
+      ` : ''}
+      <td>${vowels.map(v => `<span class="vowel-tag">${v}</span>`).join('')}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('table-container').innerHTML = html;
+};
+
+window.markWord = function(id, status) { setMark(id, status); };
+window.noteWord = function(id, note) { setNote(id, note); };
+
+function renderVowelCoverage() {
+  const vowelCodes = {
+    '\u102C': 'ာ -a', '\u102B': 'ါ -a', '\u102D': 'ိ -i', '\u102E': 'ီ -ii',
+    '\u102F': 'ု -u', '\u1030': 'ူ -uu', '\u1031': 'ေ e-', '\u1032': 'ဲ -ai',
+    '\u1036': 'ံ nasal', '\u1037': '့ low', '\u1038': 'း high',
+    '\u103A': '် asat', '\u103B': 'ျ ya', '\u103C': 'ြ ra', '\u103D': 'ွ wa', '\u103E': 'ှ ha',
+  };
+  const comboCodes = {
+    '\u1031\u102C': 'ော (-aw)', '\u102D\u102F': 'ို (-o)',
+    '\u1031\u102C\u1004\u103A': 'ောင် (-aung)', '\u102D\u102F\u1004\u103A': 'ိုင် (-aing)',
+    '\u1031\u102C\u1000\u103A': 'ောက် (-auk)', '\u102D\u102F\u1000\u103A': 'ိုက် (-aik)',
+    '\u102C\u1038': 'ား (-a:)', '\u102E\u1038': 'ီး (-ii:)',
+    '\u1030\u1038': 'ူး (-uu:)', '\u1032\u1038': 'ဲ့ (-ai.)',
+    '\u103D\u1014\u103A': 'ွန် (-un)', '\u103D\u1010\u103A': 'ွတ် (-ut)',
+  };
+
+  let html = '<h3 style="color:var(--blue);margin-bottom:12px;">Vowel Sign Coverage</h3>';
+  html += '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">5 example words per vowel sign. Mark them here too.</p>';
+
+  html += '<h4 style="color:var(--muted);font-size:11px;margin-bottom:8px;">SINGLE SIGNS</h4>';
+  for (const [code, label] of Object.entries(vowelCodes)) {
+    const examples = allWords.filter(w => w.burmese_word.includes(code)).slice(0, 5);
+    if (!examples.length) continue;
+    const total = allWords.filter(w => w.burmese_word.includes(code)).length;
+    html += `<div style="margin-bottom:12px;padding:10px;background:var(--surface);border-radius:10px;border:2px solid var(--border);">`;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px;">${code} ${label} (${total} words)</div>`;
+    html += `<table style="margin:0;"><tbody>`;
+    examples.forEach((w, i) => {
+      const m = getMark(w.id);
+      html += `<tr class="${m.status === 'ok' ? 'mark-ok' : m.status === 'fix' ? 'mark-fix' : ''}">
+        <td class="num">${i+1}</td>
+        <td class="bur" style="font-size:16px;">${w.burmese_word}</td>
+        <td class="dev" style="font-size:14px;">${w.devanagari}</td>
+        <td class="eng">${w.english_meaning||''}</td>
+        <td><div class="mark-btns">
+          <button class="mark-btn ${m.status==='ok'?'ok-active':''}" onclick="window.markWord(${w.id},'ok')">✓</button>
+          <button class="mark-btn ${m.status==='fix'?'fix-active':''}" onclick="window.markWord(${w.id},'fix')">✗</button>
+        </div></td>
+        <td><input class="note-input" value="${(m.note||'').replace(/"/g,'&quot;')}" onchange="window.noteWord(${w.id},this.value)" placeholder="fix..." /></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  html += '<h4 style="color:var(--muted);font-size:11px;margin:16px 0 8px;">VOWEL COMBINATIONS</h4>';
+  for (const [combo, label] of Object.entries(comboCodes)) {
+    const examples = allWords.filter(w => w.burmese_word.includes(combo)).slice(0, 5);
+    if (!examples.length) continue;
+    const total = allWords.filter(w => w.burmese_word.includes(combo)).length;
+    html += `<div style="margin-bottom:12px;padding:10px;background:var(--surface);border-radius:10px;border:2px solid var(--border);">`;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;">${label} (${total} words)</div>`;
+    html += `<table style="margin:0;"><tbody>`;
+    examples.forEach((w, i) => {
+      const m = getMark(w.id);
+      html += `<tr class="${m.status === 'ok' ? 'mark-ok' : m.status === 'fix' ? 'mark-fix' : ''}">
+        <td class="num">${i+1}</td>
+        <td class="bur" style="font-size:16px;">${w.burmese_word}</td>
+        <td class="dev" style="font-size:14px;">${w.devanagari}</td>
+        <td class="eng">${w.english_meaning||''}</td>
+        <td><div class="mark-btns">
+          <button class="mark-btn ${m.status==='ok'?'ok-active':''}" onclick="window.markWord(${w.id},'ok')">✓</button>
+          <button class="mark-btn ${m.status==='fix'?'fix-active':''}" onclick="window.markWord(${w.id},'fix')">✗</button>
+        </div></td>
+        <td><input class="note-input" value="${(m.note||'').replace(/"/g,'&quot;')}" onchange="window.noteWord(${w.id},this.value)" placeholder="fix..." /></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  document.getElementById('stats').textContent = '';
+  document.getElementById('table-container').innerHTML = html;
+}
+
+window.exportCSV = function(type) {
+  const isWord = currentTab === 'words' || currentTab === 'vowels';
+  let data = isWord ? allWords : allSentences;
+
+  if (type === 'ok') data = allWords.filter(w => getMark(w.id).status === 'ok');
+  else if (type === 'fix') data = allWords.filter(w => getMark(w.id).status === 'fix');
+
+  let csv = 'ID,Burmese,Devanagari,English,Source,Status,Note\n';
+  data.forEach(item => {
+    const bur = (item.burmese_word || item.burmese_text || '').replace(/"/g, '""');
+    const dev = (item.devanagari || '').replace(/"/g, '""');
+    const eng = (item.english_meaning || item.english_text || '').replace(/"/g, '""');
+    const meta = item.source || item.category || '';
+    const m = getMark(item.id);
+    csv += `${item.id},"${bur}","${dev}","${eng}","${meta}","${m.status}","${(m.note||'').replace(/"/g,'""')}"\n`;
+  });
+
+  const label = type === 'ok' ? 'perfect' : type === 'fix' ? 'needs_fix' : 'all';
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `devanagari_${label}_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+</script>
+</body>
+</html>

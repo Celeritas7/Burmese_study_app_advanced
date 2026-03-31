@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Burmese → Devanagari Audit</title>
+<style>
+  :root { --bg: #131F24; --surface: #1A2C33; --border: #1E2D33; --text: #EAEEF3; --muted: #5A7A88; --yellow: #FFC800; --green: #58CC02; --pink: #FF6B8A; --blue: #1CB0F6; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Noto Sans Myanmar', -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 16px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+  .controls select, .controls input { background: var(--surface); border: 2px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text); font-size: 13px; font-family: inherit; }
+  .controls input { flex: 1; min-width: 120px; }
+  .controls button { background: var(--blue); color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; }
+  .controls button.export { background: var(--green); }
+  .stats { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 8px 6px; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover { background: rgba(28,176,246,0.05); }
+  .num { font-size: 11px; color: var(--muted); width: 36px; }
+  .bur { font-size: 18px; font-weight: 700; }
+  .dev { font-size: 16px; font-weight: 600; color: var(--yellow); }
+  .eng { font-size: 12px; color: var(--muted); max-width: 150px; }
+  .src { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--muted); }
+  .vowel-tag { font-size: 9px; padding: 1px 4px; border-radius: 3px; background: rgba(206,130,255,0.15); color: #CE82FF; margin: 1px; display: inline-block; }
+  .key-row { background: rgba(88,204,2,0.04); }
+  #status { text-align: center; padding: 40px; color: var(--muted); }
+  .setup { background: var(--surface); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid var(--border); }
+  .setup label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .setup input { width: 100%; margin-bottom: 12px; }
+  .setup button { width: 100%; padding: 12px; font-size: 14px; }
+  .sentence-row td { background: rgba(28,176,246,0.03); }
+  .sentence-row .bur { font-size: 14px; font-weight: 500; }
+  .sentence-row .dev { font-size: 13px; }
+  .tab-btns { display: flex; gap: 4px; margin-bottom: 12px; }
+  .tab-btn { padding: 6px 14px; border-radius: 8px; border: 2px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; }
+  .tab-btn.active { border-color: var(--blue); color: var(--blue); background: rgba(28,176,246,0.08); }
+</style>
+</head>
+<body>
+
+<h1>🔍 Devanagari Audit Tool</h1>
+<div class="sub">Review toDev() output for all words & sentences</div>
+
+<div class="setup" id="setup">
+  <label>Supabase Anon Key</label>
+  <input type="password" id="sb-key" placeholder="Paste your anon key..." />
+  <button onclick="loadData()">Load Data →</button>
+</div>
+
+<div id="main" style="display:none;">
+  <div class="tab-btns">
+    <button class="tab-btn active" onclick="showTab('words')">Words</button>
+    <button class="tab-btn" onclick="showTab('sentences')">Sentences</button>
+    <button class="tab-btn" onclick="showTab('vowels')">Vowel Coverage</button>
+  </div>
+
+  <div class="controls">
+    <select id="source-filter" onchange="renderTable()">
+      <option value="">All sources</option>
+    </select>
+    <input type="text" id="search" placeholder="Search..." oninput="renderTable()" />
+    <button class="export" onclick="exportCSV()">📥 Export CSV</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="table-container"></div>
+</div>
+
+<div id="status">Enter your Supabase key above to load data.</div>
+
+<script type="module">
+import { toDev, breakSyllables } from 'https://celeritas7.github.io/language-utils/burmese.js';
+
+const SUPABASE_URL = 'https://ulgrfumbwjovbjzjiems.supabase.co';
+let KEY = '';
+let allWords = [];
+let allSentences = [];
+let currentTab = 'words';
+
+// Detect Myanmar vowel signs present in a word
+function detectVowels(text) {
+  const vowelMap = {
+    '\u102C': 'ာ (-a)', '\u102B': 'ါ (-a)', '\u102D': 'ိ (-i)', '\u102E': 'ီ (-ii)',
+    '\u102F': 'ု (-u)', '\u1030': 'ူ (-uu)', '\u1031': 'ေ (e-)', '\u1032': 'ဲ (-ai)',
+    '\u1036': 'ံ (anusvara)', '\u1037': '့ (auk myit)', '\u1038': 'း (visarga)',
+    '\u103A': '် (asat/virama)',
+    '\u103B': 'ျ (ya medial)', '\u103C': 'ြ (ra medial)', '\u103D': 'ွ (wa medial)', '\u103E': 'ှ (ha medial)',
+  };
+  const found = [];
+  for (const [code, label] of Object.entries(vowelMap)) {
+    if (text.includes(code)) found.push(label);
+  }
+  return found;
+}
+
+window.loadData = async function() {
+  KEY = document.getElementById('sb-key').value.trim();
+  if (!KEY) return;
+  
+  const headers = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` };
+  document.getElementById('status').textContent = 'Loading words...';
+  
+  try {
+    // Load words
+    const wRes = await fetch(`${SUPABASE_URL}/rest/v1/burmese_app_words?select=id,burmese_word,english_meaning,source&order=id&limit=1000`, { headers });
+    allWords = await wRes.json();
+    
+    // Load sentences
+    document.getElementById('status').textContent = 'Loading sentences...';
+    const sRes = await fetch(`${SUPABASE_URL}/rest/v1/burmese_app_sentences?select=id,burmese_text,english_text,category&order=id&limit=500`, { headers });
+    allSentences = await sRes.json();
+    
+    // Generate Devanagari for each
+    for (const w of allWords) {
+      w.devanagari = toDev(w.burmese_word);
+      w.vowels = detectVowels(w.burmese_word);
+    }
+    for (const s of allSentences) {
+      s.devanagari = toDev(s.burmese_text);
+      s.vowels = detectVowels(s.burmese_text);
+    }
+    
+    // Populate source filter
+    const sources = [...new Set(allWords.map(w => w.source).filter(Boolean))];
+    const sel = document.getElementById('source-filter');
+    sources.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      sel.appendChild(opt);
+    });
+    
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('status').style.display = 'none';
+    
+    renderTable();
+  } catch(e) {
+    document.getElementById('status').textContent = `Error: ${e.message}`;
+  }
+};
+
+window.showTab = function(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="showTab('${tab}')"]`).classList.add('active');
+  renderTable();
+};
+
+window.renderTable = function() {
+  if (currentTab === 'vowels') return renderVowelCoverage();
+  
+  const source = document.getElementById('source-filter').value;
+  const search = document.getElementById('search').value.toLowerCase();
+  
+  let data;
+  if (currentTab === 'words') {
+    data = allWords.filter(w => {
+      if (source && w.source !== source) return false;
+      if (search && !w.burmese_word.includes(search) && !(w.english_meaning||'').toLowerCase().includes(search) && !w.devanagari.includes(search)) return false;
+      return true;
+    });
+  } else {
+    data = allSentences.filter(s => {
+      if (search && !s.burmese_text.includes(search) && !(s.english_text||'').toLowerCase().includes(search) && !(s.category||'').toLowerCase().includes(search)) return false;
+      return true;
+    });
+  }
+  
+  document.getElementById('stats').textContent = `Showing ${data.length} ${currentTab}`;
+  
+  const isWord = currentTab === 'words';
+  let html = `<table><thead><tr>
+    <th>#</th><th>Burmese</th><th>Devanagari</th><th>${isWord ? 'Meaning' : 'English'}</th>
+    <th>${isWord ? 'Source' : 'Category'}</th><th>Vowels/Signs</th>
+  </tr></thead><tbody>`;
+  
+  data.forEach((item, idx) => {
+    const bur = isWord ? item.burmese_word : item.burmese_text;
+    const dev = item.devanagari;
+    const eng = isWord ? (item.english_meaning || '') : (item.english_text || '');
+    const meta = isWord ? (item.source || '') : (item.category || '');
+    const vowels = item.vowels;
+    const rowClass = !isWord ? 'sentence-row' : '';
+    
+    html += `<tr class="${rowClass}">
+      <td class="num">${idx + 1}</td>
+      <td class="bur">${bur}</td>
+      <td class="dev">${dev}</td>
+      <td class="eng">${eng}</td>
+      <td><span class="src">${meta}</span></td>
+      <td>${vowels.map(v => `<span class="vowel-tag">${v}</span>`).join('')}</td>
+    </tr>`;
+  });
+  
+  html += '</tbody></table>';
+  document.getElementById('table-container').innerHTML = html;
+};
+
+function renderVowelCoverage() {
+  // Group words by which vowel signs they contain
+  const vowelCodes = {
+    '\u102C': 'ာ -a', '\u102B': 'ါ -a', '\u102D': 'ိ -i', '\u102E': 'ီ -ii',
+    '\u102F': 'ု -u', '\u1030': 'ူ -uu', '\u1031': 'ေ e-', '\u1032': 'ဲ -ai',
+    '\u1036': 'ံ nasal', '\u1037': '့ low', '\u1038': 'း high',
+    '\u103A': '် asat',
+    '\u103B': 'ျ ya', '\u103C': 'ြ ra', '\u103D': 'ွ wa', '\u103E': 'ှ ha',
+  };
+  
+  // Also track common vowel combinations
+  const comboCodes = {
+    '\u1031\u102C': 'ော (-aw)', '\u102D\u102F': 'ို (-o)',
+    '\u1031\u102C\u1004\u103A': 'ောင် (-aung)', '\u102D\u102F\u1004\u103A': 'ိုင် (-aing)',
+    '\u1031\u102C\u1000\u103A': 'ောက် (-auk)', '\u102D\u102F\u1000\u103A': 'ိုက် (-aik)',
+    '\u102C\u1038': 'ား (-a:)', '\u102E\u1038': 'ီး (-ii:)',
+    '\u1030\u1038': 'ူး (-uu:)', '\u1032\u1038': 'ဲ့ (-ai.)',
+    '\u103D\u1014\u103A': 'ွန် (-un)', '\u103D\u1010\u103A': 'ွတ် (-ut)',
+  };
+  
+  let html = '<h3 style="color:var(--blue);margin-bottom:12px;">Vowel Sign Coverage</h3>';
+  html += '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Shows example words for each vowel sign — check if toDev handles each correctly.</p>';
+  
+  // Single signs
+  html += '<h4 style="color:var(--muted);font-size:11px;margin-bottom:8px;">SINGLE SIGNS</h4>';
+  for (const [code, label] of Object.entries(vowelCodes)) {
+    const examples = allWords.filter(w => w.burmese_word.includes(code)).slice(0, 5);
+    if (examples.length === 0) continue;
+    
+    html += `<div style="margin-bottom:12px;padding:10px;background:var(--surface);border-radius:10px;border:2px solid var(--border);">`;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px;">${code} ${label} (${allWords.filter(w => w.burmese_word.includes(code)).length} words)</div>`;
+    html += `<table style="margin:0;"><tbody>`;
+    examples.forEach((w, i) => {
+      html += `<tr><td class="num">${i+1}</td><td class="bur" style="font-size:16px;">${w.burmese_word}</td><td class="dev" style="font-size:14px;">${w.devanagari}</td><td class="eng">${w.english_meaning||''}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+  
+  // Combination signs
+  html += '<h4 style="color:var(--muted);font-size:11px;margin:16px 0 8px;">VOWEL COMBINATIONS</h4>';
+  for (const [combo, label] of Object.entries(comboCodes)) {
+    const examples = allWords.filter(w => w.burmese_word.includes(combo)).slice(0, 5);
+    if (examples.length === 0) continue;
+    
+    html += `<div style="margin-bottom:12px;padding:10px;background:var(--surface);border-radius:10px;border:2px solid var(--border);">`;
+    html += `<div style="font-size:11px;font-weight:700;color:#CE82FF;margin-bottom:6px;">${label} (${allWords.filter(w => w.burmese_word.includes(combo)).length} words)</div>`;
+    html += `<table style="margin:0;"><tbody>`;
+    examples.forEach((w, i) => {
+      html += `<tr><td class="num">${i+1}</td><td class="bur" style="font-size:16px;">${w.burmese_word}</td><td class="dev" style="font-size:14px;">${w.devanagari}</td><td class="eng">${w.english_meaning||''}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+  
+  document.getElementById('stats').textContent = '';
+  document.getElementById('table-container').innerHTML = html;
+}
+
+window.exportCSV = function() {
+  const isWord = currentTab === 'words';
+  const data = isWord ? allWords : allSentences;
+  
+  let csv = 'Sr No,Burmese,Devanagari,English,Source/Category,Correct (Y/N),Notes\n';
+  data.forEach((item, idx) => {
+    const bur = (isWord ? item.burmese_word : item.burmese_text).replace(/"/g, '""');
+    const dev = item.devanagari.replace(/"/g, '""');
+    const eng = (isWord ? (item.english_meaning||'') : (item.english_text||'')).replace(/"/g, '""');
+    const meta = isWord ? (item.source||'') : (item.category||'');
+    csv += `${idx+1},"${bur}","${dev}","${eng}","${meta}",,\n`;
+  });
+  
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `devanagari_audit_${currentTab}_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+</script>
+</body>
+</html>

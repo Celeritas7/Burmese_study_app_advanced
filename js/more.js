@@ -9,7 +9,8 @@ const ITEMS = [
   { icon: '🌿', label: 'Hub Explorer', desc: 'Anchor word trees', color: '#58CC02' },
   { icon: '📝', label: 'Sentences', desc: 'Full sentence practice', color: '#1CB0F6' },
   { icon: '🔌', label: 'Supabase', desc: db.connected ? 'Connected' : 'Not connected', color: db.connected ? '#58CC02' : '#FF4B4B' },
-  { icon: '⚙️', label: 'Settings', desc: 'Theme & preferences', color: '#5A7A88' }
+  { icon: '⚙️', label: 'Settings', desc: 'Theme & preferences', color: '#5A7A88' },
+  { icon: '🔍', label: 'Devanagari Audit', desc: 'Review transliteration', color: '#FFC800' }
 ];
 
 export class MoreTab {
@@ -64,6 +65,8 @@ export class MoreTab {
           this.showSupabaseModal();
         } else if (idx === 6) {
           this.app.showSettings();
+        } else if (idx === 7) {
+          window.open('audit.html', '_blank');
         }
       });
     });
