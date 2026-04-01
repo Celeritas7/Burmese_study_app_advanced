@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:,">
 <title>Burmese → Devanagari Audit</title>
 <style>
   :root { --bg: #131F24; --surface: #1A2C33; --border: #1E2D33; --text: #EAEEF3; --muted: #5A7A88; --yellow: #FFC800; --green: #58CC02; --pink: #FF6B8A; --blue: #1CB0F6; --purple: #CE82FF; --orange: #FF9600; }
@@ -123,9 +122,9 @@ function loadMarks() {
   try { marks = JSON.parse(localStorage.getItem(MARKS_KEY) || '{}'); } catch { marks = {}; }
 }
 
-window.saveMarks = function(silent = false) {
+window.saveMarks = function() {
   localStorage.setItem(MARKS_KEY, JSON.stringify(marks));
-  if (!silent) alert(`Saved ${Object.keys(marks).length} marks to localStorage.`);
+  alert(`Saved ${Object.keys(marks).length} marks to localStorage.`);
 };
 
 function detectVowels(text) {
@@ -147,15 +146,13 @@ function getMark(id) { return marks[id] || { status: '', note: '' }; }
 
 function setMark(id, status) {
   if (!marks[id]) marks[id] = { status: '', note: '' };
-  marks[id].status = marks[id].status === status ? '' : status;
-  saveMarks(true); // auto-save
+  marks[id].status = marks[id].status === status ? '' : status; // toggle
   renderTable();
 }
 
 function setNote(id, note) {
   if (!marks[id]) marks[id] = { status: '', note: '' };
   marks[id].note = note;
-  saveMarks(true); // auto-save
 }
 
 function updateProgress() {
@@ -195,8 +192,6 @@ window.setFilter = function(status) {
 window.loadData = async function() {
   KEY = document.getElementById('sb-key').value.trim();
   if (!KEY) return;
-  // Save so we don't ask again
-  localStorage.setItem('burmese_app_supabase_key', KEY);
   const headers = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` };
   document.getElementById('status').textContent = 'Loading words...';
 
@@ -412,14 +407,6 @@ window.exportCSV = function(type) {
   a.click();
   URL.revokeObjectURL(url);
 };
-
-// ─── AUTO-LOAD ───
-// Check if key already saved from main app
-const savedKey = localStorage.getItem('burmese_app_supabase_key');
-if (savedKey) {
-  document.getElementById('sb-key').value = savedKey;
-  loadData(); // auto-load immediately
-}
 </script>
 </body>
 </html>
