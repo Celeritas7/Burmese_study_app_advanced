@@ -9,11 +9,10 @@ import { StatsPage } from './stats.js';
 import { WritingPractice } from './writing.js';
 import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
-import { HomeTab } from './home.js';
 
 class BurmeseStudyApp {
   constructor() {
-    this.activeTab = 'home';   // was 'study'
+    this.activeTab = 'study';
     this.tabs = {};
     this.contentEl = null;
   }
@@ -23,16 +22,22 @@ class BurmeseStudyApp {
     app.innerHTML = `
       <div class="tab-content" id="tab-content"></div>
       <div class="tab-bar" id="tab-bar">
-        <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
-        <button class="tab-btn" data-tab="study"><span class="tab-icon">📖</span><span class="tab-label">Study</span></button>
-        <button class="tab-btn" data-tab="srs"><span class="tab-icon">🔄</span><span class="tab-label">SRS</span></button>
-        <button class="tab-btn" data-tab="hubExplorer"><span class="tab-icon">🏷️</span><span class="tab-label">Groups</span></button>
-        <button class="tab-btn" data-tab="more"><span class="tab-icon">⋯</span><span class="tab-label">More</span></button>
+        <button class="tab-btn active" data-tab="study">
+          <span class="tab-icon">📖</span>
+          <span class="tab-label">Study</span>
+        </button>
+        <button class="tab-btn" data-tab="srs">
+          <span class="tab-icon">🔄</span>
+          <span class="tab-label">SRS</span>
+        </button>
+        <button class="tab-btn" data-tab="more">
+          <span class="tab-icon">☰</span>
+          <span class="tab-label">More</span>
+        </button>
       </div>
     `;
     this.contentEl = document.getElementById('tab-content');
     this.tabs.study = new StudyTab(this);
-    this.tabs.home = new HomeTab(this);
     this.tabs.srs = new SRSTab(this);
     this.tabs.more = new MoreTab(this);
     this.tabs.dialogues = new DialoguesTab(this);

@@ -65,60 +65,52 @@ export class StudyTab {
 
   // ─── SETUP SCREEN ───
   renderSetup(container) {
-    const TEST_TYPES = [
-      { id: 'burmese', glyph: 'မ',  label: 'Myanmar' },
-      { id: 'deva',    glyph: 'द',  label: 'Reading' },
-      { id: 'writing', glyph: '✍', label: 'Writing' },
-    ];
-
     container.innerHTML = `
       <div class="pad">
-        <div class="setup-header">
-          <button class="setup-back" id="setup-back">‹</button>
-          <div>
-            <div class="setup-h1">Study session</div>
-            <div class="setup-h2">Set up your session</div>
-          </div>
+        <div class="mb-24">
+          <div class="app-title">မြန်မာစာ</div>
+          <div class="app-subtitle">Burmese Study</div>
         </div>
 
-        <div class="section-label" style="color:var(--text-muted);">Test type</div>
-        <div class="test-grid">
-          ${TEST_TYPES.map(t => `
-            <button class="test-card ${this.mode === t.id ? 'active' : ''}" data-mode="${t.id}">
-              <div class="tc-glyph">${t.glyph}</div>
-              <div class="tc-label">${t.label}</div>
-            </button>`).join('')}
+        <div class="section-label" style="color:var(--blue);">Test mode</div>
+        <div class="mode-grid">
+          ${MODES.map(m => `
+            <button class="mode-btn ${this.mode === m.id ? 'active' : ''}" data-mode="${m.id}">
+              <div class="mode-icon">${m.icon}</div>
+              <div class="mode-text">${m.label}</div>
+            </button>
+          `).join('')}
         </div>
 
-        <div class="balance-row">
-          <button class="balance-btn active" data-balance="equal">⚡ All Equal</button>
-          <button class="balance-btn" data-balance="custom">🎚 Custom</button>
-        </div>
-
-        <div class="section-label" style="color:var(--text-muted);">Words per level</div>
+        <div class="section-label" style="color:var(--purple);">Words per session</div>
         <div class="num-row">
-          ${[5,10,15,20,30].map(n => `
-            <button class="num-btn ${this.wordsPerSession === n ? 'active' : ''}" data-num="${n}">${n}</button>`).join('')}
+          ${[5, 10, 15, 20, 30].map(n => `
+            <button class="num-btn ${this.wordsPerSession === n ? 'active' : ''}" data-num="${n}">${n}</button>
+          `).join('')}
         </div>
 
-        ${SOURCES.map(s => {
-          const count = this.wordCounts[s.id] || (s.disabled ? 0 : '...');
-          const active = this.selectedSource === s.id;
-          return `
-            <button class="source-card ${active ? 'active' : ''}" data-source="${s.id}"
-              style="${active ? `color:${s.color};` : ''}">
-              <div class="sc-badge" style="background:${s.color};">${s.icon}</div>
-              <div class="flex-1">
-                <div class="sc-name">${s.name}</div>
-                <div class="sc-avail">${s.disabled ? 'Coming soon' : `${count} words available`}</div>
-              </div>
-              <div class="sc-count" style="${active ? `color:${s.color};` : ''}">${count || '—'}</div>
-            </button>`;
-        }).join('')}
+        <div class="section-label" style="color:var(--pink);">Source</div>
+        <div class="source-list">
+          ${SOURCES.map(s => {
+            const count = this.wordCounts[s.id] || (s.disabled ? 0 : '...');
+            return `
+              <button class="source-item ${this.selectedSource === s.id ? 'active' : ''} ${s.disabled ? 'disabled' : ''}"
+                data-source="${s.id}" style="${this.selectedSource === s.id ? `border-color:${s.color};` : ''}">
+                <div class="source-icon" style="background:${s.color}18; border-color:${s.color}30;">${s.icon}</div>
+                <div class="flex-1">
+                  <div class="source-name">${s.name}</div>
+                  <div class="source-count">${s.disabled ? 'Coming soon' : `${count} words`}</div>
+                </div>
+                <span class="source-badge" style="background:${s.color}18; color:${s.color};">${count || '—'}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
 
-        <button class="btn-primary" id="start-btn" style="background:var(--green);margin-top:8px;">▶ Start Session</button>
-        <button class="btn-primary" id="quiz-btn" style="background:var(--purple);margin-top:8px;">🧠 Quiz Mode →</button>
-      </div>`;
+        <button class="btn-primary" id="start-btn">Start Session →</button>
+        <button class="btn-primary" id="quiz-btn" style="background:var(--purple); margin-top:8px;">🧠 Quiz Mode →</button>
+      </div>
+    `;
 
     // Event listeners
     container.querySelectorAll('[data-mode]').forEach(btn => {
@@ -146,19 +138,8 @@ export class StudyTab {
 
     container.querySelector('#start-btn').addEventListener('click', () => this.startSession(container));
     container.querySelector('#quiz-btn').addEventListener('click', () => this.startQuiz(container));
-  
-    // Back button → go Home
-    container.querySelector('#setup-back')?.addEventListener('click', () => this.app.switchTab('home'));
-
-    // All Equal / Custom toggle (visual for now)
-    container.querySelectorAll('[data-balance]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        container.querySelectorAll('[data-balance]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      });
-    });
   }
-  
+
   // ─── START QUIZ ───
   async startQuiz(container) {
     container.innerHTML = '<div class="pad text-center" style="padding-top:40vh;"><div style="font-size:24px;">Loading...</div></div>';
