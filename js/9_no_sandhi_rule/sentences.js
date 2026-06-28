@@ -3,7 +3,7 @@
 // Search, filter by category, practice mode (hide English)
 
 import { db } from './supabase.js';
-import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=7';
+import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js';
 
 export class SentencesPage {
   constructor(app) {

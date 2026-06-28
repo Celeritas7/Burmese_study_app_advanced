@@ -1,6 +1,6 @@
 // ═══ SRS TAB ═══
 import { db } from './supabase.js';
-import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=7';
+import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js';
 import { getSettings } from './settings.js';
 
 const SRS_RESPONSES = [

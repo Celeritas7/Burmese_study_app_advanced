@@ -2,7 +2,7 @@
 // buildGroups with filler auto-detection + manual flagging
 
 import { db } from './supabase.js';
-import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=7';
+import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js';
 
 function isSylBoundary(str, pos) {
   if (pos <= 0 || pos >= str.length) return true;

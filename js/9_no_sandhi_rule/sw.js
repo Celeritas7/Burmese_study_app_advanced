@@ -1,5 +1,5 @@
 // ═══ SERVICE WORKER ═══
-const CACHE_NAME = 'burmese-study-v2';
+const CACHE_NAME = 'burmese-study-v1';
 const ASSETS = [
   '/',
   '/index.html',
@@ -17,7 +17,7 @@ const ASSETS = [
   '/js/writing.js',
   '/js/sentences.js',
   '/js/settings.js',
-  'https://celeritas7.github.io/language-utils/burmese.js?v=7'
+  'https://celeritas7.github.io/language-utils/burmese.js'
 ];
 
 // Install — cache all assets
