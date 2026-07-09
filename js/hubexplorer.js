@@ -95,6 +95,8 @@ function buildGroups(consonantsRaw, wordsRaw) {
   return { cons, hubs, fillers };
 }
 
+export { buildGroups };
+
 export class HubExplorer {
   constructor(app) {
     this.app = app;
