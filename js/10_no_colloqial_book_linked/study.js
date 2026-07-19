@@ -65,12 +65,8 @@ const RATINGS = [
   { icon: '💬', label: 'Seen', color: '#1CB0F6' },
   { icon: '🔥', label: 'Easy', color: '#FFC800' },
   { icon: '🤔', label: 'Fuzzy', color: '#CE82FF' },
-  { icon: '✗', label: 'Nope', color: '#FF6B8A' },
-  { icon: '✍', label: 'Write', color: '#FF9600' } // index 6 — knew it AND can write it (strongest)
+  { icon: '✗', label: 'Nope', color: '#FF6B8A' }
 ];
-
-// Visual order only — data indices stay stable: … Easy, Write, Fuzzy, Nope
-const RATING_ORDER = [0, 1, 2, 3, 6, 4, 5];
 
 export class StudyTab {
   constructor(app) {
@@ -79,8 +75,6 @@ export class StudyTab {
     this.mode = 'burmese';
     this.wordsPerSession = 10;
     this.selectedSource = null;
-    this.courseUnit = null;        // set by CourseTab: filter session to a unit's words
-    this.onSessionComplete = null; // set by CourseTab: fires once when results render
     this.words = [];
     this.currentIdx = 0;
     this.revealLevel = 0;
@@ -185,7 +179,6 @@ export class StudyTab {
       btn.addEventListener('click', () => {
         if (btn.classList.contains('disabled')) return;
         const src = btn.dataset.source;
-        this.courseUnit = null; // manual source pick leaves course mode
         this.selectedSource = this.selectedSource === src ? null : src;
         this.render(container);
       });
@@ -239,13 +232,7 @@ export class StudyTab {
     try {
       const opts = { limit: this.wordsPerSession };
       if (this.selectedSource) opts.source = this.selectedSource;
-      let words = null;
-      // Course mode: try the unit-tagged slice first; fall back to the full
-      // source if the unit column/tags don't exist yet or come back empty.
-      if (this.courseUnit != null && this.selectedSource === 'colloquial') {
-        try { words = await db.getWords({ ...opts, unit: this.courseUnit }); } catch { words = null; }
-      }
-      if (!words || !words.length) words = await db.getWords(opts);
+      let words = await db.getWords(opts);
 
       // Shuffle
       words = words.sort(() => Math.random() - 0.5).slice(0, this.wordsPerSession);
@@ -361,11 +348,10 @@ export class StudyTab {
         <!-- Rating -->
         <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:8px;">Change Rating</div>
         <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">
-          ${RATING_ORDER.map((i) => {
-            const r = RATINGS[i];
+          ${RATINGS.map((r, i) => {
             const isActive = rating === i;
             const isNope = i === 5;
-            const size = '42px';
+            const size = '44px';
             const bg = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.15)' : `${r.color}15`);
             const border = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.4)' : 'var(--border)');
             const iconColor = isActive ? '#fff' : r.color;
@@ -521,10 +507,9 @@ export class StudyTab {
 
   // ─── SESSION RESULTS ───
   renderResults(container) {
-    if (this.onSessionComplete) { const cb = this.onSessionComplete; this.onSessionComplete = null; cb(); }
     const total = this.words.length;
     const rated = Object.keys(this.ratings).length;
-    const gotIt = Object.values(this.ratings).filter(r => r === 1 || r === 3 || r === 6).length; // Got it + Easy + Write
+    const gotIt = Object.values(this.ratings).filter(r => r === 1 || r === 3).length; // Got it + Easy
     const fuzzy = Object.values(this.ratings).filter(r => r === 4).length;
     const nope = Object.values(this.ratings).filter(r => r === 5).length;
     const pct = total > 0 ? Math.round((gotIt / total) * 100) : 0;
@@ -549,7 +534,7 @@ export class StudyTab {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px;">
           <div class="srs-stat">
             <div class="srs-stat-num" style="color:var(--green);">${gotIt}</div>
-            <div class="srs-stat-label">Strong</div>
+            <div class="srs-stat-label">Got it / Easy</div>
           </div>
           <div class="srs-stat">
             <div class="srs-stat-num" style="color:var(--purple);">${fuzzy}</div>

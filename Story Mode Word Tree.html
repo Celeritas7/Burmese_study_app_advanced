@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story Mode · Word Tree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#131F24; --surface:#1A2C33; --elevated:#0F1A1F;
+    --border:#1E2D33; --border-light:#2A3A42;
+    --text:#EAEEF3; --text-muted:#5A7A88; --text-dim:#3A5060;
+    --blue:#1CB0F6; --green:#58CC02; --yellow:#FFC800;
+    --pink:#FF6B8A; --purple:#CE82FF; --orange:#FF9600;
+    --radius:14px; --radius-sm:10px; --radius-lg:18px;
+    --font:'Noto Sans Myanmar', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--font);
+    background:
+      radial-gradient(1200px 800px at 50% -10%, #16262d 0%, #0b1418 60%, #080f12 100%);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:24px 12px;
+  }
+  a{color:var(--blue);} a:hover{color:#5bc6fb;}
+
+  /* phone column mirrors the app (#app max-width 440px) */
+  .phone{
+    width:100%; max-width:412px; height:min(860px, calc(100vh - 48px));
+    background:var(--bg);
+    border:1px solid var(--border-light);
+    border-radius:30px;
+    box-shadow:0 40px 90px -30px #000, 0 0 0 6px #05090b;
+    overflow:hidden; position:relative;
+    display:flex; flex-direction:column;
+  }
+
+  /* modal-style header */
+  .sheet-head{
+    display:flex; align-items:center; gap:10px;
+    padding:18px 16px 14px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg, rgba(88,204,2,0.06), transparent);
+  }
+  .sheet-title{font-size:20px;font-weight:800;color:var(--green);letter-spacing:-0.2px;}
+  .sheet-sub{font-size:11px;color:var(--text-muted);font-weight:600;margin-top:2px;}
+  .sheet-close{
+    margin-left:auto; background:var(--surface); border:1px solid var(--border-light);
+    color:var(--text-muted); border-radius:10px; padding:7px 11px;
+    font-family:var(--font); font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .sheet-close:hover{color:var(--text);}
+
+  .toolbar{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 16px; border-bottom:1px solid var(--border);
+  }
+  .legend{display:flex; gap:12px; font-size:10px; color:var(--text-muted); font-weight:700;}
+  .legend b{display:inline-block; width:9px; height:9px; border-radius:3px; vertical-align:middle; margin-right:4px;}
+  .btn-ghost{
+    margin-left:auto; background:transparent; border:1px solid var(--border-light);
+    color:var(--text-muted); border-radius:9px; padding:6px 10px;
+    font-family:var(--font); font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .btn-ghost:hover{color:var(--text); border-color:var(--text-dim);}
+
+  .scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:6px 0 26px;}
+  .scroll::-webkit-scrollbar{width:0;}
+
+  /* each hub = its own tree card */
+  .tree-card{
+    margin:10px 12px; padding:8px 4px 12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+  }
+  .tree-scroll{overflow-x:auto; padding-bottom:4px;}
+  .tree-scroll::-webkit-scrollbar{height:5px;}
+  .tree-scroll::-webkit-scrollbar-thumb{background:var(--border-light); border-radius:3px;}
+
+  /* ── pure-CSS org-chart tree ── */
+  .tree{display:inline-block; min-width:100%; padding:6px 10px 2px; text-align:center;}
+  .tree ul{
+    display:flex; justify-content:center; padding-top:18px; position:relative;
+    list-style:none;
+  }
+  .tree li{
+    list-style:none; position:relative; padding:18px 6px 0; text-align:center;
+  }
+  /* connectors */
+  .tree li::before, .tree li::after{
+    content:''; position:absolute; top:0; right:50%;
+    width:50%; height:18px; border-top:2px solid var(--border-light);
+  }
+  .tree li::after{ right:auto; left:50%; border-left:2px solid var(--border-light); }
+  .tree li:first-child::before{border:0;}
+  .tree li:last-child::after{border:0;}
+  .tree li:last-child::before{border-right:2px solid var(--border-light); border-radius:0 7px 0 0;}
+  .tree li:first-child::after{border-left:2px solid var(--border-light); border-radius:7px 0 0 0;}
+  .tree li:only-child::before, .tree li:only-child::after{display:none;}
+  /* stem coming down out of the hub */
+  .tree ul ul::before{
+    content:''; position:absolute; top:0; left:50%;
+    border-left:2px solid var(--border-light); width:0; height:18px;
+  }
+  /* the single top-level li (the hub) has no incoming connector */
+  .tree > ul{ padding-top:0; }
+  .tree > ul > li{ padding-top:0; }
+  .tree > ul > li::before, .tree > ul > li::after{ display:none; }
+
+  /* nodes */
+  .node{
+    display:inline-flex; flex-direction:column; align-items:center;
+    border-radius:12px; cursor:pointer; user-select:none;
+    font-family:var(--font); position:relative;
+    transition:transform .12s ease, box-shadow .18s ease, border-color .18s ease;
+    background:var(--elevated);
+    padding:9px 12px; min-width:64px; max-width:150px;
+  }
+  .node:active{transform:translateY(1px);}
+  .node .my{font-size:20px; font-weight:800; line-height:1.15; white-space:nowrap;}
+  .node .en-inline{font-size:10px; color:var(--text-muted); margin-top:2px; font-weight:600;
+    max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  /* hub node */
+  .node.hub{
+    background:rgba(88,204,2,0.10); border:2px solid rgba(88,204,2,0.55);
+    padding:11px 14px 10px; min-width:92px;
+  }
+  .node.hub .my{color:var(--green); font-size:24px;}
+  .node.hub:hover{border-color:var(--green); box-shadow:0 0 0 4px rgba(88,204,2,0.10);}
+  .hub-wrap{display:inline-flex; align-items:stretch; gap:0;}
+  .chev{
+    align-self:stretch; display:flex; align-items:center; justify-content:center;
+    width:26px; margin-left:6px;
+    background:rgba(88,204,2,0.08); border:2px solid rgba(88,204,2,0.30);
+    border-radius:10px; color:var(--green); cursor:pointer; font-size:12px; font-weight:800;
+  }
+  .chev:hover{background:rgba(88,204,2,0.16);}
+
+  /* spoke node */
+  .node.spoke{
+    background:var(--surface); border:2px solid var(--border-light);
+  }
+  .node.spoke .my{color:var(--text); font-size:18px;}
+  .node.spoke:hover{border-color:var(--blue); box-shadow:0 0 0 4px rgba(28,176,246,0.08);}
+
+  /* detail line revealed on tap */
+  .node .detail{
+    display:none; margin-top:7px; padding-top:7px;
+    border-top:1px dashed var(--border-light); width:100%;
+  }
+  .node.open .detail{display:block;}
+  .node.open{ box-shadow:0 8px 24px -12px #000; }
+  .detail .pron{font-size:12px; font-weight:700; color:var(--blue); white-space:nowrap;}
+  .detail .mean{font-size:11px; color:var(--text); margin-top:2px; font-weight:500; white-space:normal; line-height:1.3;}
+  .node.hub .detail .pron{color:var(--yellow);}
+
+  /* currently-studied word */
+  .node.studying{
+    border-color:var(--purple) !important;
+    box-shadow:0 0 0 4px rgba(206,130,255,0.18), 0 0 22px -4px rgba(206,130,255,0.5) !important;
+    animation:studyPulse 2.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .node.studying{animation:none;} }
+  @keyframes studyPulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(206,130,255,0.15), 0 0 18px -6px rgba(206,130,255,0.4);}
+    50%{box-shadow:0 0 0 5px rgba(206,130,255,0.30), 0 0 30px -2px rgba(206,130,255,0.7);}
+  }
+  .studying .my{color:var(--purple) !important;}
+  .study-tag{
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    background:var(--purple); color:#1b0f26; font-size:8px; font-weight:800;
+    letter-spacing:0.4px; text-transform:uppercase;
+    padding:2px 7px; border-radius:20px; white-space:nowrap;
+    box-shadow:0 3px 10px -2px rgba(206,130,255,0.6);
+  }
+  .hub.has-study-descendant{ border-style:dashed; }
+
+  .hub-meta{
+    display:flex; align-items:center; gap:8px; justify-content:center;
+    margin-bottom:2px; padding:0 12px;
+  }
+  .badge{
+    font-size:9px; font-weight:800; padding:2px 7px; border-radius:6px;
+    background:rgba(28,176,246,0.12); color:var(--blue);
+  }
+  .badge.gloss{background:transparent; color:var(--text-muted); font-weight:600; font-size:10px;}
+
+  .empty{color:var(--text-muted); font-size:12px; padding:30px; text-align:center;}
+  .hint-row{padding:2px 16px 8px; font-size:10px; color:var(--text-dim); text-align:center;}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title">🌿 Word Tree</div>
+        <div class="sheet-sub" id="forest-stats">All hubs</div>
+      </div>
+      <button class="sheet-close">✕ Close</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="legend">
+        <span><b style="background:var(--green);"></b>hub</span>
+        <span><b style="background:var(--blue);"></b>spoke</span>
+        <span><b style="background:var(--purple);"></b>studying</span>
+      </div>
+      <button class="btn-ghost" id="toggle-all">Collapse all</button>
+    </div>
+
+    <div class="hint-row">Tap a word for pronunciation &amp; meaning · tap the ▾ chevron to fold a branch</div>
+
+    <div class="scroll" id="forest"></div>
+  </div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   Sample vocabulary — representative of the app's burmese_app_words.
+   The tree below is produced by the SAME hub generator (buildGroups)
+   used in hubexplorer.js, so structure matches the real "All Hubs" view.
+   ══════════════════════════════════════════════════════════════ */
+const WORDS = [
+  // ရေ water
+  {id:1,  burmese_word:'ရေ',        english_meaning:'water',            roman:'yay'},
+  {id:2,  burmese_word:'ရေခဲ',      english_meaning:'ice',              roman:'yay-khဲ / yei-gé'},
+  {id:3,  burmese_word:'ရေကူး',     english_meaning:'to swim',          roman:'yay-kù'},
+  {id:4,  burmese_word:'ရေချိုး',   english_meaning:'to bathe, shower', roman:'yay-chó'},
+  {id:5,  burmese_word:'ရေနွေး',    english_meaning:'hot water',        roman:'yay-nwé'},
+  // စား eat
+  {id:6,  burmese_word:'စား',       english_meaning:'to eat',           roman:'sá'},
+  {id:7,  burmese_word:'စားပွဲ',    english_meaning:'table',            roman:'sá-bwဲ / za-bwè'},
+  {id:8,  burmese_word:'စားသောက်',  english_meaning:'to dine, consume', roman:'sá-thauk'},
+  {id:9,  burmese_word:'စားဖို',    english_meaning:'kitchen',          roman:'sá-bo / za-bo'},
+  {id:10, burmese_word:'စားချင်',   english_meaning:'hungry, want to eat', roman:'sá-chin'},
+  // နေ stay / sun
+  {id:11, burmese_word:'နေ',        english_meaning:'to stay, live; sun', roman:'nay'},
+  {id:12, burmese_word:'နေအိမ်',    english_meaning:'residence, home',  roman:'nay-ein'},
+  {id:13, burmese_word:'နေကောင်း',  english_meaning:'to be well, healthy', roman:'nay-kaung'},
+  {id:14, burmese_word:'နေရာ',      english_meaning:'place, spot',      roman:'nay-ya'},
+  // လက် hand
+  {id:15, burmese_word:'လက်',       english_meaning:'hand',             roman:'lɛʔ'},
+  {id:16, burmese_word:'လက်ဖက်',    english_meaning:'tea leaf',         roman:'lɛʔ-p’ɛʔ / la-p’ɛʔ'},
+  {id:17, burmese_word:'လက်ဆောင်',  english_meaning:'gift, present',    roman:'lɛʔ-hsaung'},
+  {id:18, burmese_word:'လက်ကိုင်',  english_meaning:'handle, grip',     roman:'lɛʔ-kaing'},
+  {id:19, burmese_word:'လက်မှတ်',   english_meaning:'ticket, signature',roman:'lɛʔ-hmaʔ'},
+  // ဆေး medicine
+  {id:20, burmese_word:'ဆေး',       english_meaning:'medicine',         roman:'hsé'},
+  {id:21, burmese_word:'ဆေးရုံ',    english_meaning:'hospital',         roman:'hsé-yon'},
+  {id:22, burmese_word:'ဆေးဆိုင်',  english_meaning:'pharmacy',         roman:'hsé-hsaing'},
+  {id:23, burmese_word:'ဆေးလိပ်',   english_meaning:'cigarette',        roman:'hsé-leiʔ'},
+  // မီး fire / light
+  {id:24, burmese_word:'မီး',       english_meaning:'fire, light',      roman:'mí'},
+  {id:25, burmese_word:'မီးရထား',   english_meaning:'train',            roman:'mí-yə-t’á'},
+  {id:26, burmese_word:'မီးဖို',    english_meaning:'stove',            roman:'mí-bo'},
+  // ကား car
+  {id:27, burmese_word:'ကား',       english_meaning:'car, vehicle',     roman:'ká'},
+  {id:28, burmese_word:'ကားဂိတ်',   english_meaning:'bus / car station',roman:'ká-geiʔ'},
+  {id:29, burmese_word:'ကားလမ်း',   english_meaning:'road, route',      roman:'ká-làn'},
+  // စာ letter / writing
+  {id:30, burmese_word:'စာ',        english_meaning:'letter, writing',  roman:'sa'},
+  {id:31, burmese_word:'စာအုပ်',    english_meaning:'book',             roman:'sa-ouʔ'},
+  {id:32, burmese_word:'စာသင်',     english_meaning:'to study, teach',  roman:'sa-thin'},
+  {id:33, burmese_word:'စာတိုက်',   english_meaning:'post office',      roman:'sa-taiʔ'},
+];
+
+/* the word the learner is currently studying (highlighted in the tree) */
+const STUDYING = 'ရေခဲ';
+
+/* ── hub generator (faithful port of buildGroups from hubexplorer.js) ── */
+function isSylBoundary(str, pos){
+  if (pos <= 0 || pos >= str.length) return true;
+  const code = str.charCodeAt(pos);
+  return code >= 0x1000 && code <= 0x1021;
+}
+function isAutoFiller(word, spokeCount){
+  const meaning = (word.english_meaning || '').trim();
+  if (!meaning) return true;
+  const myanmarChars = [...word.burmese_word].filter(c=>{
+    const code = c.charCodeAt(0);
+    return code >= 0x1000 && code <= 0x1021;
+  }).length;
+  if (myanmarChars <= 1 && spokeCount >= 10) return true;
+  return false;
+}
+function buildGroups(wordsRaw){
+  const words = wordsRaw.filter(w => !w.is_filler);
+  const sorted = [...words].sort((a,b)=> a.burmese_word.length - b.burmese_word.length || a.id - b.id);
+  const assigned = new Set();
+  const hubs = [];
+  for (const pot of sorted){
+    if (assigned.has(pot.id)) continue;
+    const pw = pot.burmese_word;
+    const candidateSpokes = [];
+    for (const other of sorted){
+      if (other.id === pot.id) continue;
+      if (assigned.has(other.id)) continue;
+      const ow = other.burmese_word;
+      if (ow.length <= pw.length) continue;
+      const isPrefix = ow.startsWith(pw) && isSylBoundary(ow, pw.length);
+      const isSuffix = ow.endsWith(pw) && isSylBoundary(ow, ow.length - pw.length);
+      if (isPrefix || isSuffix) candidateSpokes.push(other);
+    }
+    if (candidateSpokes.length > 0){
+      if (isAutoFiller(pot, candidateSpokes.length)) continue;
+      candidateSpokes.forEach(s => assigned.add(s.id));
+      hubs.push({
+        id: pot.id, word: pw, meaning: pot.english_meaning || '', roman: pot.roman || '',
+        spokes: candidateSpokes.map(s => ({ word:s.burmese_word, meaning:s.english_meaning||'', roman:s.roman||'' }))
+      });
+    }
+  }
+  return hubs;
+}
+
+/* ── render ── */
+const HUBS = buildGroups(WORDS).sort((a,b)=> b.spokes.length - a.spokes.length);
+const esc = s => (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function nodeHTML(w, cls){
+  const studying = w.word === STUDYING;
+  return `
+    <div class="node ${cls}${studying?' studying':''}" data-word="${esc(w.word)}">
+      ${studying ? '<span class="study-tag">studying</span>' : ''}
+      <span class="my">${esc(w.word)}</span>
+      <div class="detail">
+        <div class="pron">${esc(w.roman)}</div>
+        <div class="mean">${esc(w.meaning)}</div>
+      </div>
+    </div>`;
+}
+
+function hubTreeHTML(hub){
+  const hasStudy = hub.word === STUDYING || hub.spokes.some(s=>s.word===STUDYING);
+  const studyingHub = hub.word === STUDYING;
+  return `
+    <div class="tree-card" data-hubid="${hub.id}">
+      <div class="hub-meta">
+        <span class="badge">${hub.spokes.length} spoke${hub.spokes.length!==1?'s':''}</span>
+        <span class="badge gloss">${esc(hub.meaning)}</span>
+      </div>
+      <div class="tree-scroll">
+        <div class="tree">
+          <ul>
+            <li>
+              <div class="hub-wrap">
+                <div class="node hub${studyingHub?' studying':''}${hasStudy && !studyingHub?' has-study-descendant':''}" data-word="${esc(hub.word)}">
+                  ${studyingHub ? '<span class="study-tag">studying</span>' : ''}
+                  <span class="my">${esc(hub.word)}</span>
+                  <div class="detail">
+                    <div class="pron">${esc(hub.roman)}</div>
+                    <div class="mean">${esc(hub.meaning)}</div>
+                  </div>
+                </div>
+                <div class="chev" title="Fold / unfold branch">▾</div>
+              </div>
+              <ul class="spokes">
+                ${hub.spokes.map(s=>`<li>${nodeHTML(s,'spoke')}</li>`).join('')}
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+const forest = document.getElementById('forest');
+const totalSpokes = HUBS.reduce((n,h)=>n+h.spokes.length,0);
+document.getElementById('forest-stats').textContent =
+  `All hubs · ${HUBS.length} hubs · ${totalSpokes} spokes`;
+forest.innerHTML = HUBS.length
+  ? HUBS.map(hubTreeHTML).join('')
+  : '<div class="empty">No hubs generated</div>';
+
+/* interactions */
+forest.addEventListener('click', (e)=>{
+  const chev = e.target.closest('.chev');
+  if (chev){
+    const card = chev.closest('.tree-card');
+    const spokes = card.querySelector('.spokes');
+    const folded = spokes.style.display === 'none';
+    spokes.style.display = folded ? '' : 'none';
+    chev.textContent = folded ? '▾' : '▸';
+    chev.style.opacity = folded ? '1' : '0.6';
+    return;
+  }
+  const node = e.target.closest('.node');
+  if (node){
+    node.classList.toggle('open');
+  }
+});
+
+/* collapse / expand all */
+const toggleAll = document.getElementById('toggle-all');
+let allFolded = false;
+toggleAll.addEventListener('click', ()=>{
+  allFolded = !allFolded;
+  forest.querySelectorAll('.tree-card').forEach(card=>{
+    const spokes = card.querySelector('.spokes');
+    const chev = card.querySelector('.chev');
+    spokes.style.display = allFolded ? 'none' : '';
+    chev.textContent = allFolded ? '▸' : '▾';
+    chev.style.opacity = allFolded ? '0.6' : '1';
+  });
+  toggleAll.textContent = allFolded ? 'Expand all' : 'Collapse all';
+});
+
+/* open the studied word's detail by default so context is visible on load */
+const studyNode = forest.querySelector('.node.studying');
+if (studyNode) studyNode.classList.add('open');
+</script>
+</body>
+</html>

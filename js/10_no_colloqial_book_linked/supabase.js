@@ -189,15 +189,13 @@ class SupabaseClient {
       single: true
     });
 
-    const isStrong = rating === 6; // ✍ Write — knew it and can write it
-    const isCorrect = [1, 3].includes(rating) || isStrong;
+    const isCorrect = [1, 3].includes(rating);
     const now = new Date().toISOString();
-    const intervals = [0, 4, 8, 24, 72, 168]; // mastery 0→5, hours
 
     if (existing) {
       const streak = isCorrect ? (existing.streak || 0) + 1 : 0;
-      const delta = isStrong ? 2 : (isCorrect ? 1 : -1);
-      const mastery = Math.min(5, Math.max(0, (existing.mastery_level || 0) + delta));
+      const mastery = Math.min(5, Math.max(0, (existing.mastery_level || 0) + (isCorrect ? 1 : -1)));
+      const intervals = [0, 4, 8, 24, 72, 168];
       const nextReview = new Date(Date.now() + intervals[mastery] * 3600000).toISOString();
 
       return this.update('burmese_app_user_state', existing.id, {
@@ -209,16 +207,14 @@ class SupabaseClient {
         last_practiced_at: now
       });
     } else {
-      const mastery = isStrong ? 2 : (isCorrect ? 1 : 0);
-      const nextReview = new Date(Date.now() + intervals[mastery] * 3600000).toISOString();
       return this.insert('burmese_app_user_state', {
         word_id: wordId,
         word_type: 'word',
         correct_count: isCorrect ? 1 : 0,
         incorrect_count: isCorrect ? 0 : 1,
         streak: isCorrect ? 1 : 0,
-        mastery_level: mastery,
-        next_review_at: nextReview,
+        mastery_level: isCorrect ? 1 : 0,
+        next_review_at: now,
         last_practiced_at: now
       });
     }

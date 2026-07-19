@@ -10,7 +10,6 @@ import { WritingPractice } from './writing.js';
 import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
-import { CourseTab } from './course.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -27,7 +26,6 @@ class BurmeseStudyApp {
         <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
         <button class="tab-btn" data-tab="study"><span class="tab-icon">📖</span><span class="tab-label">Study</span></button>
         <button class="tab-btn" data-tab="srs"><span class="tab-icon">🔄</span><span class="tab-label">SRS</span></button>
-        <button class="tab-btn" data-tab="course"><span class="tab-icon">🗺</span><span class="tab-label">Course</span></button>
         <button class="tab-btn" data-tab="hubExplorer"><span class="tab-icon">🏷️</span><span class="tab-label">Groups</span></button>
         <button class="tab-btn" data-tab="more"><span class="tab-icon">⋯</span><span class="tab-label">More</span></button>
       </div>
@@ -36,7 +34,6 @@ class BurmeseStudyApp {
     this.tabs.study = new StudyTab(this);
     this.tabs.home = new HomeTab(this);
     this.tabs.srs = new SRSTab(this);
-    this.tabs.course = new CourseTab(this);
     this.tabs.more = new MoreTab(this);
     this.tabs.dialogues = new DialoguesTab(this);
     this.tabs.hubExplorer = new HubExplorer(this);
@@ -55,7 +52,6 @@ class BurmeseStudyApp {
 
   switchTab(tabId) {
     if (tabId === this.activeTab && tabId === 'study') this.tabs.study.phase = 'setup';
-    if (tabId === this.activeTab && tabId === 'course') this.tabs.course.view = 'home';
     this.activeTab = tabId;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
     this.renderTab();
