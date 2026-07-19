@@ -99,6 +99,7 @@ export class StudyTab {
 
   render(container) {
     if (this.phase === 'setup') {
+      if (this.autoStart) { this.autoStart = false; return this.startSession(container); }
       this.renderSetup(container);
     } else if (this.phase === 'quiz') {
       this.quiz.render(container);
@@ -111,6 +112,15 @@ export class StudyTab {
 
   // ─── SETUP SCREEN ───
   renderSetup(container) {
+    // Course mode: fetch the unit's word count once per unit for the chip + source row
+    if (this.courseUnit != null && this._unitCountFor !== this.courseUnit) {
+      this._unitCountFor = this.courseUnit;
+      this._unitCount = null;
+      db.getUnitWords(this.courseUnit).then(ws => {
+        this._unitCount = ws.length;
+        if (this.phase === 'setup' && this.courseUnit === this._unitCountFor) this.render(container);
+      }).catch(() => { this._unitCount = 0; });
+    }
     const TEST_TYPES = [
       { id: 'burmese', glyph: 'မ',  label: 'Myanmar' },
       { id: 'deva',    glyph: 'द',  label: 'Reading' },
@@ -127,6 +137,14 @@ export class StudyTab {
           </div>
         </div>
 
+        ${this.courseUnit != null ? `
+          <div id="course-chip" style="display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;
+            border:2px solid var(--blue);border-radius:22px;background:rgba(255,255,255,0.02);">
+            <span style="font-size:16px;">🗺</span>
+            <span style="flex:1;font-size:13px;font-weight:700;color:var(--blue);">Unit ${this.courseUnit}${this._unitCount ? ` · ${this._unitCount} words` : ''}</span>
+            <button id="course-chip-exit" style="width:24px;height:24px;border:none;border-radius:50%;background:rgba(255,255,255,0.08);
+              color:var(--text-muted);font-size:12px;font-family:var(--font);cursor:pointer;line-height:1;">✕</button>
+          </div>` : ''}
         <div class="section-label" style="color:var(--text-muted);">Test type</div>
         <div class="test-grid">
           ${TEST_TYPES.map(t => `
@@ -148,7 +166,8 @@ export class StudyTab {
         </div>
 
         ${SOURCES.map(s => {
-          const count = this.wordCounts[s.id] || (s.disabled ? 0 : '...');
+          const inCourse = this.courseUnit != null && s.id === 'colloquial';
+          const count = inCourse ? (this._unitCount ?? '...') : (this.wordCounts[s.id] || (s.disabled ? 0 : '...'));
           const active = this.selectedSource === s.id;
           return `
             <button class="source-card ${active ? 'active' : ''}" data-source="${s.id}"
@@ -156,7 +175,7 @@ export class StudyTab {
               <div class="sc-badge" style="background:${s.color};">${s.icon}</div>
               <div class="flex-1">
                 <div class="sc-name">${s.name}</div>
-                <div class="sc-avail">${s.disabled ? 'Coming soon' : `${count} words available`}</div>
+                <div class="sc-avail">${s.disabled ? 'Coming soon' : inCourse ? `Unit ${this.courseUnit} · ${count} words` : `${count} words available`}</div>
               </div>
               <div class="sc-count" style="${active ? `color:${s.color};` : ''}">${count || '—'}</div>
             </button>`;
@@ -189,6 +208,12 @@ export class StudyTab {
         this.selectedSource = this.selectedSource === src ? null : src;
         this.render(container);
       });
+    });
+
+    container.querySelector('#course-chip-exit')?.addEventListener('click', () => {
+      this.courseUnit = null;
+      this.onSessionComplete = null;
+      this.render(container);
     });
 
     container.querySelector('#start-btn').addEventListener('click', () => this.startSession(container));

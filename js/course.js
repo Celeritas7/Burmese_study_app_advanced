@@ -198,6 +198,7 @@ export class CourseTab {
         study.selectedSource = 'colloquial';
         study.courseUnit = u.unit; // unit-tagged words only (falls back to full deck)
         study.phase = 'setup';
+        study.autoStart = true; // skip setup — jump straight into the session
         // Phase 3: step completes when the session finishes, then the unit's
         // words are seeded into the SRS queue (due now).
         study.onSessionComplete = async () => {
