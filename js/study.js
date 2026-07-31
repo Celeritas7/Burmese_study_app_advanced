@@ -43,6 +43,8 @@ const WORD_TREE_CSS = `<style>
 .wt-studying{border-color:var(--purple) !important;box-shadow:0 0 0 4px rgba(206,130,255,0.18),0 0 22px -4px rgba(206,130,255,0.5) !important;}
 .wt-studying .wt-my{color:var(--purple) !important;}
 .wt-tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--purple);color:#1b0f26;font-size:8px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.wt-jump{margin-top:7px;padding:4px 10px;border-radius:8px;background:rgba(28,176,246,0.14);color:var(--blue);font-size:10px;font-weight:800;border:1px solid rgba(28,176,246,0.35);cursor:pointer;font-family:var(--font);}
+.wt-jump:hover{background:rgba(28,176,246,0.24);}
 </style>`;
 
 const MODES = [
@@ -532,7 +534,7 @@ export class StudyTab {
     container.querySelector('#btn-story').addEventListener('click', () => this.showStoryModal(word));
 
     // Word Tree modal
-    container.querySelector('#btn-tree').addEventListener('click', () => this.showWordTreeModal(word));
+    container.querySelector('#btn-tree').addEventListener('click', () => this.showWordTreeModal(word, container));
 
     // Edit modal
     container.querySelector('#btn-edit').addEventListener('click', () => this.showEditModal(word));
@@ -684,13 +686,14 @@ export class StudyTab {
     `, { borderColor: 'var(--purple)' });
   }
 
-  async showWordTreeModal(word) {
+  async showWordTreeModal(word, container) {
     const studying = word.burmese_word;
     let consonants = [], words = [];
     try {
       [consonants, words] = await Promise.all([db.getConsonants(), db.getWords()]);
     } catch (e) { console.error('Tree load error:', e); }
 
+    this.allWords = words;
     const { hubs } = buildGroups(consonants, words);
     const sorted = [...hubs].sort((a, b) => b.spokes.length - a.spokes.length);
     const totalSpokes = sorted.reduce((n, h) => n + h.spokes.length, 0);
@@ -704,6 +707,7 @@ export class StudyTab {
         <div class="wt-detail">
           <div class="wt-pron">${esc(toPronunciation(w, { tones:false }))}</div>
           <div class="wt-mean">${esc(meaning)}</div>
+          ${isStudy ? '' : `<button class="wt-jump" data-jump="${esc(w)}">Study this →</button>`}
         </div>
       </div>`;
     };
@@ -740,6 +744,22 @@ export class StudyTab {
 
     const forest = box.querySelector('#wt-forest');
     forest.addEventListener('click', e => {
+      const jump = e.target.closest('.wt-jump');
+      if (jump) {
+        const target = jump.dataset.jump;
+        let idx = this.words.findIndex(w => w.burmese_word === target);
+        if (idx < 0) {
+          const w = (this.allWords || []).find(w => w.burmese_word === target);
+          if (!w) return;
+          this.words.push(w);
+          idx = this.words.length - 1;
+        }
+        this.currentIdx = idx;
+        this.revealLevel = 0;
+        Modal.close();
+        this.render(container);
+        return;
+      }
       const chev = e.target.closest('.wt-chev');
       if (chev) {
         const sp = chev.closest('.wt-card').querySelector('.wt-spokes');
