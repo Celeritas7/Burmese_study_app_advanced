@@ -13,6 +13,8 @@ const WORD_TREE_CSS = `<style>
 .wt-forest::-webkit-scrollbar-track{background:transparent;}
 .wt-card{margin:8px 0;padding:6px 2px 10px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
 .wt-card.wt-has-study{border-color:rgba(206,130,255,0.4);}
+.wt-card.wt-synth{border-style:dashed;border-color:rgba(255,200,0,0.45);}
+.wt-badge.wt-synth-badge{background:rgba(255,200,0,0.12);color:var(--yellow);}
 .wt-meta{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:2px;}
 .wt-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(28,176,246,0.12);color:var(--blue);}
 .wt-gloss{font-size:10px;color:var(--text-muted);}
@@ -700,7 +702,7 @@ export class StudyTab {
     } catch (e) { console.error('Tree load error:', e); }
 
     this.allWords = words;
-    const { hubs } = buildGroups(consonants, words);
+    const { hubs, fillers } = buildGroups(consonants, words);
     const sorted = [...hubs].sort((a, b) => {
       const aS = a.word === studying || a.spokes.some(s => s.word === studying);
       const bS = b.word === studying || b.spokes.some(s => s.word === studying);
@@ -724,11 +726,11 @@ export class StudyTab {
       </div>`;
     };
 
-    const treeHTML = hub => {
+    const treeHTML = (hub, synth) => {
       const studyHub = hub.word === studying;
       const hasStudy = studyHub || hub.spokes.some(s => s.word === studying);
-      return `<div class="wt-card${hasStudy ? ' wt-has-study' : ''}">
-        <div class="wt-meta"><span class="wt-badge">${hub.spokes.length} spoke${hub.spokes.length!==1?'s':''}</span>
+      return `<div class="wt-card${hasStudy ? ' wt-has-study' : ''}${synth ? ' wt-synth' : ''}">
+        <div class="wt-meta"><span class="wt-badge${synth ? ' wt-synth-badge' : ''}">${synth ? 'component · ' : ''}${hub.spokes.length} spoke${hub.spokes.length!==1?'s':''}</span>
         <span class="wt-gloss">${esc(hub.meaning)}</span></div>
         <div class="wt-scroll"><div class="wt-tree"><ul><li>
           <div class="wt-hubwrap">
@@ -740,16 +742,48 @@ export class StudyTab {
       </div>`;
     };
 
+    // ─── hubless case: explain why + synthetic component trees ───
+    const isSylB = (str, pos) => { if (pos <= 0 || pos >= str.length) return true; const c = str.charCodeAt(pos); return c >= 0x1000 && c <= 0x1021; };
+    const isPart = (whole, part) => part.length < whole.length &&
+      ((whole.startsWith(part) && isSylB(whole, part.length)) ||
+       (whole.endsWith(part) && isSylB(whole, whole.length - part.length)));
+    let whyHTML = '', synthCards = '';
+    if (!inTree) {
+      const comps = words.filter(w => w.burmese_word !== studying && isPart(studying, w.burmese_word));
+      if (!comps.length) {
+        whyHTML = `${esc(studying)} is not in any hub — none of its parts exist as words in your list`;
+      } else {
+        const reasons = comps.map(c => {
+          const cw = c.burmese_word;
+          if (c.is_filler) return `${esc(cw)} exists but is flagged filler`;
+          const af = fillers.find(f => f.id === c.id);
+          if (af) return `${esc(cw)} exists but is auto-filler (${af.reason})`;
+          const asSpoke = hubs.find(h => h.spokes.some(s => s.word === cw));
+          if (asSpoke) return `${esc(cw)} exists but is already a spoke under ${esc(asSpoke.word)}`;
+          return `${esc(cw)} is in your list but formed no hub`;
+        });
+        whyHTML = `${esc(studying)} is not in any hub — ${reasons.join(' · ')}`;
+        // synthetic tree per component: every word containing it, fillers included
+        synthCards = comps.map(c => {
+          const cw = c.burmese_word;
+          const spokes = words
+            .filter(w => w.burmese_word !== cw && isPart(w.burmese_word, cw))
+            .map(w => ({ word: w.burmese_word, meaning: w.english_meaning || '' }));
+          return spokes.length ? treeHTML({ word: cw, meaning: c.english_meaning || '', spokes }, true) : '';
+        }).join('');
+      }
+    }
+
     const box = Modal.show(`
       <div class="modal-header">
         <div class="modal-title" style="color:var(--green);">🌿 Word Tree</div>
         <button class="modal-close" data-modal-close>✕ Close</button>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
-        All hubs · ${sorted.length} hubs · ${totalSpokes} spokes · tap a word for details${inTree ? '' : ` · <span style="color:var(--yellow);">${esc(studying)} is not in any hub</span>`}
+        All hubs · ${sorted.length} hubs · ${totalSpokes} spokes · tap a word for details${inTree ? '' : ` · <span style="color:var(--yellow);">${whyHTML}</span>`}
       </div>
       <div class="wt-forest" id="wt-forest">
-        ${sorted.length ? sorted.map(treeHTML).join('') : '<div style="color:var(--text-muted);padding:24px;text-align:center;">No hubs generated</div>'}
+        ${synthCards}${sorted.length ? sorted.map(h => treeHTML(h)).join('') : '<div style="color:var(--text-muted);padding:24px;text-align:center;">No hubs generated</div>'}
       </div>
       ${WORD_TREE_CSS}
     `, { borderColor: 'var(--green)' });
