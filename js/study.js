@@ -703,6 +703,40 @@ export class StudyTab {
 
     this.allWords = words;
     const { hubs, fillers } = buildGroups(consonants, words);
+
+    // ─── virtual hubs: recurring syllable chunks that have no word row ───
+    const isSylB = (str, pos) => { if (pos <= 0 || pos >= str.length) return true; const c = str.charCodeAt(pos); return c >= 0x1000 && c <= 0x1021; };
+    const consCount = s => [...s].filter(c => { const k = c.charCodeAt(0); return k >= 0x1000 && k <= 0x1021; }).length;
+    {
+      const existing = new Set(words.map(w => (w.burmese_word || '').trim()));
+      const claimed = new Set();
+      hubs.forEach(h => { claimed.add(h.word); h.spokes.forEach(s => claimed.add(s.word)); });
+      const free = words.filter(w => !w.is_filler && !claimed.has((w.burmese_word || '').trim()));
+      const chunkMap = new Map(); // chunk -> Map(word -> meaning)
+      for (const w of free) {
+        const bw = (w.burmese_word || '').trim();
+        for (let pos = 1; pos < bw.length; pos++) {
+          if (!isSylB(bw, pos)) continue;
+          for (const chunk of [bw.slice(0, pos), bw.slice(pos)]) {
+            if (existing.has(chunk) || !consCount(chunk)) continue;
+            if (!chunkMap.has(chunk)) chunkMap.set(chunk, new Map());
+            chunkMap.get(chunk).set(bw, w.english_meaning || '');
+          }
+        }
+      }
+      // need 2+ words sharing the chunk; skip particle-like chunks (1 consonant grabbing 10+ words)
+      const cands = [...chunkMap.entries()].filter(([c, m]) => m.size >= 2 && !(consCount(c) <= 1 && m.size >= 10));
+      cands.sort((a, b) => b[0].length - a[0].length || b[1].size - a[1].size); // longer (more specific) chunks claim first
+      const taken = new Set();
+      for (const [chunk, m] of cands) {
+        const spokes = [...m.entries()].filter(([wd]) => !taken.has(wd)).map(([word, meaning]) => ({ word, meaning }));
+        if (spokes.length < 2) continue;
+        spokes.forEach(s => taken.add(s.word));
+        hubs.push({ id: null, word: chunk, meaning: '', virtual: true, spokes });
+      }
+    }
+    const vCount = hubs.filter(h => h.virtual).length;
+
     const sorted = [...hubs].sort((a, b) => {
       const aS = a.word === studying || a.spokes.some(s => s.word === studying);
       const bS = b.word === studying || b.spokes.some(s => s.word === studying);
@@ -713,28 +747,29 @@ export class StudyTab {
     const totalSpokes = sorted.reduce((n, h) => n + h.spokes.length, 0);
     const esc = s => (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-    const nodeHTML = (w, meaning, cls) => {
+    const nodeHTML = (w, meaning, cls, virtual) => {
       const isStudy = w === studying;
       return `<div class="wt-node ${cls}${isStudy ? ' wt-studying' : ''}" tabindex="0">
         ${isStudy ? '<span class="wt-tag">studying</span>' : ''}
         <span class="wt-my">${esc(w)}</span>
         <div class="wt-detail">
           <div class="wt-pron">${esc(toPronunciation(w, { tones:false }))}</div>
-          <div class="wt-mean">${esc(meaning)}</div>
-          ${isStudy ? '' : `<button class="wt-jump" data-jump="${esc(w)}">Study this →</button>`}
+          <div class="wt-mean">${virtual ? '<em style="color:var(--text-muted);">not in your list</em>' : esc(meaning)}</div>
+          ${isStudy || virtual ? '' : `<button class="wt-jump" data-jump="${esc(w)}">Study this →</button>`}
         </div>
       </div>`;
     };
 
     const treeHTML = (hub, synth) => {
+      const dashed = synth || hub.virtual;
       const studyHub = hub.word === studying;
       const hasStudy = studyHub || hub.spokes.some(s => s.word === studying);
-      return `<div class="wt-card${hasStudy ? ' wt-has-study' : ''}${synth ? ' wt-synth' : ''}">
-        <div class="wt-meta"><span class="wt-badge${synth ? ' wt-synth-badge' : ''}">${synth ? 'component · ' : ''}${hub.spokes.length} spoke${hub.spokes.length!==1?'s':''}</span>
-        <span class="wt-gloss">${esc(hub.meaning)}</span></div>
+      return `<div class="wt-card${hasStudy ? ' wt-has-study' : ''}${dashed ? ' wt-synth' : ''}">
+        <div class="wt-meta"><span class="wt-badge${dashed ? ' wt-synth-badge' : ''}">${hub.virtual ? 'virtual · ' : synth ? 'component · ' : ''}${hub.spokes.length} spoke${hub.spokes.length!==1?'s':''}</span>
+        <span class="wt-gloss">${hub.virtual ? 'shared part — no entry yet' : esc(hub.meaning)}</span></div>
         <div class="wt-scroll"><div class="wt-tree"><ul><li>
           <div class="wt-hubwrap">
-            ${nodeHTML(hub.word, hub.meaning, 'wt-hub')}
+            ${nodeHTML(hub.word, hub.meaning, 'wt-hub', hub.virtual)}
             <div class="wt-chev" title="Fold">▾</div>
           </div>
           <ul class="wt-spokes">${hub.spokes.map(s => `<li>${nodeHTML(s.word, s.meaning, 'wt-spoke')}</li>`).join('')}</ul>
@@ -743,7 +778,6 @@ export class StudyTab {
     };
 
     // ─── hubless case: explain why + synthetic component trees ───
-    const isSylB = (str, pos) => { if (pos <= 0 || pos >= str.length) return true; const c = str.charCodeAt(pos); return c >= 0x1000 && c <= 0x1021; };
     // part matches anywhere inside whole, as long as both ends land on syllable boundaries
     const isPart = (whole, part) => {
       whole = (whole || '').trim(); part = (part || '').trim();
@@ -792,7 +826,7 @@ export class StudyTab {
         <button class="modal-close" data-modal-close>✕ Close</button>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
-        All hubs · ${sorted.length} hubs · ${totalSpokes} spokes · tap a word for details${inTree ? '' : ` · <span style="color:var(--yellow);">${whyHTML}</span>`}
+        All hubs · ${sorted.length} hubs${vCount ? ` (${vCount} virtual)` : ''} · ${totalSpokes} spokes · tap a word for details${inTree ? '' : ` · <span style="color:var(--yellow);">${whyHTML}</span>`}
       </div>
       <div class="wt-forest" id="wt-forest">
         ${synthCards}${sorted.length ? sorted.map(h => treeHTML(h)).join('') : '<div style="color:var(--text-muted);padding:24px;text-align:center;">No hubs generated</div>'}
