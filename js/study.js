@@ -744,9 +744,17 @@ export class StudyTab {
 
     // ─── hubless case: explain why + synthetic component trees ───
     const isSylB = (str, pos) => { if (pos <= 0 || pos >= str.length) return true; const c = str.charCodeAt(pos); return c >= 0x1000 && c <= 0x1021; };
-    const isPart = (whole, part) => part.length < whole.length &&
-      ((whole.startsWith(part) && isSylB(whole, part.length)) ||
-       (whole.endsWith(part) && isSylB(whole, whole.length - part.length)));
+    // part matches anywhere inside whole, as long as both ends land on syllable boundaries
+    const isPart = (whole, part) => {
+      whole = (whole || '').trim(); part = (part || '').trim();
+      if (!part || part.length >= whole.length) return false;
+      let idx = whole.indexOf(part);
+      while (idx !== -1) {
+        if (isSylB(whole, idx) && isSylB(whole, idx + part.length)) return true;
+        idx = whole.indexOf(part, idx + 1);
+      }
+      return false;
+    };
     let whyHTML = '', synthCards = '';
     if (!inTree) {
       const comps = words.filter(w => w.burmese_word !== studying && isPart(studying, w.burmese_word));
@@ -765,11 +773,15 @@ export class StudyTab {
         whyHTML = `${esc(studying)} is not in any hub — ${reasons.join(' · ')}`;
         // synthetic tree per component: every word containing it, fillers included
         synthCards = comps.map(c => {
-          const cw = c.burmese_word;
+          const cw = (c.burmese_word || '').trim();
           const spokes = words
-            .filter(w => w.burmese_word !== cw && isPart(w.burmese_word, cw))
-            .map(w => ({ word: w.burmese_word, meaning: w.english_meaning || '' }));
-          return spokes.length ? treeHTML({ word: cw, meaning: c.english_meaning || '', spokes }, true) : '';
+            .filter(w => w.burmese_word !== c.burmese_word && isPart(w.burmese_word, cw))
+            .map(w => ({ word: (w.burmese_word || '').trim(), meaning: w.english_meaning || '' }));
+          // keep the studied word visible even if we cap a huge component (e.g. အ)
+          const capped = spokes.length > 30
+            ? spokes.filter(s => s.word === studying).concat(spokes.filter(s => s.word !== studying).slice(0, 29))
+            : spokes;
+          return capped.length ? treeHTML({ word: cw, meaning: c.english_meaning || '', spokes: capped }, true) : '';
         }).join('');
       }
     }
