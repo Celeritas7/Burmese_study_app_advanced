@@ -7,13 +7,19 @@ import { getSettings } from './settings.js';
 import { buildGroups } from './hubexplorer.js';
 
 const WORD_TREE_CSS = `<style>
-.wt-forest{max-height:60vh;overflow-y:auto;margin:0 -4px;}
+.wt-forest{max-height:60vh;overflow-y:auto;margin:0 -4px;scrollbar-width:thin;scrollbar-color:var(--border-light,#2A3A42) transparent;}
+.wt-forest::-webkit-scrollbar{width:6px;}
+.wt-forest::-webkit-scrollbar-thumb{background:var(--border-light,#2A3A42);border-radius:3px;}
+.wt-forest::-webkit-scrollbar-track{background:transparent;}
 .wt-card{margin:8px 0;padding:6px 2px 10px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
 .wt-card.wt-has-study{border-color:rgba(206,130,255,0.4);}
 .wt-meta{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:2px;}
 .wt-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(28,176,246,0.12);color:var(--blue);}
 .wt-gloss{font-size:10px;color:var(--text-muted);}
-.wt-scroll{overflow-x:auto;padding-bottom:4px;}
+.wt-scroll{overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--border-light,#2A3A42) transparent;}
+.wt-scroll::-webkit-scrollbar{height:5px;}
+.wt-scroll::-webkit-scrollbar-thumb{background:var(--border-light,#2A3A42);border-radius:3px;}
+.wt-scroll::-webkit-scrollbar-track{background:transparent;}
 .wt-tree{display:inline-block;min-width:100%;padding:6px 10px 2px;text-align:center;}
 .wt-tree ul{display:flex;justify-content:center;padding-top:18px;position:relative;list-style:none;}
 .wt-tree li{list-style:none;position:relative;padding:18px 6px 0;text-align:center;}
@@ -695,7 +701,13 @@ export class StudyTab {
 
     this.allWords = words;
     const { hubs } = buildGroups(consonants, words);
-    const sorted = [...hubs].sort((a, b) => b.spokes.length - a.spokes.length);
+    const sorted = [...hubs].sort((a, b) => {
+      const aS = a.word === studying || a.spokes.some(s => s.word === studying);
+      const bS = b.word === studying || b.spokes.some(s => s.word === studying);
+      if (aS !== bS) return aS ? -1 : 1;
+      return b.spokes.length - a.spokes.length;
+    });
+    const inTree = sorted.length && (sorted[0].word === studying || sorted[0].spokes.some(s => s.word === studying));
     const totalSpokes = sorted.reduce((n, h) => n + h.spokes.length, 0);
     const esc = s => (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -734,7 +746,7 @@ export class StudyTab {
         <button class="modal-close" data-modal-close>✕ Close</button>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
-        All hubs · ${sorted.length} hubs · ${totalSpokes} spokes · tap a word for details
+        All hubs · ${sorted.length} hubs · ${totalSpokes} spokes · tap a word for details${inTree ? '' : ` · <span style="color:var(--yellow);">${esc(studying)} is not in any hub</span>`}
       </div>
       <div class="wt-forest" id="wt-forest">
         ${sorted.length ? sorted.map(treeHTML).join('') : '<div style="color:var(--text-muted);padding:24px;text-align:center;">No hubs generated</div>'}
@@ -772,11 +784,18 @@ export class StudyTab {
       if (node) node.classList.toggle('wt-open');
     });
 
+    // start each tree centered on its hub (wide trees otherwise open scrolled to the left edge)
+    forest.querySelectorAll('.wt-scroll').forEach(el => {
+      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+    });
     const studyNode = forest.querySelector('.wt-studying');
     if (studyNode) {
       studyNode.classList.add('wt-open');
       const card = studyNode.closest('.wt-card');
       forest.scrollTop += card.getBoundingClientRect().top - forest.getBoundingClientRect().top - 12;
+      // center horizontally on the studied word, not the hub
+      const sc = card.querySelector('.wt-scroll');
+      sc.scrollLeft += studyNode.getBoundingClientRect().left - sc.getBoundingClientRect().left - (sc.clientWidth - studyNode.offsetWidth) / 2;
     }
   }
 
