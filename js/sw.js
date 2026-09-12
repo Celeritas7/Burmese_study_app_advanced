@@ -17,7 +17,7 @@ const ASSETS = [
   '/js/writing.js',
   '/js/sentences.js',
   '/js/settings.js',
-  'https://celeritas7.github.io/language-utils/burmese.js?v=7'
+  'https://celeritas7.github.io/language-utils/burmese.js?v=8'
 ];
 
 // Install — cache all assets
