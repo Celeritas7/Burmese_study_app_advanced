@@ -1,788 +1,662 @@
 <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Belajar Melayu</title>
+<title>Kata Kita</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Noto+Naskh+Arabic:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Naskh+Arabic:wght@500;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: phone-width column (max 440px) with a fixed bottom tab bar — mirrors the Burmese app shell.
-   Dark-only by design, matching the existing app's tokens. */
+/* Layout: one phone column; songket-patterned header band, content sheet, floating dock.
+   Palette from a Malaysian kitchen & loom: songket indigo, kunyit gold, pandan green, sambal red. */
 :root {
-  color-scheme: dark;
-  --bg: #131F24;
-  --surface: #1A2C33;
-  --elevated: #0F1A1F;
-  --border: #1E2D33;
-  --border-light: #2A3A42;
-  --text: #EAEEF3;
-  --text-muted: #6A8A98;
-  --text-dim: #3A5060;
-  --blue: #1CB0F6;
-  --green: #58CC02;
-  --yellow: #FFC800;
-  --pink: #FF6B8A;
-  --purple: #CE82FF;
-  --orange: #FF9600;
-  --red: #FF4B4B;
-  --card-bg: linear-gradient(150deg, #FFFCF0, #FFF3D6);
-  --card-border: #E5C07B;
-  --card-text: #1A1612;
-  --card-sub: rgba(26,22,18,0.5);
-  --on-accent: #131F24;
-  --radius: 14px;
-  --font: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --jawi: 'Noto Naskh Arabic', 'Geeza Pro', 'Arial', serif;
-  /* affix colours (Imbuhan) */
-  --pre: #1CB0F6;
-  --root: #58CC02;
-  --suf: #FF9600;
+  --bg: #EFF2EC;          /* pale pandan wash */
+  --sheet: #FAFBF8;
+  --ink: #1B2140;         /* songket indigo */
+  --ink-2: #545B78;
+  --ink-3: #8B90A6;
+  --line: #DCE1D8;
+  --gold: #D9961A;        /* kunyit */
+  --gold-soft: #F6E7C4;
+  --pandan: #2E8B57;
+  --pandan-soft: #D8EEDF;
+  --sambal: #CF3E2C;
+  --sambal-soft: #F7DCD6;
+  --band: #1B2140;
+  --band-ink: #F4E2B5;
+  --soil: #8A5A3B;
+  --pot: #C46A43;
+  --leaf: #3C9A5F;
+  --card: #FFFFFF;
+  --shadow: 0 18px 40px -22px rgba(27,33,64,.45);
+  --dock: #1B2140;
+  --dock-ink: #FAFBF8;
+  --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --jawi: 'Noto Naskh Arabic', 'Geeza Pro', serif;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1226; --sheet: #161A33; --ink: #ECEEF6; --ink-2: #B3B8CF; --ink-3: #7C82A0; --line: #272C4A;
+  --gold: #F0B23A; --gold-soft: #3A3120; --pandan: #4FC07D; --pandan-soft: #183428; --sambal: #F0624F; --sambal-soft: #3D1E1E;
+  --band: #0A0C1C; --band-ink: #F0B23A; --soil: #6E4A33; --pot: #A85A39; --leaf: #4FB574; --card: #1D2240;
+  --shadow: 0 18px 40px -20px rgba(0,0,0,.7); --dock: #070915; --dock-ink: #ECEEF6; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F1226; --sheet: #161A33; --ink: #ECEEF6; --ink-2: #B3B8CF; --ink-3: #7C82A0; --line: #272C4A;
+  --gold: #F0B23A; --gold-soft: #3A3120; --pandan: #4FC07D; --pandan-soft: #183428; --sambal: #F0624F; --sambal-soft: #3D1E1E;
+  --band: #0A0C1C; --band-ink: #F0B23A; --soil: #6E4A33; --pot: #A85A39; --leaf: #4FB574; --card: #1D2240;
+  --shadow: 0 18px 40px -20px rgba(0,0,0,.7); --dock: #070915; --dock-ink: #ECEEF6; color-scheme: dark; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
-button { font-family: var(--font); color: inherit; }
-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-#app { max-width: 440px; margin: 0 auto; min-height: 100%; position: relative; }
-.content { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
-.pad { padding: 18px 16px; }
-.pad-sm { padding: 12px 16px; }
-.muted { color: var(--text-muted); }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .jawi { font-family: var(--jawi); direction: rtl; }
-.section-label { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 9px; color: var(--text-muted); }
-.proto-chip { display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: rgba(255,200,0,0.12); color: var(--yellow); }
+#app { max-width: 440px; margin: 0 auto; min-height: 100%; position: relative; padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
-/* ═══ TAB BAR ═══ */
-.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; background: var(--elevated); border-top: 2px solid var(--border); z-index: 50; display: flex; justify-content: space-around; padding: 8px 4px calc(12px + env(safe-area-inset-bottom, 0px)); }
-.tab-btn { background: none; border: 2px solid transparent; border-radius: var(--radius); padding: 5px 0; width: 62px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.tab-icon { font-size: 18px; }
-.tab-label { font-size: 10px; font-weight: 800; color: var(--text-muted); }
-.tab-btn.active { background: rgba(28,176,246,0.08); border-color: rgba(28,176,246,0.2); }
-.tab-btn.active .tab-label { color: var(--blue); }
+/* ── songket band ── */
+.band { position: relative; background: var(--band); color: var(--band-ink); padding: 18px 20px 46px; overflow: hidden; }
+.band::before { content: ''; position: absolute; inset: 0; opacity: .22;
+  background:
+    linear-gradient(45deg, transparent 46%, var(--band-ink) 46% 54%, transparent 54%) 0 0 / 22px 22px,
+    linear-gradient(-45deg, transparent 46%, var(--band-ink) 46% 54%, transparent 54%) 0 0 / 22px 22px; }
+.band::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px;
+  background: repeating-linear-gradient(90deg, var(--gold) 0 10px, transparent 10px 14px, var(--sambal) 14px 18px, transparent 18px 22px); opacity: .9; }
+.band > * { position: relative; }
+.band-top { display: flex; align-items: center; gap: 10px; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -.3px; flex: 1; }
+.brand small { font-family: var(--jawi); font-size: 16px; opacity: .8; margin-left: 6px; }
+.band-btn { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--band-ink) 40%, transparent); display: grid; place-items: center; color: var(--band-ink); }
+.band h1 { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: .98; letter-spacing: -1.2px; margin-top: 22px; text-wrap: balance; }
+.band .sub { font-size: 14px; font-weight: 600; opacity: .75; margin-top: 6px; }
+.sheet > * { min-width: 0; }
+.band.compact { padding-bottom: 38px; }
+.band.compact h1 { font-size: 30px; margin-top: 14px; }
+.sheet { background: var(--bg); margin-top: -24px; border-radius: 24px 24px 0 0; position: relative; padding: 22px 16px 8px; display: grid; gap: 16px; }
 
-/* ═══ HOME ═══ */
-.home { position: relative; overflow: hidden; min-height: calc(100vh - 90px); }
-.home-header { position: relative; display: flex; align-items: center; gap: 10px; padding: 16px 16px 8px; }
-.home-logo { width: 36px; height: 36px; border-radius: 10px; background: var(--yellow); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; color: var(--on-accent); }
-.home-brand { font-size: 17px; font-weight: 900; flex: 1; }
-.pill-btn { display: flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 12px; background: var(--surface); border: 2px solid var(--border); font-size: 12px; font-weight: 800; cursor: pointer; }
-.home-wm { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.home-wm span { position: absolute; font-family: var(--jawi); font-weight: 700; line-height: 1; color: var(--focus); opacity: 0.07; }
-.home-hero { position: relative; padding: 18px 22px 10px; }
-.home-done { font-size: 13px; font-weight: 800; color: var(--green); margin-bottom: 14px; }
-.home-glyph { min-width: 88px; height: 88px; padding: 0 14px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; color: var(--focus); margin-bottom: 14px; background: color-mix(in srgb, var(--focus) 16%, var(--surface)); border: 2px solid color-mix(in srgb, var(--focus) 35%, transparent); box-shadow: 0 0 40px color-mix(in srgb, var(--focus) 18%, transparent); }
-.home-focus-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; color: var(--focus); margin-bottom: 6px; }
-.home-title { font-size: 34px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.05; margin-bottom: 8px; text-wrap: balance; }
-.home-sub { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-.home-meta { font-size: 13px; color: var(--text-muted); font-weight: 700; }
-.home-start { display: flex; align-items: center; gap: 16px; margin-top: 22px; background: none; border: none; cursor: pointer; padding: 0; }
-.home-play { width: 64px; height: 64px; border-radius: 50%; background: var(--focus); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--on-accent); padding-left: 5px; box-shadow: 0 0 30px color-mix(in srgb, var(--focus) 50%, transparent); }
-.home-start-label { font-size: 19px; font-weight: 900; }
-.wotd { position: relative; margin: 26px 16px 0; padding: 14px 16px; border-radius: 18px; background: var(--surface); border: 2px solid var(--border); display: flex; gap: 14px; align-items: center; cursor: pointer; text-align: left; width: calc(100% - 32px); }
-.wotd-jawi { font-size: 30px; color: var(--yellow); min-width: 64px; text-align: center; }
-.wotd-word { font-size: 20px; font-weight: 900; }
-.wotd-mean { font-size: 13px; color: var(--text-muted); font-weight: 700; }
-.streak-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 14px 16px 0; }
-.streak-day { text-align: center; font-size: 10px; font-weight: 800; color: var(--text-muted); }
-.streak-dot { height: 30px; border-radius: 9px; margin-top: 4px; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; }
-.streak-dot.on { background: rgba(255,150,0,0.16); border-color: rgba(255,150,0,0.5); }
+.eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink-3); }
+.h2 { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -.4px; }
+.muted { color: var(--ink-2); }
 
-/* ═══ STUDY SETUP ═══ */
-.setup-header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
-.setup-back { width: 40px; height: 40px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); font-size: 18px; cursor: pointer; }
-.setup-h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.3px; }
-.setup-h2 { font-size: 13px; color: var(--blue); font-weight: 700; }
-.test-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 22px; }
-.test-card { padding: 16px 2px 12px; border-radius: 16px; text-align: center; cursor: pointer; background: var(--surface); border: 2px solid var(--border); }
-.test-card.active { background: var(--blue); border-color: var(--blue); }
-.tc-glyph { font-size: 22px; font-weight: 900; line-height: 1.1; height: 28px; display: flex; align-items: center; justify-content: center; }
-.tc-label { font-size: 11px; font-weight: 800; margin-top: 8px; color: var(--text-muted); }
-.test-card.active .tc-glyph, .test-card.active .tc-label { color: #fff; }
-.num-row { display: flex; gap: 7px; margin-bottom: 22px; }
-.num-btn { flex: 1; padding: 10px 0; border-radius: 12px; background: var(--surface); border: 2px solid var(--border); color: var(--text-muted); font-size: 15px; font-weight: 800; cursor: pointer; }
-.num-btn.active { background: rgba(28,176,246,0.08); border-color: var(--blue); color: var(--blue); }
-.source-card { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px; border-radius: 18px; background: var(--surface); border: 2px solid var(--border); cursor: pointer; text-align: left; margin-bottom: 10px; }
-.source-card.active { border-color: var(--c); }
-.sc-badge { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; background: var(--c); }
-.sc-name { font-size: 16px; font-weight: 900; }
-.sc-avail { font-size: 12px; color: var(--text-muted); font-weight: 700; }
-.sc-count { min-width: 50px; padding: 11px 8px; border-radius: 12px; background: var(--bg); text-align: center; font-size: 18px; font-weight: 900; }
-.source-card.active .sc-count { color: var(--c); }
-.btn-primary { width: 100%; padding: 15px; background: var(--blue); color: var(--on-accent); border: none; border-radius: var(--radius); cursor: pointer; font-size: 16px; font-weight: 900; margin-top: 8px; }
-.btn-primary:active { opacity: 0.85; }
+/* ── home ── */
+.peri { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 18px; padding: 18px; position: relative; overflow: hidden; }
+.peri .ms { font-family: var(--display); font-weight: 700; font-size: 21px; line-height: 1.2; margin: 8px 0 6px; text-wrap: balance; }
+.peri .lit { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.peri .use { font-size: 13px; margin-top: 8px; font-weight: 600; }
+.peri .use b { color: var(--pandan); }
+.peri-mark { position: absolute; right: -4px; bottom: -18px; font-family: var(--jawi); font-size: 64px; color: var(--gold); opacity: .12; pointer-events: none; }
+.today { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tcard { text-align: left; border-radius: 18px; padding: 16px; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+.tcard .num { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.tcard .lbl { font-weight: 700; font-size: 14px; line-height: 1.25; }
+.tcard .go { font-size: 12px; font-weight: 800; }
+.t-learn { background: var(--ink); color: var(--sheet); grid-row: span 2; min-height: 274px; }
+.t-learn .stack { display: grid; gap: 6px; }
+.t-learn .chip { display: inline-block; background: color-mix(in srgb, var(--sheet) 12%, transparent); padding: 5px 9px; border-radius: 6px; font-weight: 700; font-size: 13px; margin: 0 4px 4px 0; }
+.t-garden { background: var(--pandan-soft); color: var(--ink); }
+.t-garden .num { color: var(--pandan); }
+.t-map { background: var(--gold-soft); color: var(--ink); }
+.t-map .num { color: var(--gold); font-size: 26px; }
+.mamak-cta { display: flex; align-items: center; gap: 14px; text-align: left; background: var(--sheet); border: 1.5px dashed var(--sambal); border-radius: 18px; padding: 14px 16px; }
+.mamak-cta .ic { width: 46px; height: 46px; border-radius: 12px; background: var(--sambal-soft); display: grid; place-items: center; font-size: 22px; flex: none; }
+.mamak-cta b { font-family: var(--display); font-size: 17px; }
 
-/* ═══ FLASHCARD ═══ */
-.fc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.fc-title { font-size: 13px; font-weight: 800; }
-.fc-title span { color: var(--text-muted); font-size: 12px; margin-left: 4px; }
-.fc-close { color: var(--text-muted); font-size: 16px; background: none; border: none; cursor: pointer; padding: 4px; }
-.fc-counter { text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; }
-.mode-row { display: flex; gap: 5px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
-.mode-btn { padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; border: 2px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; }
-.mode-btn.active { border-color: var(--blue); background: rgba(28,176,246,0.08); color: var(--blue); }
-.word-card { position: relative; background: var(--card-bg); border-radius: 18px; padding: 30px 18px 22px; text-align: center; margin-bottom: 12px; border: 3px solid var(--card-border); }
-.word-card-text { font-size: 40px; font-weight: 900; color: var(--card-text); line-height: 1.15; overflow-wrap: anywhere; }
-.word-card-text.jawi { font-size: 46px; line-height: 1.5; }
-.word-card-sub { font-size: 14px; color: var(--card-sub); margin-top: 8px; font-weight: 700; }
-.reg-badge { position: absolute; top: 10px; left: 12px; font-size: 9px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 7px; background: rgba(255,150,0,0.18); color: #A35A00; }
-.speak-btn { position: absolute; top: 8px; right: 10px; width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--card-border); background: rgba(255,255,255,0.6); cursor: pointer; font-size: 16px; color: var(--card-text); }
-.reveal-box { background: var(--surface); border-radius: 16px; padding: 16px 18px; margin-bottom: 12px; border: 2px solid var(--border); min-height: 80px; cursor: pointer; width: 100%; text-align: left; display: block; }
-.reveal-placeholder { text-align: center; padding: 22px 0; font-size: 14px; color: var(--text-muted); font-weight: 700; }
-.reveal-layer { margin-bottom: 13px; animation: fadeSlide .25s ease; }
-.reveal-layer:last-child { margin-bottom: 0; }
-.reveal-label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-.reveal-bar { width: 4px; height: 14px; border-radius: 2px; }
-.reveal-value { padding-left: 10px; line-height: 1.5; font-weight: 700; }
-.reveal-more { text-align: center; font-size: 12px; color: var(--text-muted); padding-top: 4px; font-weight: 700; }
-@keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.syl b { color: var(--yellow); }
-.parts { display: inline-flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-.part { padding: 2px 7px; border-radius: 7px; font-weight: 900; font-size: 15px; }
-.part.pre { background: rgba(28,176,246,0.15); color: var(--pre); }
-.part.root { background: rgba(88,204,2,0.15); color: var(--root); }
-.part.suf { background: rgba(255,150,0,0.15); color: var(--suf); }
-.plus { color: var(--text-dim); font-weight: 900; }
-.action-row { display: flex; gap: 7px; margin-bottom: 12px; }
-.btn-story { flex: 1; padding: 12px; border-radius: var(--radius); background: var(--purple); font-size: 13px; font-weight: 900; color: var(--on-accent); border: none; cursor: pointer; }
-.btn-action { width: 46px; border-radius: var(--radius); background: var(--surface); border: 2px solid var(--border); font-size: 16px; cursor: pointer; }
-.rating-title { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 700; }
-.rating-row { display: flex; justify-content: center; gap: 7px; margin-bottom: 14px; flex-wrap: wrap; }
-.rate { width: 42px; height: 42px; border-radius: 21px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; background: color-mix(in srgb, var(--rc) 10%, transparent); border: 2px solid var(--border); color: var(--rc); }
-.rate.nope { border-radius: 12px; background: rgba(255,75,75,0.15); border-color: rgba(255,75,75,0.4); }
-.rate.active { background: var(--rc); border-color: var(--rc); color: #fff; }
-.nav-row { display: flex; gap: 7px; margin-bottom: 8px; }
-.btn-nav { flex: 1; padding: 13px; border-radius: var(--radius); font-size: 14px; font-weight: 800; cursor: pointer; border: none; }
-.btn-prev { background: var(--surface); border: 2px solid var(--border); }
-.btn-prev:disabled { color: var(--text-dim); cursor: not-allowed; }
-.btn-shuffle { flex: none; width: 52px; border-radius: var(--radius); background: var(--surface); border: 2px solid var(--border); font-size: 20px; cursor: pointer; }
-.btn-next { background: var(--blue); color: var(--on-accent); font-weight: 900; }
-.progress-bar { height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s ease; }
+/* ── learn: swipe deck ── */
+.deck-head { display: flex; align-items: center; gap: 10px; }
+.deck-head .h2 { flex: 1; }
+.pips { display: flex; gap: 4px; }
+.pips i { width: 16px; height: 6px; border-radius: 3px; background: var(--line); }
+.pips i.k { background: var(--pandan); } .pips i.f { background: var(--sambal); } .pips i.c { background: var(--ink); }
+.deck { position: relative; height: clamp(270px, calc(100vh - 500px), 420px); perspective: 1200px; touch-action: pan-y; }
+.card { position: absolute; inset: 0; border-radius: 26px; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.2,.8,.2,1); user-select: none; }
+.card.behind { transform: translateY(14px) scale(.95); filter: brightness(.97); }
+.card.behind2 { transform: translateY(28px) scale(.9); filter: brightness(.94); }
+.card.dragging { transition: none; }
+.face { position: absolute; inset: 0; border-radius: 26px; background: var(--card); box-shadow: var(--shadow); border: 1.5px solid var(--line); backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 22px; display: flex; flex-direction: column; overflow: hidden; }
+.face.back { transform: rotateY(180deg); overflow-y: auto; }
+.card.flipped .front-wrap { transform: rotateY(180deg); }
+.front-wrap { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.3,.9,.3,1); }
+.face .strip { position: absolute; left: 0; right: 0; top: 0; height: 8px; background: repeating-linear-gradient(90deg, var(--gold) 0 10px, var(--ink) 10px 13px); }
+.face .meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; color: var(--ink-3); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+.tag { padding: 3px 8px; border-radius: 6px; background: var(--gold-soft); color: var(--ink); letter-spacing: .5px; }
+.big { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; }
+.big .w { font-family: var(--display); font-weight: 800; font-size: 54px; letter-spacing: -1.6px; line-height: 1; overflow-wrap: anywhere; }
+.big .j { font-family: var(--jawi); font-size: 34px; color: var(--ink-3); }
+.big .hint { font-size: 13px; font-weight: 700; color: var(--ink-3); }
+.speak { width: 44px; height: 44px; border-radius: 50%; background: var(--gold-soft); display: grid; place-items: center; }
+.back .mean { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: -.6px; line-height: 1.05; margin-top: 10px; }
+.back .syl { font-size: 15px; font-weight: 700; color: var(--ink-2); margin-top: 6px; }
+.back .syl em { font-style: normal; color: var(--gold); }
+.row-lbl { font-size: 10px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-3); margin: 16px 0 6px; }
+.morph { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.seg { padding: 4px 9px; border-radius: 6px; font-weight: 800; font-size: 15px; }
+.seg.pre { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--ink); }
+.seg.root { background: var(--pandan-soft); color: var(--pandan); }
+.seg.suf { background: var(--sambal-soft); color: var(--sambal); }
+.ex { font-weight: 700; font-size: 15px; line-height: 1.4; }
+.ex small { display: block; font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.swipe-stamp { position: absolute; top: 34px; padding: 6px 12px; border: 3px solid; border-radius: 8px; font-family: var(--display); font-weight: 800; font-size: 22px; opacity: 0; transform: rotate(-12deg); z-index: 3; pointer-events: none; }
+.stamp-yes { left: 22px; color: var(--pandan); }
+.stamp-no { right: 22px; color: var(--sambal); transform: rotate(12deg); }
+.deck-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.big-btn { height: 56px; border-radius: 16px; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.b-no { background: var(--sambal-soft); color: var(--sambal); }
+.b-yes { background: var(--pandan); color: #fff; }
+.b-flip { width: 56px; height: 56px; border-radius: 50%; background: var(--ink); color: var(--sheet); font-size: 20px; }
+.deck-note { text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-3); }
+.done-box { background: var(--sheet); border-radius: 22px; border: 1.5px solid var(--line); padding: 26px 20px; text-align: center; display: grid; gap: 10px; }
+.done-box .h { font-family: var(--display); font-weight: 800; font-size: 34px; letter-spacing: -1px; }
+.btn { height: 50px; border-radius: 14px; font-weight: 800; padding: 0 18px; }
+.btn-ink { background: var(--ink); color: var(--sheet); }
+.btn-line { border: 1.5px solid var(--line); background: var(--sheet); }
+.topics { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.topic { flex: none; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--line); font-weight: 700; font-size: 13px; background: var(--sheet); }
+.topic.on { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+.front-mode { display: flex; background: var(--sheet); border: 1.5px solid var(--line); border-radius: 12px; padding: 3px; }
+.front-mode button { flex: 1; padding: 8px 4px; border-radius: 9px; font-weight: 800; font-size: 12px; color: var(--ink-2); }
+.front-mode button.on { background: var(--gold-soft); color: var(--ink); }
 
-/* ═══ RESULTS ═══ */
-.res-hero { text-align: center; padding: 30px 0 18px; }
-.res-big { font-size: 56px; font-weight: 900; color: var(--green); line-height: 1; }
-.res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0; }
-.tile { background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 14px 6px; text-align: center; }
-.tile-num { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.tile-label { font-size: 10px; color: var(--text-muted); font-weight: 800; margin-top: 3px; letter-spacing: .5px; text-transform: uppercase; }
+/* ── garden (SRS) ── */
+.garden { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.plot { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 16px; padding: 8px 6px 10px; text-align: center; position: relative; }
+.plot.thirsty { border-color: color-mix(in srgb, var(--gold) 60%, var(--line)); }
+.plot svg { width: 100%; height: 82px; display: block; }
+.plot .pw { font-weight: 800; font-size: 14px; overflow-wrap: anywhere; }
+.plot .ps { font-size: 11px; color: var(--ink-3); font-weight: 700; }
+.drop { position: absolute; top: 6px; right: 7px; font-size: 10px; font-weight: 800; color: var(--gold); }
+.legend-row { display: flex; justify-content: space-between; background: var(--sheet); border: 1.5px solid var(--line); border-radius: 14px; padding: 8px 10px; }
+.legend-row div { text-align: center; font-size: 10px; font-weight: 800; color: var(--ink-3); }
+.legend-row svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
+.water-q { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 22px; padding: 18px; display: grid; gap: 14px; }
+.water-q .w { font-family: var(--display); font-weight: 800; font-size: 40px; letter-spacing: -1px; text-align: center; }
+.opts { display: grid; gap: 8px; }
+.opt { text-align: left; padding: 14px 16px; border-radius: 14px; border: 1.5px solid var(--line); font-weight: 700; background: var(--bg); }
+.opt.right { border-color: var(--pandan); background: var(--pandan-soft); color: var(--pandan); }
+.opt.wrong { border-color: var(--sambal); background: var(--sambal-soft); color: var(--sambal); }
 
-/* ═══ SRS ═══ */
-.list-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 2px solid var(--border); margin-bottom: 7px; }
-.srs-dot { width: 10px; height: 10px; border-radius: 5px; flex-shrink: 0; }
-.srs-word { font-size: 16px; font-weight: 900; }
-.srs-meaning { font-size: 12px; color: var(--text-muted); font-weight: 700; }
-.srs-due { font-size: 12px; font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
-.lvl { display: flex; gap: 3px; margin-top: 5px; justify-content: flex-end; }
-.lvl i { width: 6px; height: 6px; border-radius: 3px; background: var(--border-light); }
-.lvl i.on { background: var(--yellow); }
-.srs-resp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
-.srs-resp button { padding: 12px 4px; border-radius: 14px; border: 2px solid var(--rc); background: color-mix(in srgb, var(--rc) 12%, transparent); color: var(--rc); font-weight: 900; font-size: 13px; cursor: pointer; }
-.srs-resp small { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+/* ── map (course) ── */
+.map-wrap { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 22px; overflow: hidden; }
+.map-wrap svg { width: 100%; height: auto; display: block; }
+.stop-sheet { background: var(--ink); color: var(--sheet); border-radius: 22px; padding: 18px; display: grid; gap: 12px; }
+.stop-sheet .h2 { color: var(--sheet); }
+.step { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--sheet) 8%, transparent); }
+.step .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; border: 1.5px solid color-mix(in srgb, var(--sheet) 40%, transparent); flex: none; }
+.step.ok .n { background: var(--pandan); border-color: var(--pandan); color: #fff; }
+.step b { display: block; font-size: 15px; } .step span { font-size: 12px; opacity: .7; font-weight: 600; }
+@keyframes pulse { 0%,100% { r: 17; opacity: .5; } 50% { r: 24; opacity: 0; } }
+.pulse { animation: pulse 1.8s ease-in-out infinite; }
 
-/* ═══ COURSE ═══ */
-.unit { display: flex; gap: 14px; align-items: center; width: 100%; padding: 14px; border-radius: 18px; background: var(--surface); border: 2px solid var(--border); margin-bottom: 10px; cursor: pointer; text-align: left; }
-.unit.current { border-color: var(--yellow); box-shadow: 0 0 0 4px rgba(255,200,0,0.08); }
-.unit.locked { opacity: .45; cursor: not-allowed; }
-.unit-num { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; flex-shrink: 0; background: var(--bg); border: 3px solid var(--border-light); }
-.unit.done .unit-num { background: var(--green); border-color: var(--green); color: var(--on-accent); }
-.unit.current .unit-num { border-color: var(--yellow); color: var(--yellow); }
-.unit-title { font-size: 16px; font-weight: 900; }
-.unit-sub { font-size: 12px; color: var(--text-muted); font-weight: 700; }
-.unit-bar { height: 5px; background: var(--bg); border-radius: 3px; margin-top: 7px; overflow: hidden; }
-.unit-bar i { display: block; height: 100%; background: var(--green); }
-.step { display: flex; gap: 12px; align-items: center; width: 100%; padding: 13px 14px; border-radius: 14px; background: var(--surface); border: 2px solid var(--border); margin-bottom: 8px; cursor: pointer; text-align: left; }
-.step-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: color-mix(in srgb, var(--sc) 18%, var(--bg)); flex-shrink: 0; }
-.step-check { margin-left: auto; font-weight: 900; color: var(--green); }
+/* ── workshop (imbuhan) ── */
+.result { background: var(--card); border-radius: 22px; box-shadow: var(--shadow); border: 1.5px solid var(--line); padding: 22px 18px; text-align: center; min-height: 196px; display: grid; align-content: center; gap: 8px; position: relative; overflow: hidden; }
+.result .word { font-family: var(--display); font-weight: 800; font-size: 46px; letter-spacing: -1.4px; line-height: 1; }
+.result .word .p { color: var(--gold); } .result .word .r { color: var(--pandan); } .result .word .s { color: var(--sambal); }
+.result .eq { font-size: 13px; font-weight: 700; color: var(--ink-3); }
+.result .m { font-weight: 800; font-size: 18px; }
+.result .rule { font-size: 13px; font-weight: 600; color: var(--ink-2); background: var(--bg); border-radius: 10px; padding: 8px 10px; justify-self: center; max-width: 100%; }
+.result.miss .word { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 3px; text-decoration-color: var(--sambal); }
+.result .newbadge { position: absolute; top: 12px; right: 12px; background: var(--pandan); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 8px; border-radius: 6px; }
+.slot-lbl { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+.slot-lbl .eyebrow b { color: var(--ink); }
+.slot { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.piece { flex: none; padding: 10px 13px; border-radius: 10px; font-weight: 800; font-size: 15px; border: 1.5px solid var(--line); background: var(--sheet); }
+.piece.on.pre { background: var(--gold); border-color: var(--gold); color: #1B2140; }
+.piece.on.root { background: var(--pandan); border-color: var(--pandan); color: #fff; }
+.piece.on.suf { background: var(--sambal); border-color: var(--sambal); color: #fff; }
+.found { display: flex; flex-wrap: wrap; gap: 6px; }
+.found span { padding: 5px 9px; border-radius: 6px; background: var(--sheet); border: 1.5px solid var(--line); font-weight: 700; font-size: 13px; }
+.found span.ghost { color: transparent; background: repeating-linear-gradient(45deg, var(--line) 0 2px, transparent 2px 6px); width: 64px; }
+.meter { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--pandan); border-radius: 4px; transition: width .4s; }
 
-/* ═══ GROUPS (Imbuhan word tree) ═══ */
-.legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-.legend .part { font-size: 11px; }
-.root-tabs { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: none; }
-.root-tab { flex: none; padding: 8px 14px; border-radius: 12px; background: var(--surface); border: 2px solid var(--border); font-weight: 900; font-size: 14px; cursor: pointer; color: var(--text-muted); }
-.root-tab.active { border-color: var(--green); color: var(--green); background: rgba(88,204,2,0.08); }
-.wt-card { padding: 8px 2px 12px; background: var(--surface); border: 2px solid var(--border); border-radius: 18px; margin-bottom: 12px; }
-.wt-scroll { overflow-x: auto; padding-bottom: 4px; }
-.wt-tree { display: inline-block; min-width: 100%; padding: 8px 10px 2px; text-align: center; }
-.wt-tree ul { display: flex; justify-content: center; padding-top: 18px; position: relative; list-style: none; }
-.wt-tree li { list-style: none; position: relative; padding: 18px 4px 0; text-align: center; }
-.wt-tree li::before, .wt-tree li::after { content: ''; position: absolute; top: 0; right: 50%; width: 50%; height: 18px; border-top: 2px solid var(--border-light); }
-.wt-tree li::after { right: auto; left: 50%; border-left: 2px solid var(--border-light); }
-.wt-tree li:first-child::before { border: 0; }
-.wt-tree li:last-child::after { border: 0; }
-.wt-tree li:last-child::before { border-right: 2px solid var(--border-light); border-radius: 0 7px 0 0; }
-.wt-tree li:first-child::after { border-left: 2px solid var(--border-light); border-radius: 7px 0 0 0; }
-.wt-tree li:only-child::before, .wt-tree li:only-child::after { display: none; }
-.wt-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--border-light); height: 18px; }
-.wt-tree > ul, .wt-tree > ul > li { padding-top: 0; }
-.wt-tree > ul > li::before, .wt-tree > ul > li::after { display: none; }
-.wt-node { display: inline-flex; flex-direction: column; align-items: center; border-radius: 12px; cursor: pointer; background: var(--bg); padding: 8px 9px; min-width: 64px; border: 2px solid var(--border-light); }
-.wt-hub { background: rgba(88,204,2,0.10); border-color: rgba(88,204,2,0.55); padding: 10px 16px; }
-.wt-hub .wt-w { color: var(--green); font-size: 22px; font-weight: 900; }
-.wt-w { font-size: 14px; font-weight: 900; white-space: nowrap; }
-.wt-w .p { color: var(--pre); } .wt-w .r { color: var(--text); } .wt-w .s { color: var(--suf); }
-.wt-mean { font-size: 11px; color: var(--text-muted); font-weight: 700; margin-top: 3px; white-space: nowrap; }
-.wt-detail { display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border-light); font-size: 11px; max-width: 150px; white-space: normal; line-height: 1.35; font-weight: 700; }
-.wt-node.open .wt-detail { display: block; }
-.wt-node.open { border-color: var(--purple); }
-.fam-list .list-item { gap: 10px; }
+/* ── mamak role-play ── */
+.chat { display: grid; gap: 8px; }
+.msg { max-width: 84%; padding: 11px 14px; border-radius: 18px; font-weight: 700; line-height: 1.35; }
+.msg small { display: block; font-weight: 600; font-size: 12px; opacity: .7; margin-top: 2px; }
+.msg.them { background: var(--sheet); border: 1.5px solid var(--line); border-bottom-left-radius: 4px; }
+.msg.me { background: var(--ink); color: var(--sheet); margin-left: auto; border-bottom-right-radius: 4px; }
+.msg.note { max-width: 100%; background: var(--gold-soft); font-size: 13px; border-radius: 12px; }
+.replies { display: grid; gap: 8px; }
+.reply { text-align: left; padding: 13px 14px; border-radius: 14px; border: 1.5px solid var(--ink); font-weight: 700; background: var(--sheet); }
+.reply.wrong { border-color: var(--sambal); color: var(--sambal); background: var(--sambal-soft); }
+.who { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-3); }
 
-/* ═══ MORE ═══ */
-.more-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 13px 14px; border-radius: 16px; background: var(--surface); border: 2px solid var(--border); margin-bottom: 8px; cursor: pointer; text-align: left; }
-.more-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 21px; background: color-mix(in srgb, var(--c) 18%, var(--bg)); flex-shrink: 0; }
-.more-label { font-size: 15px; font-weight: 900; }
-.more-desc { font-size: 12px; color: var(--text-muted); font-weight: 700; }
-.more-arrow { margin-left: auto; color: var(--text-muted); font-weight: 900; }
-
-/* ═══ QUIZ ═══ */
-.q-prompt { font-size: 13px; color: var(--text-muted); font-weight: 800; text-align: center; margin-bottom: 8px; }
-.q-opts { display: grid; gap: 8px; }
-.q-opt { padding: 15px; border-radius: 14px; background: var(--surface); border: 2px solid var(--border); font-size: 16px; font-weight: 800; cursor: pointer; text-align: left; }
-.q-opt.right { border-color: var(--green); background: rgba(88,204,2,0.12); color: var(--green); }
-.q-opt.wrong { border-color: var(--red); background: rgba(255,75,75,0.12); color: var(--red); }
-
-/* ═══ DIALOGUE ═══ */
-.bubble { max-width: 82%; padding: 11px 14px; border-radius: 16px; margin-bottom: 8px; background: var(--surface); border: 2px solid var(--border); }
-.bubble.b { margin-left: auto; background: rgba(28,176,246,0.10); border-color: rgba(28,176,246,0.3); }
-.bubble .who { font-size: 10px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
-.bubble .ms { font-size: 16px; font-weight: 800; }
-.bubble .en { font-size: 12px; color: var(--text-muted); font-weight: 700; margin-top: 3px; }
-
-/* ═══ SETTINGS ═══ */
-.toggle-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; background: var(--surface); border: 2px solid var(--border); margin-bottom: 8px; }
-.switch { margin-left: auto; width: 46px; height: 26px; border-radius: 13px; background: var(--border-light); border: none; position: relative; cursor: pointer; flex-shrink: 0; }
-.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--text); transition: left .2s; }
-.switch.on { background: var(--green); }
-.switch.on::after { left: 23px; }
-.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; font-weight: 800; }
-.bar-row .track { flex: 1; height: 10px; background: var(--surface); border-radius: 5px; overflow: hidden; }
-.bar-row .track i { display: block; height: 100%; border-radius: 5px; }
-.bar-row .n { width: 42px; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-
-/* ═══ MODAL / TOAST ═══ */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.modal-box { width: 100%; max-width: 380px; background: var(--surface); border-radius: 20px; padding: 20px; border: 2px solid var(--border); max-height: 80vh; overflow-y: auto; }
-.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.modal-title { font-size: 16px; font-weight: 900; }
-.modal-close { font-size: 12px; color: var(--text-muted); background: var(--bg); padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 800; }
-.toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--elevated); border: 2px solid var(--border-light); padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 800; z-index: 120; max-width: 90%; text-align: center; }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+/* ── dock ── */
+.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 24px); max-width: 416px; background: var(--dock); border: 1px solid color-mix(in srgb, var(--dock-ink) 10%, transparent); border-radius: 22px; display: flex; padding: 6px; z-index: 40; box-shadow: 0 16px 36px -16px rgba(0,0,0,.5); }
+.dock button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 6px; border-radius: 16px; color: color-mix(in srgb, var(--dock-ink) 60%, transparent); font-size: 10.5px; font-weight: 800; }
+.dock button svg { width: 22px; height: 22px; }
+.dock button.on { background: color-mix(in srgb, var(--dock-ink) 12%, transparent); color: var(--gold); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--sheet); padding: 10px 16px; border-radius: 12px; font-weight: 700; font-size: 13px; z-index: 60; max-width: 90%; text-align: center; }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
-<div id="app">
-  <div class="content" id="content"></div>
-  <nav class="tab-bar" id="tab-bar"></nav>
-</div>
+<div id="app"><div id="view"></div></div>
+<nav class="dock" id="dock" aria-label="Main"></nav>
 
 <script>
-// ═══ DATA (sample content for the prototype) ═══
-const SOURCES = [
-  { id: 'asas',   name: 'Asas · Basics',          icon: '🌺', color: '#FF6B8A' },
-  { id: 'makan',  name: 'Kedai Makan · Food',      icon: '🍛', color: '#58CC02' },
-  { id: 'jalan',  name: 'Jalan-jalan · Travel',    icon: '🚌', color: '#CE82FF' },
-  { id: 'nombor', name: 'Nombor & Wang · Numbers', icon: '💰', color: '#1CB0F6' },
-  { id: 'pasar',  name: 'Bahasa Pasar · Slang',    icon: '💬', color: '#FFC800' },
+// ═══════════ SAMPLE CONTENT ═══════════
+const TOPICS = [
+  { id: 'all', name: 'Semua · All' }, { id: 'salam', name: 'Salam' }, { id: 'makan', name: 'Makan' },
+  { id: 'jalan', name: 'Jalan' }, { id: 'wang', name: 'Wang' }, { id: 'pasar', name: 'Cakap pasar' },
 ];
-
-// parts: [text, 'pre'|'root'|'suf'] — the Imbuhan (affix) breakdown
+// parts: [text, pre|root|suf]
 const WORDS = [
-  { id: 1,  src: 'asas', ms: 'selamat pagi', en: 'good morning', syl: 'se·la·mat pa·gi', jawi: 'سلامت ڤاݢي', ex: 'Selamat pagi, cikgu!', exEn: 'Good morning, teacher!' },
-  { id: 2,  src: 'asas', ms: 'apa khabar', en: 'how are you?', syl: 'a·pa kha·bar', jawi: 'اڤ خبر', ex: 'Apa khabar, kawan?', exEn: 'How are you, friend?', note: 'Reply: “Khabar baik” (I’m fine).' },
-  { id: 3,  src: 'asas', ms: 'terima kasih', en: 'thank you', syl: 'te·ri·ma ka·sih', jawi: 'تريما کاسيه', ex: 'Terima kasih banyak!', exEn: 'Thank you very much!' },
-  { id: 4,  src: 'asas', ms: 'sama-sama', en: 'you’re welcome', syl: 'sa·ma-sa·ma', jawi: 'سام٢', ex: '— Terima kasih. — Sama-sama.', exEn: '— Thanks. — You’re welcome.', note: 'Reduplication: the Jawi ٢ means “repeat the word”.' },
-  { id: 5,  src: 'asas', ms: 'saya', en: 'I / me', syl: 'sa·ya', jawi: 'ساي', ex: 'Saya dari India.', exEn: 'I am from India.' },
-  { id: 6,  src: 'asas', ms: 'belajar', en: 'to study, to learn', syl: 'be·la·jar', parts: [['bel', 'pre'], ['ajar', 'root']], jawi: 'بلاجر', ex: 'Saya belajar bahasa Melayu.', exEn: 'I am learning Malay.' },
-  { id: 7,  src: 'asas', ms: 'tolong', en: 'please (help)', syl: 'to·long', jawi: 'تولوڠ', ex: 'Tolong cakap perlahan-lahan.', exEn: 'Please speak slowly.' },
-  { id: 8,  src: 'asas', ms: 'tidak', en: 'no / not', syl: 'ti·dak', jawi: 'تيدق', ex: 'Saya tidak faham.', exEn: 'I don’t understand.', note: 'Spoken: “tak” — Saya tak faham.' },
-  { id: 9,  src: 'makan', ms: 'makan', en: 'to eat', syl: 'ma·kan', jawi: 'ماکن', ex: 'Jom makan!', exEn: 'Let’s eat!' },
-  { id: 10, src: 'makan', ms: 'makanan', en: 'food', syl: 'ma·ka·nan', parts: [['makan', 'root'], ['an', 'suf']], jawi: 'ماکنن', ex: 'Makanan di sini sedap.', exEn: 'The food here is delicious.' },
-  { id: 11, src: 'makan', ms: 'minuman', en: 'drink, beverage', syl: 'mi·nu·man', parts: [['minum', 'root'], ['an', 'suf']], jawi: 'مينومن', ex: 'Awak nak minuman apa?', exEn: 'What drink would you like?' },
-  { id: 12, src: 'makan', ms: 'sedap', en: 'delicious', syl: 'se·dap', jawi: 'سدڤ', ex: 'Wah, sedapnya!', exEn: 'Wow, so tasty!' },
-  { id: 13, src: 'makan', ms: 'pedas', en: 'spicy', syl: 'pe·das', jawi: 'ڤدس', ex: 'Kurang pedas, ya.', exEn: 'Less spicy, please.' },
-  { id: 14, src: 'makan', ms: 'teh tarik', en: 'pulled milk tea', syl: 'teh ta·rik', jawi: 'تيه تاريق', ex: 'Teh tarik kurang manis, satu.', exEn: 'One teh tarik, less sweet.' },
-  { id: 15, src: 'makan', ms: 'bungkus', en: 'take away (to wrap)', syl: 'bung·kus', jawi: 'بوڠکوس', ex: 'Makan sini atau bungkus?', exEn: 'Eat here or take away?' },
-  { id: 16, src: 'jalan', ms: 'perjalanan', en: 'journey, trip', syl: 'per·ja·la·nan', parts: [['per', 'pre'], ['jalan', 'root'], ['an', 'suf']], jawi: 'ڤرجالنن', ex: 'Selamat dalam perjalanan!', exEn: 'Have a safe trip!' },
-  { id: 17, src: 'jalan', ms: 'di mana', en: 'where', syl: 'di ma·na', jawi: 'دمان', ex: 'Tandas di mana?', exEn: 'Where is the toilet?' },
-  { id: 18, src: 'jalan', ms: 'kiri', en: 'left', syl: 'ki·ri', jawi: 'کيري', ex: 'Belok kiri di simpang.', exEn: 'Turn left at the junction.' },
-  { id: 19, src: 'jalan', ms: 'berhenti', en: 'to stop', syl: 'ber·hen·ti', parts: [['ber', 'pre'], ['henti', 'root']], jawi: 'برهنتي', ex: 'Tolong berhenti di sini.', exEn: 'Please stop here.' },
-  { id: 20, src: 'jalan', ms: 'berjalan', en: 'to walk', syl: 'ber·ja·lan', parts: [['ber', 'pre'], ['jalan', 'root']], jawi: 'برجالن', ex: 'Kami berjalan ke pasar.', exEn: 'We walk to the market.' },
-  { id: 21, src: 'nombor', ms: 'berapa', en: 'how much / how many', syl: 'be·ra·pa', jawi: 'براڤ', ex: 'Berapa harga ini?', exEn: 'How much is this?' },
-  { id: 22, src: 'nombor', ms: 'ringgit', en: 'ringgit (RM)', syl: 'ring·git', jawi: 'رڠݢيت', ex: 'Lima belas ringgit.', exEn: 'Fifteen ringgit.' },
-  { id: 23, src: 'nombor', ms: 'murah', en: 'cheap', syl: 'mu·rah', jawi: 'موره', ex: 'Boleh murah sikit?', exEn: 'Can you make it a bit cheaper?' },
-  { id: 24, src: 'nombor', ms: 'mahal', en: 'expensive', syl: 'ma·hal', jawi: 'مهل', ex: 'Mahalnya!', exEn: 'So expensive!' },
-  { id: 25, src: 'nombor', ms: 'membeli', en: 'to buy', syl: 'mem·be·li', parts: [['mem', 'pre'], ['beli', 'root']], jawi: 'ممبلي', ex: 'Saya mahu membeli buah.', exEn: 'I want to buy fruit.' },
-  { id: 26, src: 'pasar', ms: 'jom', en: 'let’s go', syl: 'jom', jawi: 'جوم', ex: 'Jom pergi mamak!', exEn: 'Let’s go to the mamak stall!', reg: 'Informal' },
-  { id: 27, src: 'pasar', ms: 'tak apa', en: 'never mind, it’s OK', syl: 'tak a·pa', jawi: 'تق اڤ', ex: 'Tak apa, lain kali.', exEn: 'No worries, next time.', reg: 'Informal', note: 'Short for “tidak apa-apa”.' },
-  { id: 28, src: 'pasar', ms: 'boleh', en: 'can / OK, sure', syl: 'bo·leh', jawi: 'بوليه', ex: 'Boleh, boss!', exEn: 'Sure thing, boss!' },
-  { id: 29, src: 'pasar', ms: 'lepak', en: 'to hang out', syl: 'le·pak', jawi: 'لڤق', ex: 'Jom lepak malam ni.', exEn: 'Let’s hang out tonight.', reg: 'Slang' },
-  { id: 30, src: 'pasar', ms: 'alamak', en: 'oh no!', syl: 'a·la·mak', jawi: 'الامق', ex: 'Alamak, hujan!', exEn: 'Oh no, it’s raining!', reg: 'Slang' },
+  { id: 1, t: 'salam', ms: 'selamat pagi', en: 'good morning', syl: 'se·la·mat pa·gi', jawi: 'سلامت ڤاݢي', ex: 'Selamat pagi, cikgu!', exEn: 'Good morning, teacher!' },
+  { id: 2, t: 'salam', ms: 'apa khabar', en: 'how are you?', syl: 'a·pa kha·bar', jawi: 'اڤ خبر', ex: 'Apa khabar? — Khabar baik.', exEn: 'How are you? — I’m well.' },
+  { id: 3, t: 'salam', ms: 'terima kasih', en: 'thank you', syl: 'te·ri·ma ka·sih', jawi: 'تريما کاسيه', ex: 'Terima kasih banyak!', exEn: 'Thank you very much!' },
+  { id: 4, t: 'salam', ms: 'belajar', en: 'to study', syl: 'be·la·jar', parts: [['bel', 'pre'], ['ajar', 'root']], jawi: 'بلاجر', ex: 'Saya belajar bahasa Melayu.', exEn: 'I’m learning Malay.' },
+  { id: 5, t: 'salam', ms: 'tidak', en: 'no, not', syl: 'ti·dak', jawi: 'تيدق', ex: 'Saya tidak faham.', exEn: 'I don’t understand.', tag: 'spoken: tak' },
+  { id: 6, t: 'makan', ms: 'makanan', en: 'food', syl: 'ma·ka·nan', parts: [['makan', 'root'], ['an', 'suf']], jawi: 'ماکنن', ex: 'Makanan di sini sedap.', exEn: 'The food here is delicious.' },
+  { id: 7, t: 'makan', ms: 'sedap', en: 'delicious', syl: 'se·dap', jawi: 'سدڤ', ex: 'Wah, sedapnya!', exEn: 'Wow, so tasty!' },
+  { id: 8, t: 'makan', ms: 'pedas', en: 'spicy', syl: 'pe·das', jawi: 'ڤدس', ex: 'Kurang pedas, ya.', exEn: 'Less spicy, please.' },
+  { id: 9, t: 'makan', ms: 'bungkus', en: 'take away', syl: 'bung·kus', jawi: 'بوڠکوس', ex: 'Makan sini atau bungkus?', exEn: 'Eat here or take away?', tag: 'lit. wrap' },
+  { id: 10, t: 'makan', ms: 'minuman', en: 'drink', syl: 'mi·nu·man', parts: [['minum', 'root'], ['an', 'suf']], jawi: 'مينومن', ex: 'Minuman apa yang ada?', exEn: 'What drinks are there?' },
+  { id: 11, t: 'jalan', ms: 'perjalanan', en: 'journey', syl: 'per·ja·la·nan', parts: [['per', 'pre'], ['jalan', 'root'], ['an', 'suf']], jawi: 'ڤرجالنن', ex: 'Selamat dalam perjalanan!', exEn: 'Have a safe trip!' },
+  { id: 12, t: 'jalan', ms: 'di mana', en: 'where', syl: 'di ma·na', jawi: 'دمان', ex: 'Tandas di mana?', exEn: 'Where’s the toilet?' },
+  { id: 13, t: 'jalan', ms: 'berhenti', en: 'to stop', syl: 'ber·hen·ti', parts: [['ber', 'pre'], ['henti', 'root']], jawi: 'برهنتي', ex: 'Tolong berhenti di sini.', exEn: 'Please stop here.' },
+  { id: 14, t: 'jalan', ms: 'kiri', en: 'left', syl: 'ki·ri', jawi: 'کيري', ex: 'Belok kiri di simpang.', exEn: 'Turn left at the junction.' },
+  { id: 15, t: 'wang', ms: 'berapa', en: 'how much', syl: 'be·ra·pa', jawi: 'براڤ', ex: 'Berapa harga ini?', exEn: 'How much is this?' },
+  { id: 16, t: 'wang', ms: 'murah', en: 'cheap', syl: 'mu·rah', jawi: 'موره', ex: 'Boleh murah sikit?', exEn: 'A little cheaper?' },
+  { id: 17, t: 'wang', ms: 'membeli', en: 'to buy', syl: 'mem·be·li', parts: [['mem', 'pre'], ['beli', 'root']], jawi: 'ممبلي', ex: 'Saya mahu membeli buah.', exEn: 'I want to buy fruit.' },
+  { id: 18, t: 'pasar', ms: 'jom', en: 'let’s go', syl: 'jom', jawi: 'جوم', ex: 'Jom pergi mamak!', exEn: 'Let’s go to the mamak!', tag: 'informal' },
+  { id: 19, t: 'pasar', ms: 'tak apa', en: 'never mind', syl: 'tak a·pa', jawi: 'تق اڤ', ex: 'Tak apa, lain kali.', exEn: 'No worries, next time.', tag: 'informal' },
+  { id: 20, t: 'pasar', ms: 'alamak', en: 'oh no!', syl: 'a·la·mak', jawi: 'الامق', ex: 'Alamak, hujan!', exEn: 'Oh no, it’s raining!', tag: 'slang' },
 ];
 
-// Root-word families: the Malay counterpart of the Burmese hub/spoke trees
-const FAMILIES = [
-  { root: 'ajar', en: 'teach / instruct', kids: [
-    { parts: [['bel', 'pre'], ['ajar', 'root']], en: 'to study', note: 'ber- → bel- before “ajar”. Intransitive: you study.' },
-    { parts: [['meng', 'pre'], ['ajar', 'root']], en: 'to teach', note: 'meN- active verb; becomes meng- before a vowel.' },
-    { parts: [['pel', 'pre'], ['ajar', 'root']], en: 'student', note: 'peN-/pe- marks the person who does it.' },
-    { parts: [['pel', 'pre'], ['ajar', 'root'], ['an', 'suf']], en: 'lesson', note: 'pe-…-an: the result or subject of studying.' },
-    { parts: [['di', 'pre'], ['ajar', 'root']], en: 'is taught', note: 'di- passive.' },
-  ]},
-  { root: 'makan', en: 'eat', kids: [
-    { parts: [['makan', 'root'], ['an', 'suf']], en: 'food', note: '-an turns the verb into a thing.' },
-    { parts: [['me', 'pre'], ['makan', 'root']], en: 'to eat (sth)', note: 'meN- → me- before m. Formal/written.' },
-    { parts: [['di', 'pre'], ['makan', 'root']], en: 'is eaten', note: 'di- passive.' },
-    { parts: [['pe', 'pre'], ['makan', 'root']], en: 'eater', note: 'pemakan daging = meat eater.' },
-    { parts: [['ter', 'pre'], ['makan', 'root']], en: 'eaten by accident', note: 'ter- = accidental / unintended.' },
-  ]},
-  { root: 'jalan', en: 'road · walk', kids: [
-    { parts: [['ber', 'pre'], ['jalan', 'root']], en: 'to walk', note: 'ber- intransitive / state.' },
-    { parts: [['per', 'pre'], ['jalan', 'root'], ['an', 'suf']], en: 'journey', note: 'per-…-an: the process.' },
-    { parts: [['pe', 'pre'], ['jalan', 'root']], en: 'walker', note: 'pejalan kaki = pedestrian.' },
-    { parts: [['men', 'pre'], ['jalan', 'root'], ['kan', 'suf']], en: 'to run, carry out', note: '-kan makes it causative: make it go.' },
-  ]},
-  { root: 'beli', en: 'buy', kids: [
-    { parts: [['mem', 'pre'], ['beli', 'root']], en: 'to buy', note: 'meN- → mem- before b.' },
-    { parts: [['pem', 'pre'], ['beli', 'root']], en: 'buyer', note: 'peN- → pem- before b.' },
-    { parts: [['beli', 'root'], ['an', 'suf']], en: 'a purchase', note: '-an: the thing bought.' },
-    { parts: [['di', 'pre'], ['beli', 'root']], en: 'is bought', note: 'di- passive.' },
-  ]},
-  { root: 'tulis', en: 'write', kids: [
-    { parts: [['me', 'pre'], ['nulis', 'root']], en: 'to write', note: 'meN- + t → men-, and the t drops: menulis.' },
-    { parts: [['tulis', 'root'], ['an', 'suf']], en: 'writing, script', note: 'tulisan Jawi = Jawi script.' },
-    { parts: [['pe', 'pre'], ['nulis', 'root']], en: 'writer', note: 'Same t-drop as menulis.' },
-    { parts: [['di', 'pre'], ['tulis', 'root']], en: 'is written', note: 'di- never changes the root.' },
-  ]},
+const PERIBAHASA = [
+  { ms: 'Sedikit-sedikit, lama-lama jadi bukit.', lit: 'Little by little, in time it becomes a hill.', use: 'Ten words a day adds up', key: 'bukit = hill' },
+  { ms: 'Di mana bumi dipijak, di situ langit dijunjung.', lit: 'Where you tread the earth, there you hold up the sky.', use: 'Respect local customs', key: 'dipijak = is stepped on' },
+  { ms: 'Bagai aur dengan tebing.', lit: 'Like bamboo and the riverbank.', use: 'Two who hold each other up', key: 'tebing = riverbank' },
+  { ms: 'Air dicincang tidak akan putus.', lit: 'Chopped water never breaks apart.', use: 'Family ties survive quarrels', key: 'dicincang = is chopped' },
 ];
 
-const AFFIXES = [
-  ['meN-', 'pre', 'active verb'], ['ber-', 'pre', 'state / intransitive'], ['di-', 'pre', 'passive'],
-  ['ter-', 'pre', 'accidental · most'], ['peN-', 'pre', 'doer'], ['-an', 'suf', 'thing / result'], ['-kan', 'suf', 'causative'],
+// garden: stage 0 seed → 4 bunga raya in bloom
+const GARDEN = [
+  { id: 7, stage: 3, due: true }, { id: 3, stage: 4, due: false }, { id: 15, stage: 1, due: true },
+  { id: 4, stage: 2, due: true }, { id: 18, stage: 4, due: false }, { id: 12, stage: 0, due: true },
+  { id: 6, stage: 2, due: false }, { id: 16, stage: 1, due: true }, { id: 9, stage: 3, due: false },
+];
+const STAGES = ['Benih · seed', 'Tunas · sprout', 'Daun · leaves', 'Kudup · bud', 'Mekar · bloom'];
+
+const STOPS = [
+  { n: 1, town: 'Kuala Lumpur', unit: 'Salam & kenalan', en: 'Greetings', x: 92, y: 560, done: true },
+  { n: 2, town: 'Melaka', unit: 'Nombor & wang', en: 'Numbers & money', x: 250, y: 470, done: true },
+  { n: 3, town: 'Pulau Pinang', unit: 'Di kedai mamak', en: 'Ordering food', x: 110, y: 365, current: true },
+  { n: 4, town: 'Ipoh', unit: 'Arah & bas', en: 'Directions & buses', x: 255, y: 262 },
+  { n: 5, town: 'Kota Bharu', unit: 'Imbuhan meN-', en: 'The meN- prefix', x: 120, y: 160 },
+  { n: 6, town: 'Kuching', unit: 'Cakap pasar', en: 'Street speech', x: 262, y: 66 },
+];
+const STOP_STEPS = [
+  ['Dengar', 'Listen: an order at a mamak stall', true],
+  ['Kata', '10 words · swipe deck', true],
+  ['Main peranan', 'Role-play: you order', false],
+  ['Cabaran', 'Checkpoint: 5 questions', false],
 ];
 
-const UNITS = [
-  { n: 1, title: 'Salam & Perkenalan', en: 'Greetings & introductions', steps: 4, done: 4 },
-  { n: 2, title: 'Nombor & Wang', en: 'Numbers & money', steps: 4, done: 4 },
-  { n: 3, title: 'Di Kedai Mamak', en: 'Ordering food', steps: 4, done: 2 },
-  { n: 4, title: 'Arah & Pengangkutan', en: 'Directions & transport', steps: 4, done: 0 },
-  { n: 5, title: 'Imbuhan meN-', en: 'The meN- prefix', steps: 4, done: 0 },
-  { n: 6, title: 'Bahasa Pasar', en: 'Everyday colloquial speech', steps: 4, done: 0 },
-];
-const UNIT_STEPS = [
-  { key: 'dialogue', icon: '💬', label: 'Dialogue', desc: 'Di gerai mamak — 8 lines', c: '#1CB0F6' },
-  { key: 'vocab', icon: '📚', label: 'Vocabulary', desc: '12 words · flashcards', c: '#58CC02' },
-  { key: 'drill', icon: '🧩', label: 'Pattern drill', desc: 'nak + noun · kurang + adjective', c: '#CE82FF' },
-  { key: 'check', icon: '📊', label: 'Unit check', desc: 'Can-do checklist', c: '#FF9600' },
+// ── Imbuhan workshop: prefix × root × suffix ──
+const PREFIXES = ['', 'ber', 'meN', 'di', 'peN', 'ter', 'per'];
+const ROOTS = { ajar: 'teach', makan: 'eat', jalan: 'road · walk', beli: 'buy', tulis: 'write' };
+const SUFFIXES = ['', 'an', 'kan', 'i'];
+// key "pre|root|suf" → [surface parts, meaning, rule]
+const FORMS = {
+  '|ajar|': [[['ajar', 'r']], 'teach (root)', 'Rarely used alone. Add an affix to make a word.'],
+  'ber|ajar|': [[['bel', 'p'], ['ajar', 'r']], 'to study', 'ber- becomes bel- before “ajar”. It’s the one famous exception.'],
+  'meN|ajar|': [[['meng', 'p'], ['ajar', 'r']], 'to teach', 'meN- becomes meng- before a vowel.'],
+  'meN|ajar|kan': [[['meng', 'p'], ['ajar', 'r'], ['kan', 's']], 'to teach (a subject)', '-kan points at the thing being taught.'],
+  'di|ajar|': [[['di', 'p'], ['ajar', 'r']], 'is taught', 'di- makes it passive. It never changes the root.'],
+  'di|ajar|kan': [[['di', 'p'], ['ajar', 'r'], ['kan', 's']], 'is taught (a subject)', 'Passive of mengajarkan.'],
+  'peN|ajar|': [[['peng', 'p'], ['ajar', 'r']], 'instructor', 'peN- = the doer. Compare pelajar, “student”, built like belajar.'],
+  'peN|ajar|an': [[['pel', 'p'], ['ajar', 'r'], ['an', 's']], 'lesson', 'pe-…-an makes the result. Pengajaran is “the act of teaching”.'],
+  '|ajar|an': [[['ajar', 'r'], ['an', 's']], 'teaching, doctrine', '-an turns the action into a thing.'],
+  '|makan|': [[['makan', 'r']], 'to eat', 'Everyday verb, no affix needed.'],
+  'meN|makan|': [[['me', 'p'], ['makan', 'r']], 'to eat (something)', 'meN- becomes me- before m. Sounds formal.'],
+  'di|makan|': [[['di', 'p'], ['makan', 'r']], 'is eaten', 'di- passive.'],
+  'ter|makan|': [[['ter', 'p'], ['makan', 'r']], 'eaten by accident', 'ter- = it happened without meaning to.'],
+  'peN|makan|': [[['pe', 'p'], ['makan', 'r']], 'eater', 'pemakan sayur = vegetarian.'],
+  '|makan|an': [[['makan', 'r'], ['an', 's']], 'food', '-an: the thing you eat.'],
+  'peN|makan|an': [[['pe', 'p'], ['makan', 'r'], ['an', 's']], 'nutrition, diet', 'pe-…-an: the whole system around eating.'],
+  '|jalan|': [[['jalan', 'r']], 'road; to walk', 'Works alone in speech: “Jalan dulu!” (I’m off!).'],
+  'ber|jalan|': [[['ber', 'p'], ['jalan', 'r']], 'to walk', 'ber- = doing it, no object.'],
+  'meN|jalan|kan': [[['men', 'p'], ['jalan', 'r'], ['kan', 's']], 'to carry out, run', 'meN- becomes men- before j. -kan = make it go.'],
+  'meN|jalan|i': [[['men', 'p'], ['jalan', 'r'], ['i', 's']], 'to undergo', '-i points at where/what you go through: menjalani latihan.'],
+  'di|jalan|kan': [[['di', 'p'], ['jalan', 'r'], ['kan', 's']], 'is carried out', 'Passive of menjalankan.'],
+  'peN|jalan|': [[['pe', 'p'], ['jalan', 'r']], 'walker', 'pejalan kaki = pedestrian.'],
+  'per|jalan|an': [[['per', 'p'], ['jalan', 'r'], ['an', 's']], 'journey', 'per-…-an: the process. Selamat dalam perjalanan!'],
+  '|jalan|an': [[['jalan', 'r'], ['an', 's']], 'the streets', 'makanan jalanan = street food.'],
+  '|beli|': [[['beli', 'r']], 'buy (casual)', 'Fine in speech: “Nak beli apa?”'],
+  'meN|beli|': [[['mem', 'p'], ['beli', 'r']], 'to buy', 'meN- becomes mem- before b.'],
+  'meN|beli|kan': [[['mem', 'p'], ['beli', 'r'], ['kan', 's']], 'to buy for someone', '-kan = for the benefit of someone.'],
+  'di|beli|': [[['di', 'p'], ['beli', 'r']], 'is bought', 'di- passive.'],
+  'ter|beli|': [[['ter', 'p'], ['beli', 'r']], 'bought by mistake', 'ter- = unintended.'],
+  'peN|beli|': [[['pem', 'p'], ['beli', 'r']], 'buyer', 'peN- becomes pem- before b, same as meN-.'],
+  'peN|beli|an': [[['pem', 'p'], ['beli', 'r'], ['an', 's']], 'a purchase', 'pe-…-an: the act or result.'],
+  '|beli|an': [[['beli', 'r'], ['an', 's']], 'item bought', 'Less common than pembelian.'],
+  '|tulis|': [[['tulis', 'r']], 'write (root)', 'Usually takes an affix.'],
+  'meN|tulis|': [[['me', 'p'], ['nulis', 'r']], 'to write', 'meN- + t → men-, and the t drops: menulis.'],
+  'meN|tulis|kan': [[['me', 'p'], ['nulis', 'r'], ['kan', 's']], 'to write down', 'Same t-drop, plus -kan for the thing written.'],
+  'di|tulis|': [[['di', 'p'], ['tulis', 'r']], 'is written', 'di- keeps the t.'],
+  'ter|tulis|': [[['ter', 'p'], ['tulis', 'r']], 'in writing', 'ujian bertulis = written exam. tertulis = stated in writing.'],
+  'peN|tulis|': [[['pe', 'p'], ['nulis', 'r']], 'writer', 'The t drops here too.'],
+  'peN|tulis|an': [[['pe', 'p'], ['nulis', 'r'], ['an', 's']], 'the writing process', 'pe-…-an.'],
+  '|tulis|an': [[['tulis', 'r'], ['an', 's']], 'writing, script', 'tulisan Jawi = Jawi script.'],
+};
+
+const MAMAK = [
+  { them: 'Nak makan apa, bang?', them_en: 'What would you like, bro?',
+    replies: [['Nasi lemak satu.', true, 'Perfect. Item + number is all you need.'], ['Saya nasi lemak.', false, '“I am nasi lemak”. Funny, but drop the saya.'], ['Berapa nasi lemak?', false, 'That asks how much it costs. Order first.']] },
+  { them: 'Minum?', them_en: 'Something to drink?',
+    replies: [['Teh tarik kurang manis.', true, 'kurang manis = less sweet. Very Malaysian.'], ['Minum teh tarik saya.', false, 'Word order is off. Just name the drink.'], ['Tidak minum manis.', false, 'Understandable, but “kurang manis” is how people say it.']] },
+  { them: 'Makan sini ke bungkus?', them_en: 'Eat here or take away?',
+    replies: [['Bungkus.', true, 'One word does it.'], ['Makan bungkus.', false, '“Eat take-away” mixes both answers.'], ['Sini bungkus.', false, 'Pick one: sini or bungkus.']] },
+  { them: 'Tujuh ringgit lima puluh sen.', them_en: 'RM7.50.',
+    replies: [['Terima kasih, bang!', true, 'Bagus! Order complete.'], ['Sama-sama.', false, 'That’s “you’re welcome”. He hasn’t thanked you yet.'], ['Tidak apa.', false, 'That means “never mind”. Pay and say thanks.']] },
 ];
 
-const DIALOGUE = [
-  ['A', 'Pelayan', 'Nak makan apa, bang?', 'What would you like to eat, bro?'],
-  ['B', 'Anda', 'Nasi lemak satu, telur mata.', 'One nasi lemak, with a fried egg.'],
-  ['A', 'Pelayan', 'Minum?', 'To drink?'],
-  ['B', 'Anda', 'Teh tarik kurang manis.', 'Teh tarik, less sweet.'],
-  ['A', 'Pelayan', 'Makan sini atau bungkus?', 'Eat here or take away?'],
-  ['B', 'Anda', 'Makan sini. Berapa semua?', 'Eat here. How much altogether?'],
-  ['A', 'Pelayan', 'Tujuh ringgit lima puluh sen.', 'Seven ringgit fifty sen.'],
-  ['B', 'Anda', 'Terima kasih!', 'Thank you!'],
-];
-
-const FOCI = [
-  { src: 'makan',  glyph: 'Jom!',  jawi: 'ماکن',   title: 'Ordering at the mamak', sub: 'Kedai Makan · Unit 3', meta: '7 new words', color: '#58CC02', done: 'Numbers' },
-  { src: 'asas',   glyph: 'Hai',   jawi: 'سلامت',  title: 'Greetings & basics',    sub: 'Asas · Unit 1',        meta: '8 new words', color: '#FF6B8A', done: 'Slang' },
-  { src: 'jalan',  glyph: 'Kiri',  jawi: 'جالن',   title: 'Getting around',        sub: 'Jalan-jalan · Unit 4', meta: '5 new words', color: '#CE82FF', done: 'Food' },
-  { src: 'nombor', glyph: 'RM',    jawi: 'رڠݢيت',  title: 'Prices & bargaining',   sub: 'Nombor & Wang · Unit 2', meta: '5 new words', color: '#1CB0F6', done: 'Travel' },
-  { src: 'pasar',  glyph: 'Lepak', jawi: 'جوم',    title: 'Everyday slang',        sub: 'Bahasa Pasar · Unit 6', meta: '5 new words', color: '#FFC800', done: 'Basics' },
-];
-
-const MODES = [
-  { id: 'ms', glyph: 'Ms', label: 'Melayu' },
-  { id: 'en', glyph: 'En', label: 'English' },
-  { id: 'jawi', glyph: 'ج', label: 'Jawi' },
-  { id: 'listen', glyph: '🔊', label: 'Listen' },
-];
-const RATINGS = [
-  { icon: '○', label: 'New', color: '#8A9AA6' },
-  { icon: '✓', label: 'Got it', color: '#58CC02' },
-  { icon: '💬', label: 'Seen', color: '#1CB0F6' },
-  { icon: '🔥', label: 'Easy', color: '#FFC800' },
-  { icon: '🤔', label: 'Fuzzy', color: '#CE82FF' },
-  { icon: '✗', label: 'Nope', color: '#FF4B4B' },
-  { icon: '✍', label: 'Spell', color: '#FF9600' },
-];
-const RATING_ORDER = [0, 1, 2, 3, 6, 4, 5];
-const SRS_RESP = [
-  { label: 'Again', color: '#FF6B8A', next: '1m' }, { label: 'Hard', color: '#CE82FF', next: '1h' },
-  { label: 'Good', color: '#58CC02', next: '1d' }, { label: 'Easy', color: '#FFC800', next: '3d' },
-];
-
-// ═══ STATE ═══
-const S = {
-  tab: 'home', view: null,
-  mode: 'ms', perSession: 10, source: 'makan',
-  session: [], idx: 0, reveal: 0, ratings: {},
-  root: 'ajar', openNode: null,
-  srsQueue: [9, 12, 3, 21, 6, 26, 17, 25].map((id, i) => ({ id, due: ['Now','Now','Now','Now','2h','5h','1d','3d'][i], lvl: [1,2,0,3,4,2,5,6][i] })),
-  srsIdx: 0, srsReveal: false, srsDone: 0,
-  openUnit: null,
-  quiz: null,
-  showEn: true,
-  settings: { jawi: true, colloquial: true, autoSpeak: false },
+// ═══════════ STATE ═══════════
+const st = {
+  tab: 'home', topic: 'all', front: 'ms',
+  deck: [], i: 0, flipped: false, marks: {},
+  garden: GARDEN.map(g => ({ ...g })), watering: null,
+  stop: 3,
+  pre: 'meN', root: 'tulis', suf: '', found: new Set(['meN|tulis|', '|makan|an', 'ber|ajar|']), lastNew: false,
+  mamak: null,
 };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const srcOf = id => SOURCES.find(s => s.id === id);
-const wordById = id => WORDS.find(w => w.id === id);
-const focus = () => FOCI[Math.floor(Date.now() / 86400000) % FOCI.length];
-const partsOf = w => w.parts || [[w.ms, 'root']];
-const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-
+const byId = id => WORDS.find(w => w.id === id);
+const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [b[i], b[j]] = [b[j], b[i]]; } return b; };
+const dayIdx = n => Math.floor(Date.now() / 86400000) % n;
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 11) return ['Selamat pagi', 'Good morning'];
+  if (h < 15) return ['Selamat tengah hari', 'Good afternoon'];
+  if (h < 19) return ['Selamat petang', 'Good evening'];
+  return ['Selamat malam', 'Good night'];
+}
 function speak(text) {
   try {
     const u = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    const v = voices.find(v => /^ms/i.test(v.lang)) || voices.find(v => /^id/i.test(v.lang));
-    if (v) u.voice = v; u.lang = v ? v.lang : 'ms-MY'; u.rate = 0.85;
+    const v = speechSynthesis.getVoices().find(v => /^ms/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^id/i.test(v.lang));
+    if (v) u.voice = v; u.lang = v ? v.lang : 'ms-MY'; u.rate = .85;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
-  } catch { toast('Audio isn’t available in this browser'); }
+  } catch { toast('No speech voice on this device'); }
 }
-let toastTimer;
-function toast(msg) {
-  document.querySelectorAll('.toast').forEach(t => t.remove());
-  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 1800);
-}
-function modal(title, html, color) {
-  const o = document.createElement('div'); o.className = 'modal-overlay';
-  o.innerHTML = `<div class="modal-box" style="border-color:${color || 'var(--border)'}"><div class="modal-head"><div class="modal-title" style="color:${color || 'var(--text)'}">${title}</div><button class="modal-close" data-close>✕ Close</button></div>${html}</div>`;
-  o.addEventListener('click', e => { if (e.target === o || e.target.closest('[data-close]')) o.remove(); });
-  document.body.appendChild(o);
+let tt; function toast(m) { document.querySelectorAll('.toast').forEach(x => x.remove()); const d = document.createElement('div'); d.className = 'toast'; d.textContent = m; document.body.append(d); clearTimeout(tt); tt = setTimeout(() => d.remove(), 2000); }
+const segs = parts => parts.map(([t, k]) => `<span class="seg ${k}">${esc(t)}</span>`).join('');
+
+// ═══════════ ICONS ═══════════
+const IC = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  learn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="3" width="13" height="17" rx="2.5" transform="rotate(8 12 12)"/><rect x="4" y="4" width="13" height="17" rx="2.5"/></svg>',
+  garden: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21v-9"/><path d="M12 12c0-4 3-7 7-7 0 4-3 7-7 7zM12 14c0-3-2.5-5.5-6-5.5 0 3 2.5 5.5 6 5.5z"/><path d="M6 21h12"/></svg>',
+  map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>',
+  shop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/><rect x="15" y="9" width="6" height="6" rx="1.5"/><path d="M12 4v3M12 17v3"/></svg>',
+  sound: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>',
+  theme: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>',
+};
+const DOCK = [['home', 'Hari ini', IC.home], ['learn', 'Belajar', IC.learn], ['garden', 'Kebun', IC.garden], ['map', 'Peta', IC.map], ['shop', 'Bengkel', IC.shop]];
+function renderDock() { $('#dock').innerHTML = DOCK.map(([id, l, ic]) => `<button class="${st.tab === id ? 'on' : ''}" data-tab="${id}" aria-label="${l}">${ic}${l}</button>`).join(''); }
+
+function band(title, sub, extra = '', compact = false) {
+  return `<header class="band${compact ? ' compact' : ''}"><div class="band-top"><div class="brand">Kata Kita<small>کات کيت</small></div>${extra}<button class="band-btn" data-act="theme" aria-label="Switch theme">${IC.theme}</button></div><h1>${title}</h1><div class="sub">${sub}</div></header>`;
 }
 
-// ═══ TAB BAR ═══
-const TABS = [['home', '🏠', 'Home'], ['study', '📖', 'Study'], ['srs', '🔄', 'SRS'], ['course', '🗺', 'Course'], ['groups', '🌳', 'Imbuhan'], ['more', '⋯', 'More']];
-function renderTabs() {
-  $('#tab-bar').innerHTML = TABS.map(([id, ic, lb]) =>
-    `<button class="tab-btn ${S.tab === id ? 'active' : ''}" data-tab="${id}"><span class="tab-icon">${ic}</span><span class="tab-label">${lb}</span></button>`).join('');
-}
-function go(tab, view = null) { if (S.tab === 'study') S.lastStudyView = S.view; S.tab = tab; S.view = view; render(); window.scrollTo(0, 0); }
-
-// ═══ VIEWS ═══
-function Home() {
-  const f = focus();
-  const w = WORDS[Math.floor(Date.now() / 86400000) % WORDS.length];
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const today = (new Date().getDay() + 6) % 7;
-  return `<div class="home" style="--focus:${f.color}">
-    <div class="home-header">
-      <div class="home-logo">Ms</div>
-      <div class="home-brand">Belajar Melayu</div>
-      <button class="pill-btn" data-go="more:stats">📊 Stats</button>
-      <button class="pill-btn" data-go="more:settings" aria-label="Settings">⚙️</button>
-    </div>
-    <div class="home-wm" aria-hidden="true">
-      <span style="top:80px;right:-6px;font-size:130px;">${f.jawi}</span>
-      <span style="top:330px;left:-20px;font-size:110px;">بهاس</span>
-      <span style="bottom:30px;right:10px;font-size:120px;">ملايو</span>
-    </div>
-    <div class="home-hero">
-      <div class="home-done">✓ ${f.done} completed today</div>
-      <div class="home-glyph">${f.glyph}</div>
-      <div class="home-focus-label">Fokus hari ini · Today</div>
-      <div class="home-title">${f.title}</div>
-      <div class="home-sub">${f.sub}</div>
-      <div class="home-meta">${f.meta} · ${S.srsQueue.filter(q => q.due === 'Now').length} reviews due</div>
-      <button class="home-start" data-action="home-start"><span class="home-play">▶</span><span class="home-start-label">Mula latihan · Start</span></button>
-    </div>
-    <div class="streak-row">${days.map((d, i) => `<div class="streak-day">${d}<div class="streak-dot ${i <= today ? 'on' : ''}">${i <= today ? '🔥' : ''}</div></div>`).join('')}</div>
-    <button class="wotd" data-action="speak" data-text="${esc(w.ms)}">
-      <div class="wotd-jawi jawi">${w.jawi}</div>
-      <div style="min-width:0"><div class="section-label" style="margin-bottom:3px;color:var(--yellow)">Kata hari ini · Word of the day</div>
-      <div class="wotd-word">${esc(w.ms)} <span style="font-size:14px">🔊</span></div><div class="wotd-mean">${esc(w.en)}</div></div>
-    </button>
-  </div>`;
-}
-
-function StudySetup() {
-  const count = id => WORDS.filter(w => w.src === id).length;
-  return `<div class="pad">
-    <div class="setup-header">
-      <button class="setup-back" data-tab="home" aria-label="Back">‹</button>
-      <div><div class="setup-h1">Study session</div><div class="setup-h2">Set up your session</div></div>
-    </div>
-    <div class="section-label">Card front</div>
-    <div class="test-grid">${MODES.map(m => `<button class="test-card ${S.mode === m.id ? 'active' : ''}" data-mode="${m.id}"><div class="tc-glyph ${m.id === 'jawi' ? 'jawi' : ''}">${m.glyph}</div><div class="tc-label">${m.label}</div></button>`).join('')}</div>
-    <div class="section-label">Words per session</div>
-    <div class="num-row">${[5, 10, 15, 20, 30].map(n => `<button class="num-btn ${S.perSession === n ? 'active' : ''}" data-num="${n}">${n}</button>`).join('')}</div>
-    <div class="section-label">Source</div>
-    ${SOURCES.map(s => `<button class="source-card ${S.source === s.id ? 'active' : ''}" data-source="${s.id}" style="--c:${s.color}">
-      <div class="sc-badge">${s.icon}</div>
-      <div class="flex-1" style="flex:1;min-width:0"><div class="sc-name">${s.name}</div><div class="sc-avail">${count(s.id)} words available</div></div>
-      <div class="sc-count">${count(s.id)}</div></button>`).join('')}
-    <button class="btn-primary" data-action="start" style="background:var(--green)">▶ Start Session</button>
-    <button class="btn-primary" data-action="quiz" style="background:var(--purple)">🧠 Quiz Mode →</button>
-  </div>`;
-}
-
-function revealLayers(w) {
-  const L = [];
-  if (S.mode !== 'en') L.push(['Meaning', 'var(--blue)', `<span style="font-size:18px">${esc(w.en)}</span>`]);
-  if (S.mode !== 'ms') L.push(['Rumi · Malay', 'var(--green)', `<span style="font-size:20px;font-weight:900">${esc(w.ms)}</span>`]);
-  L.push(['Sebutan · Syllables', 'var(--yellow)', `<span class="syl" style="font-size:17px">${esc(w.syl).replace(/·/g, '<b>·</b>')}</span> <span class="muted" style="font-size:12px">— stress is light; every vowel is clear</span>`]);
-  L.push(['Imbuhan · Root + affix', 'var(--orange)', `<span class="parts">${partsOf(w).map(([t, k]) => `<span class="part ${k}">${esc(k === 'pre' ? t + '-' : k === 'suf' ? '-' + t : t)}</span>`).join('<span class="plus">+</span>')}</span>${w.parts ? '' : ' <span class="muted" style="font-size:12px">base word, no affixes</span>'}`]);
-  if (S.settings.jawi && S.mode !== 'jawi') L.push(['Jawi', 'var(--purple)', `<span class="jawi" style="font-size:26px">${w.jawi}</span>`]);
-  L.push(['Contoh · Example', 'var(--pink)', `${esc(w.ex)}<div class="muted" style="font-size:13px">${esc(w.exEn)}</div>${w.note && S.settings.colloquial ? `<div style="font-size:12px;color:var(--yellow);margin-top:4px">💡 ${esc(w.note)}</div>` : ''}`]);
-  return L;
-}
-
-function Session() {
-  const w = S.session[S.idx];
-  const total = S.session.length;
-  const layers = revealLayers(w);
-  let front, cls = '';
-  if (S.mode === 'en') front = esc(w.en);
-  else if (S.mode === 'jawi') { front = w.jawi; cls = 'jawi'; }
-  else if (S.mode === 'listen') front = '🔊';
-  else front = esc(w.ms);
-  const shown = layers.slice(0, S.reveal);
-  const r = S.ratings[w.id];
-  return `<div class="pad-sm">
-    <div class="fc-top"><div class="fc-title">📖 ${esc(srcOf(w.src).name)}</div><button class="fc-close" data-action="end" aria-label="End session">✕</button></div>
-    <div class="fc-counter">${S.idx + 1} / ${total}</div>
-    <div class="mode-row">${MODES.map(m => `<button class="mode-btn ${S.mode === m.id ? 'active' : ''}" data-mode="${m.id}"><span class="${m.id === 'jawi' ? 'jawi' : ''}">${m.glyph}</span>${S.mode === m.id ? ' ' + m.label : ''}</button>`).join('')}</div>
-    <div class="word-card">
-      ${w.reg ? `<span class="reg-badge">${w.reg}</span>` : ''}
-      <button class="speak-btn" data-action="speak" data-text="${esc(w.ms)}" aria-label="Play pronunciation">🔊</button>
-      <div class="word-card-text ${cls}" style="${S.mode === 'en' ? 'font-size:26px' : S.mode === 'listen' ? 'font-size:52px;cursor:pointer' : ''}" ${S.mode === 'listen' ? `data-action="speak" data-text="${esc(w.ms)}"` : ''}>${front}</div>
-      ${S.mode === 'listen' ? '<div class="word-card-sub">Tap to hear it again</div>' : ''}
-    </div>
-    <button class="reveal-box" data-action="reveal">
-      ${shown.length === 0 ? '<div class="reveal-placeholder">Tap to reveal 👆</div>' :
-        shown.map(([lb, c, v]) => `<div class="reveal-layer"><div class="reveal-label" style="color:${c}"><span class="reveal-bar" style="background:${c}"></span>${lb}</div><div class="reveal-value">${v}</div></div>`).join('') +
-        (S.reveal < layers.length ? `<div class="reveal-more">Tap for more · ${layers.length - S.reveal} left</div>` : '')}
-    </button>
-    <div class="action-row">
-      <button class="btn-story" data-action="story">📝 My Story</button>
-      <button class="btn-story" style="background:var(--green)" data-action="family" data-id="${w.id}">🌳 Family</button>
-      <button class="btn-action" data-action="toast" data-msg="Edit word — coming in the full build" aria-label="Edit">✏️</button>
-      <button class="btn-action" data-action="toast" data-msg="Flagged for review" aria-label="Flag">🚩</button>
-    </div>
-    <div class="rating-title">Rate this word</div>
-    <div class="rating-row">${RATING_ORDER.map(i => { const rt = RATINGS[i]; return `<button class="rate ${i === 5 ? 'nope' : ''} ${r === i ? 'active' : ''}" style="--rc:${rt.color}" data-rate="${i}" title="${rt.label}" aria-label="${rt.label}">${rt.icon}</button>`; }).join('')}</div>
-    <div class="nav-row">
-      <button class="btn-nav btn-prev" data-action="prev" ${S.idx === 0 ? 'disabled' : ''}>← Prev</button>
-      <button class="btn-shuffle" data-action="shuffle" aria-label="Shuffle">🎲</button>
-      <button class="btn-nav btn-next" data-action="next">${S.idx === total - 1 ? 'Finish ✓' : 'Next →'}</button>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" style="width:${(S.idx + 1) / total * 100}%"></div></div>
-  </div>`;
-}
-
-function Results() {
-  const vals = S.session.map(w => S.ratings[w.id]);
-  const good = vals.filter(v => [1, 3, 6].includes(v)).length;
-  const fuzzy = vals.filter(v => [2, 4].includes(v)).length;
-  const nope = vals.filter(v => v === 5).length;
-  return `<div class="pad">
-    <div class="res-hero"><div style="font-size:44px">🎉</div><div class="res-big">${good}/${S.session.length}</div><div style="font-weight:900;font-size:18px;margin-top:8px">Bagus! Session complete</div><div class="muted" style="font-weight:700;font-size:13px">${esc(srcOf(S.source).name)}</div></div>
-    <div class="res-grid"><div class="tile"><div class="tile-num" style="color:var(--green)">${good}</div><div class="tile-label">Known</div></div><div class="tile"><div class="tile-num" style="color:var(--purple)">${fuzzy}</div><div class="tile-label">Fuzzy</div></div><div class="tile"><div class="tile-num" style="color:var(--red)">${nope}</div><div class="tile-label">Nope</div></div></div>
-    <div class="section-label">Added to SRS</div>
-    ${S.session.slice(0, 6).map(w => `<div class="list-item"><div class="srs-dot" style="background:${RATINGS[S.ratings[w.id] ?? 0].color}"></div><div style="flex:1"><div class="srs-word">${esc(w.ms)}</div><div class="srs-meaning">${esc(w.en)}</div></div><div class="jawi muted" style="font-size:18px">${w.jawi}</div></div>`).join('')}
-    <button class="btn-primary" data-action="start" style="background:var(--green)">↻ Study again</button>
-    <button class="btn-primary" data-tab="srs" style="background:var(--surface);color:var(--text);border:2px solid var(--border)">Go to reviews →</button>
-  </div>`;
-}
-
-function SRS() {
-  if (S.view === 'review') return SRSReview();
-  const due = S.srsQueue.filter(q => q.due === 'Now').length;
-  return `<div class="pad">
-    <div class="setup-header"><div><div class="setup-h1">Ulang kaji · Review</div><div class="setup-h2">Spaced repetition</div></div></div>
-    <div class="res-grid" style="margin-top:0"><div class="tile"><div class="tile-num" style="color:var(--pink)">${due}</div><div class="tile-label">Due now</div></div><div class="tile"><div class="tile-num" style="color:var(--blue)">${S.srsQueue.length}</div><div class="tile-label">Learning</div></div><div class="tile"><div class="tile-num" style="color:var(--yellow)">42</div><div class="tile-label">Mastered</div></div></div>
-    <button class="btn-primary" data-action="srs-start" style="background:var(--pink);margin-bottom:20px" ${due ? '' : 'disabled'}>▶ Review ${due} due cards</button>
-    <div class="section-label">Queue</div>
-    ${S.srsQueue.map(q => { const w = wordById(q.id); const now = q.due === 'Now'; return `<div class="list-item"><div class="srs-dot" style="background:${now ? 'var(--pink)' : 'var(--border-light)'}"></div><div style="flex:1;min-width:0"><div class="srs-word">${esc(w.ms)}</div><div class="srs-meaning">${esc(w.en)}</div></div><div><div class="srs-due" style="color:${now ? 'var(--pink)' : 'var(--text-muted)'}">${q.due}</div><div class="lvl">${Array.from({ length: 7 }, (_, i) => `<i class="${i < q.lvl ? 'on' : ''}"></i>`).join('')}</div></div></div>`; }).join('')}
-  </div>`;
-}
-
-function SRSReview() {
-  const due = S.srsQueue.filter(q => q.due === 'Now');
-  const q = due[0];
-  if (!q) return `<div class="pad"><div class="res-hero"><div style="font-size:44px">✅</div><div class="res-big">${S.srsDone}</div><div style="font-weight:900;font-size:18px;margin-top:8px">All caught up!</div><div class="muted" style="font-weight:700">Next review in 2 hours</div></div><button class="btn-primary" data-action="srs-exit">Back to queue</button></div>`;
-  const w = wordById(q.id);
-  return `<div class="pad-sm">
-    <div class="fc-top"><div class="fc-title">🔄 Review</div><button class="fc-close" data-action="srs-exit" aria-label="Exit review">✕</button></div>
-    <div class="fc-counter">${due.length} left</div>
-    <div class="word-card"><button class="speak-btn" data-action="speak" data-text="${esc(w.ms)}" aria-label="Play">🔊</button><div class="word-card-text">${esc(w.ms)}</div>${S.srsReveal ? `<div class="word-card-sub">${esc(w.syl)}</div>` : ''}</div>
-    ${S.srsReveal ? `<div class="reveal-box" style="cursor:default"><div class="reveal-layer"><div class="reveal-label" style="color:var(--blue)"><span class="reveal-bar" style="background:var(--blue)"></span>Meaning</div><div class="reveal-value" style="font-size:18px">${esc(w.en)}</div></div><div class="reveal-layer"><div class="reveal-label" style="color:var(--pink)"><span class="reveal-bar" style="background:var(--pink)"></span>Contoh</div><div class="reveal-value">${esc(w.ex)}<div class="muted" style="font-size:13px">${esc(w.exEn)}</div></div></div></div>
-      <div class="srs-resp">${SRS_RESP.map((r, i) => `<button style="--rc:${r.color}" data-srs="${i}">${r.label}<small>${r.next}</small></button>`).join('')}</div>`
-    : `<button class="btn-primary" data-action="srs-show">Show answer</button>`}
-  </div>`;
-}
-
-function Course() {
-  if (S.openUnit) {
-    const u = UNITS.find(u => u.n === S.openUnit);
-    return `<div class="pad">
-      <div class="setup-header"><button class="setup-back" data-action="unit-close" aria-label="Back">‹</button><div><div class="setup-h1">Unit ${u.n}: ${u.title}</div><div class="setup-h2">${u.en}</div></div></div>
-      ${UNIT_STEPS.map((s, i) => `<button class="step" style="--sc:${s.c}" data-step="${s.key}"><div class="step-icon">${s.icon}</div><div><div class="more-label">${s.label}</div><div class="more-desc">${s.desc}</div></div><div class="step-check">${i < u.done ? '✓' : '›'}</div></button>`).join('')}
-      <div class="section-label" style="margin-top:18px">You’ll be able to</div>
-      <div class="list-item" style="display:block;font-weight:700;font-size:14px;line-height:1.7">☐ Order a meal and a drink at a mamak stall<br>☐ Ask for less sugar / less spice<br>☐ Ask how much it costs and understand the answer</div>
-    </div>`;
+// ═══════════ PLANT DRAWING ═══════════
+function plant(stage, size = 82) {
+  const pot = `<path d="M34 64h32l-4 18H38z" fill="var(--pot)"/><rect x="31" y="60" width="38" height="6" rx="2" fill="var(--pot)"/><ellipse cx="50" cy="61" rx="17" ry="3" fill="var(--soil)"/>`;
+  let g = '';
+  if (stage === 0) g = `<ellipse cx="50" cy="58" rx="5" ry="3.5" fill="var(--soil)" stroke="var(--ink-3)" stroke-width="1"/>`;
+  if (stage >= 1) g += `<path d="M50 60V${stage === 1 ? 46 : stage === 2 ? 34 : 24}" stroke="var(--leaf)" stroke-width="3" stroke-linecap="round"/>`;
+  if (stage === 1) g += `<path d="M50 48c-6-1-9-5-9-8 5 0 9 3 9 8zM50 48c6-1 9-5 9-8-5 0-9 3-9 8z" fill="var(--leaf)"/>`;
+  if (stage >= 2) g += `<path d="M50 50c-9-1-14-6-14-11 7 0 14 4 14 11zM50 44c9-1 14-6 14-11-7 0-14 4-14 11z" fill="var(--leaf)"/>`;
+  if (stage === 3) g += `<path d="M50 26c-4-4-4-10 0-13 4 3 4 9 0 13z" fill="var(--sambal)"/><path d="M47 27h6l-3 3z" fill="var(--leaf)"/>`;
+  if (stage === 4) {
+    g += Array.from({ length: 5 }, (_, i) => `<ellipse cx="50" cy="13" rx="6.5" ry="10" fill="var(--sambal)" transform="rotate(${i * 72} 50 23)"/>`).join('');
+    g += `<circle cx="50" cy="23" r="3.5" fill="var(--gold)"/><path d="M50 23l9-9" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><circle cx="59.5" cy="13.5" r="1.8" fill="var(--gold)"/>`;
   }
-  const cur = UNITS.find(u => u.done < u.steps);
-  return `<div class="pad">
-    <div class="setup-header"><div><div class="setup-h1">Kursus · Course</div><div class="setup-h2">Conversational Malay A1 → A2</div></div></div>
-    ${UNITS.map(u => { const done = u.done === u.steps, current = u === cur, locked = !done && !current; return `<button class="unit ${done ? 'done' : ''} ${current ? 'current' : ''} ${locked ? 'locked' : ''}" data-unit="${u.n}" ${locked ? 'aria-disabled="true"' : ''}><div class="unit-num">${done ? '✓' : locked ? '🔒' : u.n}</div><div style="flex:1;min-width:0"><div class="unit-title">${u.title}</div><div class="unit-sub">${u.en} · ${u.done}/${u.steps} steps</div><div class="unit-bar"><i style="width:${u.done / u.steps * 100}%"></i></div></div></button>`; }).join('')}
-  </div>`;
+  return `<svg viewBox="0 0 100 86" style="height:${size}px" aria-hidden="true">${g}${pot}</svg>`;
 }
 
-function famWord(parts) { return parts.map(([t, k]) => `<span class="${k[0] === 'p' ? 'p' : k[0] === 'r' ? 'r' : 's'}">${esc(t)}</span>`).join(''); }
-function Groups() {
-  const f = FAMILIES.find(f => f.root === S.root);
-  return `<div class="pad">
-    <div class="setup-header"><div><div class="setup-h1">Imbuhan · Word families</div><div class="setup-h2">One root, many words</div></div></div>
-    <div class="legend">${AFFIXES.map(([a, k, d]) => `<span class="part ${k}" title="${d}">${a} <span style="font-weight:700;opacity:.8">${d}</span></span>`).join('')}</div>
-    <div class="root-tabs">${FAMILIES.map(x => `<button class="root-tab ${x.root === S.root ? 'active' : ''}" data-root="${x.root}">${x.root}</button>`).join('')}</div>
-    <div class="wt-card"><div class="wt-scroll"><div class="wt-tree"><ul><li>
-      <div class="wt-node wt-hub"><span class="wt-w">${f.root}</span><span class="wt-mean">${esc(f.en)}</span></div>
-      <ul>${f.kids.map((k, i) => `<li><div class="wt-node ${S.openNode === i ? 'open' : ''}" data-node="${i}"><span class="wt-w">${famWord(k.parts)}</span><span class="wt-mean">${esc(k.en)}</span><div class="wt-detail">${esc(k.note)}</div></div></li>`).join('')}</ul>
-    </li></ul></div></div></div>
-    <div class="section-label">Breakdown</div>
-    <div class="fam-list">${f.kids.map(k => `<div class="list-item"><span class="parts" style="flex:1">${k.parts.map(([t, c]) => `<span class="part ${c}">${esc(t)}</span>`).join('<span class="plus">+</span>')}</span><span class="srs-meaning" style="text-align:right">${esc(k.en)}</span></div>`).join('')}</div>
-  </div>`;
+// ═══════════ VIEWS ═══════════
+function Home() {
+  const [g, gEn] = greeting();
+  const p = PERIBAHASA[dayIdx(PERIBAHASA.length)];
+  const thirsty = st.garden.filter(x => x.due).length;
+  const cur = STOPS.find(s => s.current);
+  const preview = shuffle(WORDS).slice(0, 5);
+  return band(g + '.', `${gEn} · hari ke-12 berturut-turut (12-day streak)`) + `
+  <main class="sheet">
+    <section class="peri" aria-label="Proverb of the day">
+      <span class="peri-mark" aria-hidden="true">ڤريبهاس</span>
+      <div class="eyebrow">Peribahasa hari ini · Proverb of the day</div>
+      <div class="ms">${esc(p.ms)}</div>
+      <div class="lit">“${esc(p.lit)}”</div>
+      <div class="use">Use it when: <b>${esc(p.use)}</b> · <span class="muted">${esc(p.key)}</span></div>
+    </section>
+    <div class="today">
+      <button class="tcard t-learn" data-tab="learn">
+        <div><div class="eyebrow" style="color:var(--gold)">Belajar</div><div class="num" style="margin-top:8px">10</div><div class="lbl">new words in today’s deck</div></div>
+        <div class="stack">${preview.map(w => `<span class="chip">${esc(w.ms)}</span>`).join('')}</div>
+        <div class="go" style="color:var(--gold)">Swipe through →</div>
+      </button>
+      <button class="tcard t-garden" data-tab="garden"><div class="eyebrow">Kebun</div><div><div class="num">${thirsty}</div><div class="lbl">plants need water</div></div></button>
+      <button class="tcard t-map" data-tab="map"><div class="eyebrow">Next stop</div><div><div class="num">${cur.town}</div><div class="lbl">${cur.unit}</div></div></button>
+    </div>
+    <button class="mamak-cta" data-act="mamak"><span class="ic" aria-hidden="true">🍛</span><span style="min-width:0"><b>Order at the mamak</b><br><span class="muted" style="font-size:13px;font-weight:600">2-minute role-play. The waiter is waiting.</span></span></button>
+  </main>`;
 }
 
-function More() {
-  if (S.view === 'quiz') return Quiz();
-  if (S.view === 'dialogue') return Dialogue();
-  if (S.view === 'stats') return Stats();
-  if (S.view === 'settings') return Settings();
-  const items = [
-    ['dialogue', '💬', 'Dialogues', 'Real conversations, line by line', '#1CB0F6'],
-    ['quiz', '🧠', 'Quiz', 'Multiple choice · type · match', '#CE82FF'],
-    ['jawi', 'ج', 'Jawi script', 'Read the Arabic-based script', '#FF9600'],
-    ['numbers', '🔢', 'Number trainer', 'Hear a price, type the number', '#58CC02'],
-    ['sentences', '📝', 'Sentences', 'Example sentences by word', '#FF6B8A'],
-    ['stats', '📊', 'Stats', 'Progress by source', '#FFC800'],
-    ['settings', '⚙️', 'Settings', 'Jawi layer, slang notes, audio', '#8A9AA6'],
-  ];
-  return `<div class="pad">
-    <div class="setup-header"><div><div class="setup-h1">More</div><div class="setup-h2">Tools & practice</div></div></div>
-    ${items.map(([id, ic, lb, d, c]) => `<button class="more-item" style="--c:${c}" data-more="${id}"><div class="more-icon ${id === 'jawi' ? 'jawi' : ''}" style="${id === 'jawi' ? 'font-size:24px;color:' + c : ''}">${ic}</div><div style="min-width:0"><div class="more-label">${lb}</div><div class="more-desc">${d}</div></div><div class="more-arrow">›</div></button>`).join('')}
-    <p class="muted" style="font-size:12px;font-weight:700;margin-top:14px"><span class="proto-chip">Prototype</span> Sample data. Jawi spellings still need a native-speaker check.</p>
-  </div>`;
+function newDeck() {
+  const pool = WORDS.filter(w => st.topic === 'all' || w.t === st.topic);
+  st.deck = shuffle(pool).slice(0, 10); st.i = 0; st.flipped = false; st.marks = {};
 }
-const backBtn = to => `<button class="setup-back" data-back="${to}" aria-label="Back">‹</button>`;
-
-function Quiz() {
-  const q = S.quiz;
-  if (q.i >= q.qs.length) return `<div class="pad"><div class="res-hero"><div style="font-size:44px">🧠</div><div class="res-big" style="color:var(--purple)">${q.score}/${q.qs.length}</div><div style="font-weight:900;font-size:18px;margin-top:8px">${q.score >= 4 ? 'Hebat! Great job' : 'Good effort, keep going'}</div></div><button class="btn-primary" data-action="quiz" style="background:var(--purple)">↻ New quiz</button><button class="btn-primary" data-back="more" style="background:var(--surface);color:var(--text);border:2px solid var(--border)">Done</button></div>`;
-  const cur = q.qs[q.i];
-  return `<div class="pad">
-    <div class="setup-header">${backBtn('more')}<div><div class="setup-h1">🧠 Quiz</div><div class="setup-h2">Question ${q.i + 1} of ${q.qs.length} · score ${q.score}</div></div></div>
-    <div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" style="width:${q.i / q.qs.length * 100}%;background:var(--purple)"></div></div>
-    <div class="q-prompt">What does this mean?</div>
-    <div class="word-card"><button class="speak-btn" data-action="speak" data-text="${esc(cur.w.ms)}" aria-label="Play">🔊</button><div class="word-card-text">${esc(cur.w.ms)}</div></div>
-    <div class="q-opts">${cur.opts.map((o, i) => { let c = ''; if (q.picked != null) { if (o.id === cur.w.id) c = 'right'; else if (i === q.picked) c = 'wrong'; } return `<button class="q-opt ${c}" data-opt="${i}" ${q.picked != null ? 'disabled' : ''}>${esc(o.en)}</button>`; }).join('')}</div>
-    ${q.picked != null ? `<button class="btn-primary" data-action="quiz-next" style="background:var(--purple);margin-top:14px">${q.i === q.qs.length - 1 ? 'See score' : 'Next →'}</button>` : ''}
-  </div>`;
+function cardFaces(w) {
+  let front;
+  if (st.front === 'en') front = `<div class="w" style="font-size:38px">${esc(w.en)}</div><div class="hint">Say it in Malay, then flip</div>`;
+  else if (st.front === 'jawi') front = `<div class="w jawi" style="font-size:58px;font-weight:700;letter-spacing:0">${w.jawi}</div><div class="hint">Read the Jawi, then flip</div>`;
+  else front = `<div class="w">${esc(w.ms)}</div><div class="j">${w.jawi}</div><div class="hint">Tap to flip · swipe → Ingat (remember) · ← Belum (not yet)</div>`;
+  return `
+    <div class="face front"><div class="strip"></div>
+      <div class="meta"><span>${esc(TOPICS.find(t => t.id === w.t).name)}</span>${w.tag ? `<span class="tag">${esc(w.tag)}</span>` : ''}</div>
+      <div class="big">${front}<button class="speak" data-act="speak" data-say="${esc(w.ms)}" aria-label="Hear it">${IC.sound}</button></div>
+    </div>
+    <div class="face back"><div class="strip"></div>
+      <div class="meta"><span>${esc(w.ms)}</span><button class="speak" style="width:36px;height:36px" data-act="speak" data-say="${esc(w.ms)}" aria-label="Hear it">${IC.sound}</button></div>
+      <div class="mean">${esc(w.en)}</div>
+      <div class="syl">${esc(w.syl).replace(/·/g, '<em>·</em>')}</div>
+      <div class="row-lbl">Built from</div>
+      <div class="morph">${w.parts ? segs(w.parts) : `<span class="seg root">${esc(w.ms)}</span><span class="muted" style="font-size:12px;font-weight:700">&nbsp;base word</span>`}</div>
+      <div class="row-lbl">In a sentence</div>
+      <div class="ex">${esc(w.ex)}<small>${esc(w.exEn)}</small></div>
+      <div class="row-lbl">Jawi</div><div class="jawi" style="font-size:24px;text-align:left">${w.jawi}</div>
+    </div>`;
 }
-function newQuiz() {
-  const pool = shuffle(WORDS).slice(0, 5);
-  S.quiz = { i: 0, score: 0, picked: null, qs: pool.map(w => ({ w, opts: shuffle([w, ...shuffle(WORDS.filter(x => x.id !== w.id)).slice(0, 3)]) })) };
-}
-
-function Dialogue() {
-  return `<div class="pad">
-    <div class="setup-header">${backBtn('more')}<div><div class="setup-h1">Di Gerai Mamak</div><div class="setup-h2">At the mamak stall · Unit 3</div></div></div>
-    <div style="display:flex;gap:8px;margin-bottom:16px"><button class="mode-btn ${S.showEn ? 'active' : ''}" data-action="toggle-en">English ${S.showEn ? 'on' : 'off'}</button><button class="mode-btn" data-action="play-all">🔊 Play all</button></div>
-    ${DIALOGUE.map(([s, who, ms, en]) => `<div class="bubble ${s === 'B' ? 'b' : ''}" data-action="speak" data-text="${esc(ms)}" style="cursor:pointer"><div class="who">${who}</div><div class="ms">${esc(ms)}</div>${S.showEn ? `<div class="en">${esc(en)}</div>` : ''}</div>`).join('')}
-    <p class="muted" style="font-size:12px;font-weight:700;margin-top:10px">💡 <b style="color:var(--yellow)">bang</b> (from abang, “big brother”) is a friendly way to address a man at a stall.</p>
-  </div>`;
-}
-
-function Stats() {
-  const prog = [['asas', 82], ['makan', 46], ['jalan', 18], ['nombor', 64], ['pasar', 30]];
-  return `<div class="pad">
-    <div class="setup-header">${backBtn('more')}<div><div class="setup-h1">📊 Stats</div><div class="setup-h2">Example data</div></div></div>
-    <div class="res-grid" style="margin-top:0"><div class="tile"><div class="tile-num" style="color:var(--orange)">12🔥</div><div class="tile-label">Day streak</div></div><div class="tile"><div class="tile-num" style="color:var(--green)">186</div><div class="tile-label">Words seen</div></div><div class="tile"><div class="tile-num" style="color:var(--yellow)">42</div><div class="tile-label">Mastered</div></div></div>
-    <div class="section-label">Progress by source</div>
-    ${prog.map(([id, p]) => { const s = srcOf(id); return `<div class="bar-row"><span style="width:22px">${s.icon}</span><span style="width:92px">${s.name.split(' · ')[0]}</span><div class="track"><i style="width:${p}%;background:${s.color}"></i></div><span class="n">${p}%</span></div>`; }).join('')}
-  </div>`;
+function Learn() {
+  if (!st.deck.length) newDeck();
+  const head = band('Belajar', 'Swipe right if you knew it, left if you didn’t.', '', true);
+  const top = `<div class="topics">${TOPICS.map(t => `<button class="topic ${st.topic === t.id ? 'on' : ''}" data-topic="${t.id}">${t.name}</button>`).join('')}</div>
+    <div class="front-mode" role="group" aria-label="Card front">${[['ms', 'Malay first'], ['en', 'English first'], ['jawi', 'Jawi first']].map(([k, l]) => `<button class="${st.front === k ? 'on' : ''}" data-front="${k}">${l}</button>`).join('')}</div>`;
+  if (st.i >= st.deck.length) {
+    const known = Object.values(st.marks).filter(Boolean).length;
+    return head + `<main class="sheet">${top}<div class="done-box"><div class="eyebrow">Deck finished</div><div class="h">${known} / ${st.deck.length}</div><div class="muted" style="font-weight:600">${known === st.deck.length ? 'Hebat! Every card sorted to the right.' : `${st.deck.length - known} word${st.deck.length - known > 1 ? 's' : ''} planted as seeds in your Kebun.`}</div><button class="btn btn-ink" data-act="redeal">Deal a new deck</button><button class="btn btn-line" data-tab="garden">Visit the garden</button></div></main>`;
+  }
+  const cards = st.deck.slice(st.i, st.i + 3).map((w, k) => `<div class="card ${k === 1 ? 'behind' : k === 2 ? 'behind2' : ''} ${k === 0 && st.flipped ? 'flipped' : ''}" ${k === 0 ? 'id="top" tabindex="0" aria-label="Flashcard. Press space to flip, arrow keys to sort."' : 'aria-hidden="true"'} style="z-index:${3 - k}">
+      ${k === 0 ? '<div class="swipe-stamp stamp-yes">INGAT</div><div class="swipe-stamp stamp-no">BELUM</div>' : ''}
+      <div class="front-wrap">${cardFaces(w)}</div></div>`).join('');
+  return head + `<main class="sheet">${top}
+    <div class="deck-head"><div class="h2">${st.i + 1}<span class="muted" style="font-size:16px"> of ${st.deck.length}</span></div><div class="pips">${st.deck.map((w, k) => `<i class="${k in st.marks ? (st.marks[k] ? 'k' : 'f') : k === st.i ? 'c' : ''}"></i>`).join('')}</div></div>
+    <div class="deck" id="deck">${cards}</div>
+    <div class="deck-actions">
+      <button class="big-btn b-no" data-act="sort" data-v="0">← Belum</button>
+      <button class="b-flip" data-act="flip" aria-label="Flip card">↻</button>
+      <button class="big-btn b-yes" data-act="sort" data-v="1">Ingat →</button>
+    </div>
+  </main>`;
 }
 
-function Settings() {
-  const rows = [['jawi', 'Show Jawi layer', 'Adds Jawi script to the reveal steps'], ['colloquial', 'Colloquial notes', 'Show spoken forms like “tak” for “tidak”'], ['autoSpeak', 'Auto-play audio', 'Speak each card as it appears']];
-  return `<div class="pad">
-    <div class="setup-header">${backBtn('more')}<div><div class="setup-h1">⚙️ Settings</div><div class="setup-h2">Make it yours</div></div></div>
-    ${rows.map(([k, l, d]) => `<div class="toggle-row"><div><div class="more-label">${l}</div><div class="more-desc">${d}</div></div><button class="switch ${S.settings[k] ? 'on' : ''}" data-setting="${k}" role="switch" aria-checked="${S.settings[k]}" aria-label="${l}"></button></div>`).join('')}
-  </div>`;
+function Garden() {
+  const thirsty = st.garden.filter(g => g.due);
+  if (st.watering) {
+    const w = st.watering;
+    const word = byId(w.g.id);
+    return band('Siram', `Watering ${w.done + 1} of ${w.total}. A right answer helps it grow.`) + `<main class="sheet">
+      <div class="water-q">
+        <div style="display:flex;justify-content:center">${plant(w.g.stage, 110)}</div>
+        <div class="w">${esc(word.ms)}</div>
+        <div class="opts">${w.opts.map((o, k) => { let c = ''; if (w.pick != null) { if (o.id === word.id) c = 'right'; else if (k === w.pick) c = 'wrong'; } return `<button class="opt ${c}" data-opt="${k}" ${w.pick != null ? 'disabled' : ''}>${esc(o.en)}</button>`; }).join('')}</div>
+        ${w.pick != null ? `<div class="muted" style="font-weight:700;text-align:center">${w.ok ? `Tumbuh! It grew to “${STAGES[w.g.stage].split(' · ')[1]}”.` : 'It stays as it is and comes back sooner.'}</div><button class="btn btn-ink" data-act="water-next">${w.done + 1 < w.total ? 'Next plant →' : 'Finish'}</button>` : ''}
+      </div></main>`;
+  }
+  return band('Kebun', 'Every word is a plant. Review it to help it grow into a bunga raya.') + `<main class="sheet">
+    <div class="legend-row" aria-label="Growth stages">${STAGES.map((s, k) => `<div>${plant(k, 38)}${s.split(' · ')[0]}</div>`).join('')}</div>
+    <button class="btn btn-ink" data-act="water" ${thirsty.length ? '' : 'disabled'} style="${thirsty.length ? '' : 'opacity:.5'}">💧 Water ${thirsty.length} thirsty plant${thirsty.length === 1 ? '' : 's'}</button>
+    <div class="garden">${st.garden.map(g => { const w = byId(g.id); return `<div class="plot ${g.due ? 'thirsty' : ''}">${g.due ? '<span class="drop">💧 dry</span>' : ''}${plant(g.stage)}<div class="pw">${esc(w.ms)}</div><div class="ps">${STAGES[g.stage].split(' · ')[1]}</div></div>`; }).join('')}</div>
+    <p class="muted" style="font-size:12px;font-weight:600">Bunga raya, the hibiscus, is Malaysia’s national flower. A word in bloom has been recalled across several weeks.</p>
+  </main>`;
 }
 
-// ═══ RENDER + EVENTS ═══
+function MapView() {
+  const pathD = STOPS.map((s, k) => k === 0 ? `M${s.x} ${s.y}` : `C${STOPS[k - 1].x} ${(STOPS[k - 1].y + s.y) / 2 - 10}, ${s.x} ${(STOPS[k - 1].y + s.y) / 2 + 10}, ${s.x} ${s.y}`).join(' ');
+  const doneUpTo = STOPS.findIndex(s => s.current);
+  const donePath = STOPS.slice(0, doneUpTo + 1).map((s, k) => k === 0 ? `M${s.x} ${s.y}` : `C${STOPS[k - 1].x} ${(STOPS[k - 1].y + s.y) / 2 - 10}, ${s.x} ${(STOPS[k - 1].y + s.y) / 2 + 10}, ${s.x} ${s.y}`).join(' ');
+  const sel = STOPS.find(s => s.n === st.stop);
+  const locked = !sel.done && !sel.current;
+  return band('Peta', 'Six stops across Malaysia. Each one is a unit of real situations.') + `<main class="sheet">
+    <div class="map-wrap"><svg viewBox="0 0 360 620" role="img" aria-label="Course route map">
+      <defs><pattern id="sea" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M0 7q3.5-4 7 0t7 0" fill="none" stroke="var(--line)" stroke-width="1.2"/></pattern></defs>
+      <rect width="360" height="620" fill="url(#sea)"/>
+      <path d="${pathD}" fill="none" stroke="var(--ink-3)" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+      <path d="${donePath}" fill="none" stroke="var(--pandan)" stroke-width="5" stroke-linecap="round"/>
+      ${STOPS.map(s => {
+        const right = s.x < 180;
+        const fill = s.done ? 'var(--pandan)' : s.current ? 'var(--gold)' : 'var(--sheet)';
+        const stroke = s.done ? 'var(--pandan)' : s.current ? 'var(--gold)' : 'var(--ink-3)';
+        return `<g data-stop="${s.n}" style="cursor:pointer" tabindex="0" role="button" aria-label="Stop ${s.n}: ${s.town}">
+          ${s.current ? `<circle class="pulse" cx="${s.x}" cy="${s.y}" r="17" fill="var(--gold)"/>` : ''}
+          <circle cx="${s.x}" cy="${s.y}" r="${st.stop === s.n ? 18 : 15}" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+          <text x="${s.x}" y="${s.y + 5}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="14" fill="${s.done || s.current ? '#1B2140' : 'var(--ink-3)'}">${s.done ? '✓' : s.n}</text>
+          <text x="${right ? s.x + 28 : s.x - 28}" y="${s.y - 2}" text-anchor="${right ? 'start' : 'end'}" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="17" fill="var(--ink)">${s.town}</text>
+          <text x="${right ? s.x + 28 : s.x - 28}" y="${s.y + 16}" text-anchor="${right ? 'start' : 'end'}" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="12" fill="var(--ink-2)">${s.unit}</text>
+        </g>`;
+      }).join('')}
+    </svg></div>
+    <section class="stop-sheet" aria-live="polite">
+      <div class="eyebrow" style="color:var(--gold)">Stop ${sel.n} · ${sel.town}${sel.done ? ' · selesai (done)' : sel.current ? ' · you are here' : ' · locked'}</div>
+      <div class="h2">${sel.unit} <span style="opacity:.6;font-weight:600;font-size:15px">${sel.en}</span></div>
+      ${locked ? `<div style="opacity:.75;font-weight:600;font-size:14px">Finish ${STOPS.find(s => s.current).town} to travel here.</div>` :
+        STOP_STEPS.map(([t, d, ok], k) => { const isOk = sel.done || ok; return `<button class="step ${isOk ? 'ok' : ''}" data-step="${k}"><span class="n">${isOk ? '✓' : k + 1}</span><span><b>${t}</b><span>${d}</span></span></button>`; }).join('')}
+    </section>
+  </main>`;
+}
+
+function Shop() {
+  const key = `${st.pre}|${st.root}|${st.suf}`;
+  const f = FORMS[key];
+  const total = Object.keys(FORMS).length;
+  const pieceLbl = (p, k) => p ? (k === 'pre' ? p + '-' : '-' + p) : '—';
+  const eq = [st.pre && st.pre + '-', st.root, st.suf && '-' + st.suf].filter(Boolean).join(' + ');
+  let res;
+  if (f) res = `<div class="result">${st.lastNew ? '<span class="newbadge">NEW</span>' : ''}<div class="eq">${esc(eq)} =</div><div class="word">${f[0].map(([t, k]) => `<span class="${k}">${esc(t)}</span>`).join('')}</div><div class="m">${esc(f[1])}</div><div class="rule">${esc(f[2])}</div><button class="speak" style="justify-self:center" data-act="speak" data-say="${esc(f[0].map(x => x[0]).join(''))}" aria-label="Hear it">${IC.sound}</button></div>`;
+  else res = `<div class="result miss"><div class="eq">${esc(eq)} =</div><div class="word">${esc((st.pre ? st.pre.replace('N', '') : '') + st.root + st.suf)}</div><div class="m">Bukan perkataan · not a word</div><div class="rule">Not every affix fits every root. Try a different prefix or suffix.</div></div>`;
+  return band('Bengkel Imbuhan', 'The affix workshop. Snap a prefix and a suffix onto a root and see what Malay makes of it.') + `<main class="sheet">
+    ${res}
+    <div><div class="slot-lbl"><span class="eyebrow">Awalan · <b>prefix</b></span></div><div class="slot">${PREFIXES.map(p => `<button class="piece pre ${st.pre === p ? 'on' : ''}" data-pre="${p}">${pieceLbl(p, 'pre')}</button>`).join('')}</div></div>
+    <div><div class="slot-lbl"><span class="eyebrow">Kata dasar · <b>root</b></span></div><div class="slot">${Object.entries(ROOTS).map(([r, en]) => `<button class="piece root ${st.root === r ? 'on' : ''}" data-root="${r}">${r} <span style="font-weight:600;opacity:.7;font-size:12px">${en}</span></button>`).join('')}</div></div>
+    <div><div class="slot-lbl"><span class="eyebrow">Akhiran · <b>suffix</b></span></div><div class="slot">${SUFFIXES.map(s => `<button class="piece suf ${st.suf === s ? 'on' : ''}" data-suf="${s}">${pieceLbl(s, 'suf')}</button>`).join('')}</div></div>
+    <div style="display:grid;gap:8px">
+      <div class="slot-lbl"><span class="eyebrow">Your collection</span><span style="font-weight:800;font-size:13px">${st.found.size} / ${total}</span></div>
+      <div class="meter"><i style="width:${st.found.size / total * 100}%"></i></div>
+      <div class="found">${[...st.found].map(k => `<span>${esc(FORMS[k][0].map(x => x[0]).join(''))}</span>`).join('')}${Array.from({ length: Math.min(6, total - st.found.size) }, () => '<span class="ghost">·</span>').join('')}</div>
+    </div>
+  </main>`;
+}
+
+function Mamak() {
+  const m = st.mamak;
+  const lines = [];
+  for (let k = 0; k <= m.step && k < MAMAK.length; k++) {
+    lines.push(`<div><div class="who">Pelayan · waiter</div><div class="msg them">${esc(MAMAK[k].them)}<small>${esc(MAMAK[k].them_en)}</small></div></div>`);
+    if (m.answers[k]) lines.push(`<div class="msg me">${esc(m.answers[k][0])}</div><div class="msg note">💡 ${esc(m.answers[k][2])}</div>`);
+  }
+  const cur = MAMAK[m.step];
+  const finished = m.step >= MAMAK.length;
+  return band('Gerai Mamak', 'Pulau Pinang · Role-play. Choose what you’d say.', '<button class="band-btn" data-act="mamak-exit" aria-label="Close role-play">✕</button>', true) + `<main class="sheet">
+    <div class="chat">${lines.join('')}</div>
+    ${finished ? `<div class="done-box"><div class="eyebrow">Order complete</div><div class="h">${m.firstTry} / ${MAMAK.length}</div><div class="muted" style="font-weight:600">right on the first try</div><button class="btn btn-ink" data-act="mamak">Order again</button><button class="btn btn-line" data-act="mamak-exit">Back</button></div>`
+      : `<div class="replies">${shuffleFixed(cur.replies, m.step).map(([t, ok]) => `<button class="reply ${m.wrong.includes(t) ? 'wrong' : ''}" data-reply="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+         ${m.wrong.length ? `<div class="msg note">✗ ${esc(cur.replies.find(r => r[0] === m.wrong[m.wrong.length - 1])[2])}</div>` : ''}`}
+  </main>`;
+}
+const shuffleFixed = (arr, seed) => [...arr].sort((a, b) => ((a[0].length * 7 + seed) % 5) - ((b[0].length * 7 + seed) % 5));
+
+// ═══════════ RENDER ═══════════
 function render() {
-  const c = $('#content');
-  if (S.tab === 'home') c.innerHTML = Home();
-  else if (S.tab === 'study') c.innerHTML = S.view === 'session' ? Session() : S.view === 'results' ? Results() : StudySetup();
-  else if (S.tab === 'srs') c.innerHTML = SRS();
-  else if (S.tab === 'course') c.innerHTML = Course();
-  else if (S.tab === 'groups') c.innerHTML = Groups();
-  else c.innerHTML = More();
-  renderTabs();
+  const v = $('#view');
+  if (st.mamak) v.innerHTML = Mamak();
+  else v.innerHTML = { home: Home, learn: Learn, garden: Garden, map: MapView, shop: Shop }[st.tab]();
+  renderDock();
+  if (st.tab === 'learn' && !st.mamak) bindSwipe();
 }
-function startSession() {
-  const pool = WORDS.filter(w => w.src === S.source);
-  S.session = shuffle(pool).slice(0, S.perSession);
-  S.idx = 0; S.reveal = 0; S.ratings = {};
-  S.tab = 'study'; S.view = 'session'; render(); window.scrollTo(0, 0);
-  if (S.settings.autoSpeak || S.mode === 'listen') speak(S.session[0].ms);
+function go(tab) { st.tab = tab; st.mamak = null; render(); window.scrollTo(0, 0); }
+
+function sort(known) {
+  const top = $('#top'); if (!top) return;
+  st.marks[st.i] = !!known;
+  top.style.transition = 'transform .35s ease, opacity .35s';
+  top.style.transform = `translateX(${known ? 520 : -520}px) rotate(${known ? 24 : -24}deg)`;
+  top.style.opacity = '0';
+  if (!known) { const id = st.deck[st.i].id; if (!st.garden.some(g => g.id === id)) st.garden.push({ id, stage: 0, due: true }); }
+  setTimeout(() => { st.i++; st.flipped = false; render(); }, 280);
 }
-function moveCard(d) {
-  S.idx += d; S.reveal = 0; render();
-  if (S.settings.autoSpeak || S.mode === 'listen') speak(S.session[S.idx].ms);
+function bindSwipe() {
+  const top = $('#top'); if (!top) return;
+  let x0 = null, dx = 0, moved = false;
+  const yes = top.querySelector('.stamp-yes'), no = top.querySelector('.stamp-no');
+  top.addEventListener('pointerdown', e => { if (e.target.closest('[data-act]')) return; x0 = e.clientX; dx = 0; moved = false; top.setPointerCapture(e.pointerId); top.classList.add('dragging'); });
+  top.addEventListener('pointermove', e => {
+    if (x0 == null) return; dx = e.clientX - x0; if (Math.abs(dx) > 6) moved = true;
+    top.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+    yes.style.opacity = Math.max(0, Math.min(1, dx / 90)); no.style.opacity = Math.max(0, Math.min(1, -dx / 90));
+  });
+  const end = () => {
+    if (x0 == null) return; x0 = null; top.classList.remove('dragging');
+    if (Math.abs(dx) > 90) return sort(dx > 0);
+    top.style.transform = ''; yes.style.opacity = 0; no.style.opacity = 0;
+    if (!moved) { st.flipped = !st.flipped; top.classList.toggle('flipped', st.flipped); }
+  };
+  top.addEventListener('pointerup', end); top.addEventListener('pointercancel', end);
+  top.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); st.flipped = !st.flipped; top.classList.toggle('flipped', st.flipped); }
+    if (e.key === 'ArrowRight') sort(true); if (e.key === 'ArrowLeft') sort(false);
+  });
 }
 
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-tab],[data-go],[data-action],[data-mode],[data-num],[data-source],[data-rate],[data-srs],[data-unit],[data-step],[data-root],[data-node],[data-more],[data-back],[data-opt],[data-setting]');
-  if (!el || el.closest('.modal-overlay')) return;
+  const el = e.target.closest('[data-tab],[data-act],[data-topic],[data-front],[data-pre],[data-root],[data-suf],[data-stop],[data-step],[data-opt],[data-reply]');
+  if (!el) return;
   const d = el.dataset;
-  if (d.tab) {
-    // Re-tapping Study returns to setup; coming back from another tab resumes the session.
-    if (d.tab === 'course') S.openUnit = null;
-    return go(d.tab, d.tab === 'study' && S.tab !== 'study' ? S.lastStudyView : null);
+  if (d.tab) return go(d.tab);
+  if (d.topic) { st.topic = d.topic; newDeck(); return render(); }
+  if (d.front) { st.front = d.front; st.flipped = false; return render(); }
+  if (d.pre !== undefined || d.root !== undefined || d.suf !== undefined) {
+    if (d.pre !== undefined) st.pre = d.pre; if (d.root !== undefined) st.root = d.root; if (d.suf !== undefined) st.suf = d.suf;
+    const key = `${st.pre}|${st.root}|${st.suf}`;
+    st.lastNew = !!FORMS[key] && !st.found.has(key); if (FORMS[key]) st.found.add(key);
+    return render();
   }
-  if (d.go) { const [t, v] = d.go.split(':'); return go(t, v); }
-  if (d.back) return go(d.back);
-  if (d.mode) { S.mode = d.mode; S.reveal = 0; render(); if (S.view === 'session' && d.mode === 'listen') speak(S.session[S.idx].ms); return; }
-  if (d.num) { S.perSession = +d.num; return render(); }
-  if (d.source) { S.source = d.source; return render(); }
-  if (d.rate) { const w = S.session[S.idx]; S.ratings[w.id] = +d.rate; render(); if (S.idx < S.session.length - 1) setTimeout(() => moveCard(1), 260); return; }
-  if (d.srs) { const q = S.srsQueue.find(q => q.due === 'Now'); q.due = SRS_RESP[+d.srs].next; q.lvl = Math.max(0, Math.min(7, q.lvl + [-2, -1, 1, 2][+d.srs])); S.srsDone++; S.srsReveal = false; return render(); }
-  if (d.unit) { if (el.classList.contains('locked')) return toast('Finish the previous unit to unlock'); S.openUnit = +d.unit; return render(); }
-  if (d.step) { if (d.step === 'dialogue') return go('more', 'dialogue'); if (d.step === 'vocab') { S.source = 'makan'; return startSession(); } return toast(d.step === 'drill' ? 'Pattern drill — next build' : 'Unit check — next build'); }
-  if (d.root) { S.root = d.root; S.openNode = null; return render(); }
-  if (d.node) { S.openNode = S.openNode === +d.node ? null : +d.node; return render(); }
-  if (d.more) { if (['quiz'].includes(d.more)) { newQuiz(); return go('more', 'quiz'); } if (['dialogue', 'stats', 'settings'].includes(d.more)) return go('more', d.more); return toast('Coming in the full build'); }
-  if (d.opt) { const q = S.quiz; q.picked = +d.opt; if (q.qs[q.i].opts[q.picked].id === q.qs[q.i].w.id) q.score++; return render(); }
-  if (d.setting) { S.settings[d.setting] = !S.settings[d.setting]; return render(); }
-  switch (d.action) {
-    case 'home-start': S.source = focus().src; S.mode = 'ms'; return startSession();
-    case 'start': return startSession();
-    case 'quiz': newQuiz(); return go('more', 'quiz');
-    case 'quiz-next': S.quiz.i++; S.quiz.picked = null; return render();
-    case 'speak': e.stopPropagation(); return speak(d.text);
-    case 'reveal': { const n = revealLayers(S.session[S.idx]).length; if (S.reveal < n) { S.reveal++; render(); } return; }
-    case 'next': if (S.idx < S.session.length - 1) return moveCard(1); S.view = 'results'; render(); return window.scrollTo(0, 0);
-    case 'prev': if (S.idx > 0) moveCard(-1); return;
-    case 'shuffle': S.session = shuffle(S.session); S.idx = 0; S.reveal = 0; return render();
-    case 'end': S.view = null; return render();
-    case 'story': return modal('📝 My Story', `<p class="muted" style="font-weight:700;font-size:13px;margin-bottom:10px">Write a memory hook for <b style="color:var(--text)">${esc(S.session[S.idx].ms)}</b>.</p><textarea id="story-text" rows="4" style="width:100%;border-radius:12px;background:var(--bg);border:2px solid var(--border);color:var(--text);padding:10px;font-family:var(--font);font-size:14px">${S.session[S.idx].ms === 'sedap' ? 'Sedap sounds like “said up”: you sit up and say “mmm” when food is delicious.' : ''}</textarea>`, 'var(--purple)');
-    case 'family': { const w = wordById(+d.id); const root = (w.parts || []).find(p => p[1] === 'root')?.[0] || w.ms; const fam = FAMILIES.find(f => f.root === root || f.kids.some(k => k.parts.map(p => p[0]).join('') === w.ms)); return modal('🌳 Word family', fam ? `<div class="muted" style="font-weight:700;font-size:13px;margin-bottom:10px">Root <b style="color:var(--green)">${fam.root}</b> · ${esc(fam.en)}</div>${fam.kids.map(k => `<div class="list-item"><span class="parts" style="flex:1">${k.parts.map(([t, c]) => `<span class="part ${c}">${esc(t)}</span>`).join('<span class="plus">+</span>')}</span><span class="srs-meaning">${esc(k.en)}</span></div>`).join('')}` : `<p class="muted" style="font-weight:700"><b style="color:var(--text)">${esc(w.ms)}</b> has no affix family yet. Open the Imbuhan tab to explore roots like makan, ajar and jalan.</p>`, 'var(--green)'); }
-    case 'toast': return toast(d.msg);
-    case 'srs-start': S.srsDone = 0; S.srsReveal = false; return go('srs', 'review');
-    case 'srs-show': S.srsReveal = true; return render();
-    case 'srs-exit': return go('srs');
-    case 'unit-close': S.openUnit = null; return render();
-    case 'toggle-en': S.showEn = !S.showEn; return render();
-    case 'play-all': return speak(DIALOGUE.map(l => l[2]).join('. '));
+  if (d.stop) { st.stop = +d.stop; return render(); }
+  if (d.step) { const k = +d.step; if (k === 2) return startMamak(); if (k === 1) return go('learn'); return toast(k === 0 ? 'Listening drill: next build' : 'Checkpoint: next build'); }
+  if (d.opt) { const w = st.watering, word = byId(w.g.id); w.pick = +d.opt; w.ok = w.opts[w.pick].id === word.id; if (w.ok) w.g.stage = Math.min(4, w.g.stage + 1); w.g.due = false; return render(); }
+  if (d.reply) { const m = st.mamak, cur = MAMAK[m.step], r = cur.replies.find(x => x[0] === d.reply); if (r[1]) { if (!m.wrong.length) m.firstTry++; m.answers[m.step] = r; m.step++; m.wrong = []; } else if (!m.wrong.includes(r[0])) m.wrong.push(r[0]); render(); if (r[1]) speak(r[0]); return; }
+  switch (d.act) {
+    case 'speak': e.stopPropagation(); return speak(d.say);
+    case 'flip': { const t = $('#top'); if (t) { st.flipped = !st.flipped; t.classList.toggle('flipped', st.flipped); } return; }
+    case 'sort': return sort(d.v === '1');
+    case 'redeal': newDeck(); return render();
+    case 'water': { const q = st.garden.filter(g => g.due); st.watering = { list: q, total: q.length, done: 0 }; setWater(); return render(); }
+    case 'water-next': { const w = st.watering; w.done++; if (w.done >= w.total) { st.watering = null; toast('Kebun disiram. The garden is watered.'); } else setWater(); render(); return window.scrollTo(0, 0); }
+    case 'mamak': return startMamak();
+    case 'mamak-exit': st.mamak = null; render(); return window.scrollTo(0, 0);
+    case 'theme': { const r = document.documentElement; const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; return; }
   }
 });
+function setWater() { const w = st.watering; w.g = w.list[w.done]; const word = byId(w.g.id); w.opts = shuffle([word, ...shuffle(WORDS.filter(x => x.id !== word.id)).slice(0, 2)]); w.pick = null; w.ok = null; }
+function startMamak() { st.mamak = { step: 0, answers: {}, wrong: [], firstTry: 0 }; render(); window.scrollTo(0, 0); speak(MAMAK[0].them); }
 try { speechSynthesis.getVoices(); } catch {}
 render();
 </script>
