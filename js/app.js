@@ -11,6 +11,7 @@ import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
+import { SpeakTab } from './speak.js?v=1';
 
 class BurmeseStudyApp {
   constructor() {
@@ -24,6 +25,7 @@ class BurmeseStudyApp {
     app.innerHTML = `
       <div class="tab-content" id="tab-content"></div>
       <div class="tab-bar" id="tab-bar">
+        <button class="tab-btn" data-tab="speak"><span class="tab-icon">🗣</span><span class="tab-label">Speak</span></button>
         <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
         <button class="tab-btn" data-tab="study"><span class="tab-icon">📖</span><span class="tab-label">Study</span></button>
         <button class="tab-btn" data-tab="srs"><span class="tab-icon">🔄</span><span class="tab-label">SRS</span></button>
@@ -44,6 +46,7 @@ class BurmeseStudyApp {
     this.tabs.writing = new WritingPractice(this);
     this.tabs.sentences = new SentencesPage(this);
     this.tabs.settings = new SettingsPage(this);
+    this.tabs.speak = new SpeakTab(this);
 
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
