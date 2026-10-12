@@ -32,6 +32,10 @@ async def main(force: bool) -> None:
             failed += 1
             out.unlink(missing_ok=True)
             print(f"  [{n}/{len(todo)}] FAILED {it['text']}: {e}")
+    # clips.json = the files that really exist; speak.js only offers 🔊 for these.
+    have = [it["file"] for it in items if (ROOT / it["file"]).exists()]
+    (ROOT / "audio/speak/clips.json").write_text(json.dumps(have, indent=0) + "\n", encoding="utf-8")
+    print(f"{len(have)} of {len(items)} clips available (audio/speak/clips.json)")
     print("Done." if not failed else f"Done with {failed} failures - run again to retry them.")
 
 

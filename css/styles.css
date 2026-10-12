@@ -695,3 +695,16 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .sp .bad{border-color:var(--red)!important;background:rgba(255,75,75,.1)!important}
 .sp-fade{animation:spFade .25s ease}
 @keyframes spFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* 🔊 button states: idle | loading | playing | off */
+.sp-say{display:inline-flex;align-items:center;gap:8px}
+.sp-say-ic{width:16px;height:16px;flex:none;position:relative;display:inline-block}
+.sp-say-ic::before{content:'🔊';font-size:14px;line-height:16px;font-style:normal}
+.sp-say[data-state=loading] .sp-say-ic::before{content:'';position:absolute;inset:1px;border-radius:50%;border:2px solid var(--border-light);border-top-color:var(--blue);animation:spSpin .7s linear infinite}
+.sp-say[data-state=playing]{border-color:var(--blue);color:var(--blue)}
+.sp-say[data-state=playing] .sp-say-ic::before{content:'';position:absolute;left:0;bottom:2px;width:3px;height:12px;background:var(--blue);border-radius:2px;box-shadow:6px 0 0 var(--blue),12px 0 0 var(--blue);animation:spBars .6s ease-in-out infinite}
+.sp-say[data-state=off]{opacity:.45;color:var(--text-muted);border-style:dashed}
+.sp-say[data-state=off] .sp-say-ic::before{content:'🔇'}
+@keyframes spSpin{to{transform:rotate(360deg)}}
+@keyframes spBars{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.sp-toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--surface);border:2px solid var(--border-light);border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--text);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+.sp-toast.show{opacity:1}

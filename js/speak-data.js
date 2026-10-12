@@ -41,8 +41,8 @@ export const PACKS = [
     ['Let\u2019s go', 'သွားကြမယ်', 'thwa ja meh', 'Everyone has finished eating', '🚶'],
   ].map(row) },
   { id: 'food', emoji: '🍜', color: '#FF9600', title: 'Food & dishes', desc: 'Name what\u2019s on the table', food: true, words: [
-    ['Mohinga', 'မုန့်ဟင်းခါး', 'mont hin ga', 'Rice noodles in fish broth, the national breakfast', '🍜', 'img/food/mohinga.jpg'],
-    ['Tea leaf salad', 'လက်ဖက်သုပ်', 'la phet thoke', 'Fermented tea leaves, nuts, garlic, tomato', '🥗', 'img/food/laphet-thoke.jpg'],
+    ['Mohinga', 'မုန့်ဟင်းခါး', 'mont hin ga', 'Rice noodles in fish broth, the national breakfast', '🍜'],
+    ['Tea leaf salad', 'လက်ဖက်သုပ်', 'la phet thoke', 'Fermented tea leaves, nuts, garlic, tomato', '🥗'],
     ['Shan noodles', 'ရှမ်းခေါက်ဆွဲ', 'shan khauk swe', 'Rice noodles with chicken or pork, from Shan state', '🍝'],
     ['Coconut noodles', 'အုန်းနို့ခေါက်ဆွဲ', 'ohn no khauk swe', 'Noodles in coconut-chicken curry', '🥥'],
     ['Fried rice', 'ထမင်းကြော်', 'hta min kyaw', 'Yesterday\u2019s rice, fried with egg and peas', '🍚'],
