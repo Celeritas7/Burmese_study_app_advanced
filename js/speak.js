@@ -4,6 +4,7 @@
 // every answer is also logged to Supabase `speak_log` (fire-and-forget).
 // App deps load lazily so this file also runs standalone (preview) without them.
 import { PACKS, FEEL, STEPS } from './speak-data.js?v=1';
+import { audioFile } from './speak-audio.js?v=1';
 
 const DEPS = { db: null, getSettings: () => ({ showDevanagari: true }), toPronunciation: () => '' };
 const depsReady = Promise.all([
@@ -43,8 +44,15 @@ export class SpeakTab {
   allMissed() { return PACKS.flatMap(p => this.missed(p).map(w => ({ p, w }))); }
   // Image if the word has one (and it loaded), else the emoji tile.
   pic(w, cls = 'sp-tile dark') { return w.img ? `<img class="sp-img" src="${w.img}" alt="" onerror="this.outerHTML='<div class=&quot;${cls}&quot;>${w.emo}</div>'">` : `<div class="${cls}">${w.emo}</div>`; }
+  // Plays the pre-generated clip in the ♂/♀ voice (audio/speak/), else falls back to the device's TTS.
   speak(t) {
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'my-MM'; u.rate = 0.85; speechSynthesis.speak(u); } catch {}
+    try { speechSynthesis.cancel(); } catch {}
+    this.audio?.pause();
+    const a = this.audio = new Audio(audioFile(t, this.S.gender));
+    a.play().catch(() => { if (this.audio === a) this.tts(t); });
+  }
+  tts(t) {
+    try { const u = new SpeechSynthesisUtterance(t); u.lang = 'my-MM'; u.rate = 0.85; speechSynthesis.speak(u); } catch {}
   }
   markSaid(p, w, ok = true) {
     const k = this.key(p, w);
