@@ -11,7 +11,7 @@ import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
-import { SpeakTab } from './speak.js?v=3';
+import { SpeakTab } from './speak.js?v=4';
 
 class BurmeseStudyApp {
   constructor() {
@@ -52,6 +52,9 @@ class BurmeseStudyApp {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
     });
     await db.testConnection();
+    // Speak progress follows you across devices: rebuild said/miss (step 1) and ladder counts (steps 2–4, correct only) from the answer log (single user, anon key, so every row is mine).
+    if (db.connected) db.query('speak_log', { select: 'pack,item,step,ok,created_at', filters: ['or=(step.eq.1,and(step.in.(2,3,4),ok.is.true))'], order: 'created_at' })
+      .then(rows => this.tabs.speak.hydrate(rows)).catch(() => {});
     await this.tabs.study.init();
     this.renderTab();
   }

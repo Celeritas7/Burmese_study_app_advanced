@@ -82,14 +82,16 @@ export class SpeakTab {
     t.textContent = m; t.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 1600);
   }
   sayBtn(t, label = 'Hear', cls = 'sm ghost') { return `<button class="sp-btn ${cls} sp-say" data-sp="say" data-t="${t}" data-state="${DEPS.hasAudio(t) ? 'idle' : 'off'}"><i class="sp-say-ic"></i>${label}</button>`; }
-  // Phase 3: rebuild said/miss from Supabase rows [{item, pack, step, ok, created_at}] so progress follows the user across devices.
+  // Phase 3: rebuild said/miss and ladder counts from Supabase rows [{item, pack, step, ok, created_at}] so progress follows the user across devices.
   hydrate(rows) {
-    const miss = {};
+    const miss = {}, built = {};
     for (const r of [...rows].sort((a, b) => a.created_at < b.created_at ? -1 : 1)) {
-      if (r.step !== 1) continue;
+      if (r.step > 1) { if (r.ok) built[r.step - 1] = (built[r.step - 1] || 0) + 1; continue; }   // ladder: correct builds per step
       const k = r.pack + '|' + r.item; this.S.said[k] = 1; miss[k] = r.ok ? 0 : (miss[k] || 0) + 1;
     }
-    Object.assign(this.S.miss, miss); this.save(); if (this.container) this.render(this.container);
+    Object.assign(this.S.miss, miss);
+    for (const i in built) this.S.steps[i] = Math.max(this.S.steps[i] || 0, built[i]);
+    this.save(); if (this.container) this.render(this.container);
   }
   markSaid(p, w, ok = true) {
     const k = this.key(p, w);
