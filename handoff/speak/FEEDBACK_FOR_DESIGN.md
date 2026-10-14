@@ -33,6 +33,13 @@ Phase 1 of the Speak tab is live in the app (`js/speak.js`, `js/speak-data.js`, 
    - **dialogues have two speakers.** How should we show and assign a voice per speaker (e.g. speaker A = male, B = female, or a per-line label)?
 5. **Next content packs** (Phase 5): "At the tea shop", "Numbers & prices", "Where is…". Ladder steps 2–4 currently only work for How I feel, because only those words have the `pre` / `v` split. Should new packs get their own ladder, or stay as word lists?
 
-## 4. Content check still needed
+## 4. Wider app questions (beyond the Speak tab)
+
+1. **Tab bar has 7 tabs** (Speak, Home, Study, SRS, Course, Groups, More). PHASES.md suggested replacing Groups or adding a 6th. On a phone the labels are 9px and "More" sits lower than the others, because its icon is a text "⋯" and not an emoji. Which tabs stay in the bar, and which move under More? Should Speak or Home be the first and default tab? The app currently opens on Home.
+2. **Speak vs Course overlap.** Two grammar paths now exist. The Speak ladder (steps 2–4) builds sentences from **tiles**, while the Course "Pattern drill" (`showDrillModal` in `js/course.js`) uses **multiple-choice options**. PHASES.md Phase 4 suggests reusing the Speak tile builder in Course. Should we use one drill style everywhere, and how should the Speak ladder and Course units relate (is the ladder the on-ramp into Course unit 1)?
+3. **Speak section in Stats (Phase 3).** `speak_log` will hold every answer, but the Stats page has no design for it yet: accuracy per pack, most-missed words, and maybe a streak.
+4. **Food photo style (Phase 2).** If we add dish photos, what style should they follow (real photos vs illustrations, crop, background), so they look consistent with the emoji tiles they replace?
+
+## 5. Content check still needed
 
 The romanisations (e.g. "deh" for တယ်, "kya-naw" for ကျွန်တော်) and the situation texts still need a native-speaker check. The Burmese grammar in the drills looks correct, e.g. ဗိုက် မ ဆာ ဘူး.
