@@ -60,6 +60,21 @@
   "file": "audio/speak/m/3f396892.mp3"
  },
  {
+  "text": "သတိရတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/52e9aaa9.mp3"
+ },
+ {
+  "text": "ရှက်တယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/fc61d682.mp3"
+ },
+ {
+  "text": "သဝန်တိုတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/1e8a4a8e.mp3"
+ },
+ {
   "text": "မင်္ဂလာပါ",
   "voice": "my-MM-ThihaNeural",
   "file": "audio/speak/m/5029e9b1.mp3"
@@ -210,6 +225,181 @@
   "file": "audio/speak/m/5d1894fd.mp3"
  },
  {
+  "text": "ညီလေး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/0800c686.mp3"
+ },
+ {
+  "text": "ပုံမှန်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/49eecce8.mp3"
+ },
+ {
+  "text": "ချိုဆိမ့်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/98990546.mp3"
+ },
+ {
+  "text": "ကျဆိမ့်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/01fb686d.mp3"
+ },
+ {
+  "text": "ပေါ့ဆိမ့်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/315a236e.mp3"
+ },
+ {
+  "text": "ရေနွေးကြမ်း",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/b59e91d4.mp3"
+ },
+ {
+  "text": "ကော်ဖီ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/ef13142c.mp3"
+ },
+ {
+  "text": "ပလာတာ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/b2c4b07c.mp3"
+ },
+ {
+  "text": "အီကြာကွေး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/bf863dc8.mp3"
+ },
+ {
+  "text": "နောက်တစ်ခွက်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/55d73b7f.mp3"
+ },
+ {
+  "text": "ပါဆယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/3be6ed95.mp3"
+ },
+ {
+  "text": "ပိုက်ဆံရှင်းမယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/8fce6d5a.mp3"
+ },
+ {
+  "text": "တစ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/fd681d0c.mp3"
+ },
+ {
+  "text": "နှစ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/05975514.mp3"
+ },
+ {
+  "text": "သုံး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/109f58c4.mp3"
+ },
+ {
+  "text": "လေး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/3334e252.mp3"
+ },
+ {
+  "text": "တစ်ဆယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/5714fea2.mp3"
+ },
+ {
+  "text": "တစ်ရာ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/edfef85b.mp3"
+ },
+ {
+  "text": "တစ်ထောင်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/e67c5b90.mp3"
+ },
+ {
+  "text": "ကျပ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/b9ed9193.mp3"
+ },
+ {
+  "text": "ဘယ်လောက်လဲ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/1762e6a8.mp3"
+ },
+ {
+  "text": "ဈေးကြီးတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/32da8598.mp3"
+ },
+ {
+  "text": "ဈေးလျှော့ပေးပါ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/12f126bb.mp3"
+ },
+ {
+  "text": "ဘယ်မှာလဲ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/f9bdca72.mp3"
+ },
+ {
+  "text": "အိမ်သာ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/8304a18e.mp3"
+ },
+ {
+  "text": "ဈေး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/407874fe.mp3"
+ },
+ {
+  "text": "ဘတ်စ်ကားမှတ်တိုင်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/9920a447.mp3"
+ },
+ {
+  "text": "ဆေးရုံ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/91e595b4.mp3"
+ },
+ {
+  "text": "ဘုရား",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/fda56a55.mp3"
+ },
+ {
+  "text": "ဒီမှာ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/1f6ba3ea.mp3"
+ },
+ {
+  "text": "ဟိုမှာ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/58461ef3.mp3"
+ },
+ {
+  "text": "ဘယ်ဘက်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/b3fb8c37.mp3"
+ },
+ {
+  "text": "ညာဘက်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/087fc7eb.mp3"
+ },
+ {
+  "text": "တည့်တည့်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/1b042585.mp3"
+ },
+ {
+  "text": "ဝေးလား",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/8f8a4e03.mp3"
+ },
+ {
   "text": "ကျွန်တော်အိပ်ချင်တယ်",
   "voice": "my-MM-ThihaNeural",
   "file": "audio/speak/m/3b75e711.mp3"
@@ -268,6 +458,21 @@
   "text": "ကျွန်တော်ကြောက်တယ်",
   "voice": "my-MM-ThihaNeural",
   "file": "audio/speak/m/21e30189.mp3"
+ },
+ {
+  "text": "ကျွန်တော်သတိရတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/66ee0de6.mp3"
+ },
+ {
+  "text": "ကျွန်တော်ရှက်တယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/852c0395.mp3"
+ },
+ {
+  "text": "ကျွန်တော်သဝန်တိုတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/70315633.mp3"
  },
  {
   "text": "အိပ်ချင်လား",
@@ -330,6 +535,21 @@
   "file": "audio/speak/m/852bfbf6.mp3"
  },
  {
+  "text": "သတိရလား",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/1fb50871.mp3"
+ },
+ {
+  "text": "ရှက်လား",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/43744c86.mp3"
+ },
+ {
+  "text": "သဝန်တိုလား",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/3e674d22.mp3"
+ },
+ {
   "text": "မအိပ်ချင်ဘူး",
   "voice": "my-MM-ThihaNeural",
   "file": "audio/speak/m/ae3756cd.mp3"
@@ -390,6 +610,21 @@
   "file": "audio/speak/m/df3d68cd.mp3"
  },
  {
+  "text": "သတိမရဘူး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/fdb3ca82.mp3"
+ },
+ {
+  "text": "မရှက်ဘူး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/d6ab8e71.mp3"
+ },
+ {
+  "text": "သဝန်မတိုဘူး",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/0be25d09.mp3"
+ },
+ {
   "text": "အိပ်ချင်တယ်",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/d3ac12da.mp3"
@@ -448,6 +683,21 @@
   "text": "ကြောက်တယ်",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/3f396892.mp3"
+ },
+ {
+  "text": "သတိရတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/52e9aaa9.mp3"
+ },
+ {
+  "text": "ရှက်တယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/fc61d682.mp3"
+ },
+ {
+  "text": "သဝန်တိုတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/1e8a4a8e.mp3"
  },
  {
   "text": "မင်္ဂလာပါ",
@@ -600,6 +850,181 @@
   "file": "audio/speak/f/5d1894fd.mp3"
  },
  {
+  "text": "ညီလေး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/0800c686.mp3"
+ },
+ {
+  "text": "ပုံမှန်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/49eecce8.mp3"
+ },
+ {
+  "text": "ချိုဆိမ့်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/98990546.mp3"
+ },
+ {
+  "text": "ကျဆိမ့်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/01fb686d.mp3"
+ },
+ {
+  "text": "ပေါ့ဆိမ့်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/315a236e.mp3"
+ },
+ {
+  "text": "ရေနွေးကြမ်း",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/b59e91d4.mp3"
+ },
+ {
+  "text": "ကော်ဖီ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/ef13142c.mp3"
+ },
+ {
+  "text": "ပလာတာ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/b2c4b07c.mp3"
+ },
+ {
+  "text": "အီကြာကွေး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/bf863dc8.mp3"
+ },
+ {
+  "text": "နောက်တစ်ခွက်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/55d73b7f.mp3"
+ },
+ {
+  "text": "ပါဆယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/3be6ed95.mp3"
+ },
+ {
+  "text": "ပိုက်ဆံရှင်းမယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/8fce6d5a.mp3"
+ },
+ {
+  "text": "တစ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/fd681d0c.mp3"
+ },
+ {
+  "text": "နှစ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/05975514.mp3"
+ },
+ {
+  "text": "သုံး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/109f58c4.mp3"
+ },
+ {
+  "text": "လေး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/3334e252.mp3"
+ },
+ {
+  "text": "တစ်ဆယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/5714fea2.mp3"
+ },
+ {
+  "text": "တစ်ရာ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/edfef85b.mp3"
+ },
+ {
+  "text": "တစ်ထောင်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/e67c5b90.mp3"
+ },
+ {
+  "text": "ကျပ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/b9ed9193.mp3"
+ },
+ {
+  "text": "ဘယ်လောက်လဲ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/1762e6a8.mp3"
+ },
+ {
+  "text": "ဈေးကြီးတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/32da8598.mp3"
+ },
+ {
+  "text": "ဈေးလျှော့ပေးပါ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/12f126bb.mp3"
+ },
+ {
+  "text": "ဘယ်မှာလဲ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/f9bdca72.mp3"
+ },
+ {
+  "text": "အိမ်သာ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/8304a18e.mp3"
+ },
+ {
+  "text": "ဈေး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/407874fe.mp3"
+ },
+ {
+  "text": "ဘတ်စ်ကားမှတ်တိုင်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/9920a447.mp3"
+ },
+ {
+  "text": "ဆေးရုံ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/91e595b4.mp3"
+ },
+ {
+  "text": "ဘုရား",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/fda56a55.mp3"
+ },
+ {
+  "text": "ဒီမှာ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/1f6ba3ea.mp3"
+ },
+ {
+  "text": "ဟိုမှာ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/58461ef3.mp3"
+ },
+ {
+  "text": "ဘယ်ဘက်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/b3fb8c37.mp3"
+ },
+ {
+  "text": "ညာဘက်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/087fc7eb.mp3"
+ },
+ {
+  "text": "တည့်တည့်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/1b042585.mp3"
+ },
+ {
+  "text": "ဝေးလား",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/8f8a4e03.mp3"
+ },
+ {
   "text": "ကျွန်မအိပ်ချင်တယ်",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/e3785a8d.mp3"
@@ -658,6 +1083,21 @@
   "text": "ကျွန်မကြောက်တယ်",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/b4d9079d.mp3"
+ },
+ {
+  "text": "ကျွန်မသတိရတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/9155f59a.mp3"
+ },
+ {
+  "text": "ကျွန်မရှက်တယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/2f8c09d1.mp3"
+ },
+ {
+  "text": "ကျွန်မသဝန်တိုတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/1bdfbfc7.mp3"
  },
  {
   "text": "အိပ်ချင်လား",
@@ -720,6 +1160,21 @@
   "file": "audio/speak/f/852bfbf6.mp3"
  },
  {
+  "text": "သတိရလား",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/1fb50871.mp3"
+ },
+ {
+  "text": "ရှက်လား",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/43744c86.mp3"
+ },
+ {
+  "text": "သဝန်တိုလား",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/3e674d22.mp3"
+ },
+ {
   "text": "မအိပ်ချင်ဘူး",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/ae3756cd.mp3"
@@ -778,5 +1233,20 @@
   "text": "မကြောက်ဘူး",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/df3d68cd.mp3"
+ },
+ {
+  "text": "သတိမရဘူး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/fdb3ca82.mp3"
+ },
+ {
+  "text": "မရှက်ဘူး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/d6ab8e71.mp3"
+ },
+ {
+  "text": "သဝန်မတိုဘူး",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/0be25d09.mp3"
  }
 ]

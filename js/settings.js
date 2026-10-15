@@ -9,7 +9,9 @@ const DEFAULTS = {
   showRomanization: false,
   autoReveal: false,       // auto-reveal after delay
   sessionSize: 10,
-  theme: 'dark'            // dark only for now
+  theme: 'dark',           // dark only for now
+  voice: 'm',              // m = ♂ ကျွန်တော် (Thiha), f = ♀ ကျွန်မ (Nilar) — used by every 🔊 in the app
+  showPlayful: false       // "Just for fun 😏" pack on Speak home
 };
 
 export function getSettings() {
@@ -47,6 +49,27 @@ export class SettingsPage {
           </div>
         </div>
 
+        <!-- Voice (Phase 8) -->
+        <div style="font-size:10px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Voice</div>
+        <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;">
+            <div style="min-width:0;">
+              <div style="font-size:14px;font-weight:600;color:var(--text);">Your voice</div>
+              <div style="font-size:11px;color:var(--text-muted);">Who you hear on 🔊 and your word for “I”</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              ${[['m', '♂ ကျွန်တော်'], ['f', '♀ ကျွန်မ']].map(([v, label]) => `
+                <button class="set-opt" data-key="voice" data-val="${v}" style="
+                  padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+                  background:${s.voice === v ? 'var(--blue)' : 'var(--bg)'};
+                  border:2px solid ${s.voice === v ? 'var(--blue)' : 'var(--border)'};
+                  color:${s.voice === v ? '#fff' : 'var(--text-muted)'};
+                ">${label}</button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
         <!-- Display Settings -->
         <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Display</div>
         <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
@@ -81,6 +104,21 @@ export class SettingsPage {
             ">
               <div style="width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;
                 transition:all 0.2s;${s.showDevanagari ? 'left:23px;' : 'left:3px;'}"></div>
+            </button>
+          </div>
+
+          <!-- Show playful pack (Phase 11) -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);">Show playful pack 😏</div>
+              <div style="font-size:11px;color:var(--text-muted);">Teasing & flirting lines for friends. Off hides it from Speak.</div>
+            </div>
+            <button class="set-toggle" data-key="showPlayful" style="
+              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;
+              background:${s.showPlayful ? 'var(--green)' : 'var(--border)'};
+            ">
+              <div style="width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;
+                transition:all 0.2s;${s.showPlayful ? 'left:23px;' : 'left:3px;'}"></div>
             </button>
           </div>
 

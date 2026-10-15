@@ -12,8 +12,7 @@ if not defined PY (
   exit /b 1
 )
 
-echo   Installing edge-tts ...
-%PY% -m pip install --quiet --upgrade edge-tts
+if not defined AZURE_SPEECH_KEY ( echo   [X] Set AZURE_SPEECH_KEY and AZURE_SPEECH_REGION first. & pause & exit /b 1 )
 echo.
 %PY% tools\gen_speak_audio.py %*
 echo.

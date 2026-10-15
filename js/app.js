@@ -11,7 +11,7 @@ import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
-import { SpeakTab } from './speak.js?v=2';
+import { SpeakTab } from './speak.js?v=6';
 
 class BurmeseStudyApp {
   constructor() {
@@ -52,6 +52,9 @@ class BurmeseStudyApp {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
     });
     await db.testConnection();
+    // Speak progress follows you across devices: rebuild said/miss (step 1) and ladder counts (steps 2–4, correct only) from the answer log (single user, anon key, so every row is mine).
+    if (db.connected) db.query('speak_log', { select: 'pack,item,step,ok,created_at', filters: ['or=(step.eq.1,and(step.in.(2,3,4),ok.is.true))'], order: 'created_at' })
+      .then(rows => this.tabs.speak.hydrate(rows)).catch(() => {});
     await this.tabs.study.init();
     this.renderTab();
   }
@@ -89,3 +92,6 @@ app.init().catch(err => {
       <div style="font-size:13px;color:#5A7A88;">${err.message}</div>
     </div>`;
 });
+
+// Offline: register the root-level service worker on every load (relative path works under GitHub Pages' /<repo>/).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

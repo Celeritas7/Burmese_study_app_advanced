@@ -3,27 +3,22 @@ setlocal enabledelayedexpansion
 title Burmese Study - local server
 cd /d "%~dp0"
 
-set "PORT=8092"
+REM Each app needs its OWN port: the browser keeps cache + service worker per port,
+REM so two apps on the same port show each other's pages.
+set "PORT=8301"
+set "URL=http://localhost:%PORT%/"
 
 echo.
 echo   Burmese Study - local server
 echo   folder: %cd%
 echo.
 
-REM --- find the entry page ---
-set "PAGE="
-if exist "index.html" set "PAGE=index.html"
-if not defined PAGE if exist "study.html" set "PAGE=study.html"
-if not defined PAGE (
-  for %%F in (*.html) do if not defined PAGE set "PAGE=%%F"
-)
-if not defined PAGE (
-  echo   [X] No .html file found here. Put this .bat in the app root folder.
+if not exist "index.html" (
+  echo   [X] index.html not found here. Put this .bat in the app root folder.
   echo.
   pause
   exit /b 1
 )
-echo   entry page: %PAGE%
 
 REM --- find a working Python ---
 set "PY="
@@ -33,10 +28,10 @@ if not defined PY ( python3 -c "import sys" >nul 2>&1 && set "PY=python3" )
 
 if defined PY (
   echo   Python found: %PY%
-  echo   Starting server on port %PORT% ...
+  echo   Starting server on %URL% ...
   echo.
   REM open the browser a few seconds AFTER the server starts
-  start "" cmd /c "timeout /t 3 >nul & start """" ""http://localhost:%PORT%/%PAGE%"""
+  start "" cmd /c "timeout /t 3 >nul & start "" %URL%"
   echo   KEEP THIS WINDOW OPEN. Close it to stop the server.
   echo   ------------------------------------------------------------
   %PY% -m http.server %PORT%
@@ -52,8 +47,9 @@ REM --- fall back to Node ---
 where npx >nul 2>&1
 if %errorlevel%==0 (
   echo   Python not usable - using Node instead.
+  echo   Starting server on %URL% ...
   echo.
-  start "" cmd /c "timeout /t 5 >nul & start """" ""http://localhost:%PORT%/%PAGE%"""
+  start "" cmd /c "timeout /t 5 >nul & start "" %URL%"
   echo   KEEP THIS WINDOW OPEN. Close it to stop the server.
   echo   ------------------------------------------------------------
   npx --yes serve -l %PORT% .
