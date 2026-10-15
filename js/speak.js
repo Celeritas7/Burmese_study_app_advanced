@@ -3,14 +3,14 @@
 // Drop in js/speak.js (+ js/speak-data.js). Progress lives in localStorage;
 // every answer is also logged to Supabase `speak_log` (fire-and-forget).
 // App deps load lazily so this file also runs standalone (preview) without them.
-import { PACKS, FEEL, STEPS } from './speak-data.js?v=2';
+import { PACKS, FEEL, STEPS, STEP1_GOAL } from './speak-data.js?v=3';
 import { audioFile } from './speak-audio.js?v=1';
 
 const DEPS = { db: null, getSettings: () => ({ showDevanagari: true }), toPronunciation: () => '', hasAudio: () => true };
 const depsReady = Promise.all([
   import('./supabase.js').then(m => { DEPS.db = m.db; }).catch(() => {}),
   import('./settings.js').then(m => { DEPS.getSettings = m.getSettings; }).catch(() => {}),
-  import('https://celeritas7.github.io/language-utils/burmese.js?v=8').then(m => { DEPS.toPronunciation = m.toPronunciation; }).catch(() => {}),
+  import('https://celeritas7.github.io/language-utils/burmese.js?v=9').then(m => { DEPS.toPronunciation = m.toPronunciation; }).catch(() => {}),
 ]);
 // MP3s that actually exist: audio/speak/clips.json is written by tools/gen_speak_audio.py (texts.json entries whose file was generated).
 // A text with no clip for the current voice shows the 🔊 button as 'off' — no silent fallback.
@@ -102,7 +102,7 @@ export class SpeakTab {
   }
   // 0 = step 1 (one word) … 3 = step 4 (say no). Returns 'done' | 'now' | 'locked'.
   stepState(i) {
-    const done = j => j === 0 ? this.saidCount(PACKS[0]) === FEEL.length : (this.S.steps[j] || 0) >= STEP_GOAL;
+    const done = j => j === 0 ? this.saidCount(PACKS[0]) >= STEP1_GOAL : (this.S.steps[j] || 0) >= STEP_GOAL;
     if (done(i)) return 'done';
     for (let j = 0; j < i; j++) if (!done(j)) return 'locked';
     return 'now';
@@ -155,7 +155,7 @@ export class SpeakTab {
           ${i > 0 && st === 'now' ? `<div class="sp-d">${this.S.steps[i] || 0} / ${STEP_GOAL} correct</div>` : ''}</div>
         ${st !== 'locked' ? (i === 0 ? `<button class="sp-btn sm" data-sp="pack" data-pack="feel">${st === 'done' ? 'Review' : 'Go'}</button>`
           : `<button class="sp-btn sm ${st === 'done' ? 'ghost' : ''}" data-sp="build" data-step="${i}">${st === 'done' ? 'Again' : 'Try'}</button>`) : ''}</div>`; }).join('')}
-        <div class="sp-d" style="margin-top:6px">Step 1 clears once you\u2019ve tried every word in How I feel — right or “not yet” both count; misses come back in Retry. Steps 2–4 clear at ${STEP_GOAL} correct.</div></div>
+        <div class="sp-d" style="margin-top:6px">Step 1 clears once you\u2019ve tried ${STEP1_GOAL} words in How I feel — right or “not yet” both count; misses come back in Retry. Steps 2–4 clear at ${STEP_GOAL} correct.</div></div>
       <div class="section-label sp-lbl">Grammar lessons</div>
       <button class="sp-item ${grammarOpen ? '' : 'locked'}" data-sp="${grammarOpen ? 'grammar' : ''}">
         <div class="sp-tile" style="background:rgba(206,130,255,.1);border-color:rgba(206,130,255,.25)">🧩</div>

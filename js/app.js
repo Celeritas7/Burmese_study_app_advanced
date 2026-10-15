@@ -11,7 +11,7 @@ import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
-import { SpeakTab } from './speak.js?v=4';
+import { SpeakTab } from './speak.js?v=5';
 
 class BurmeseStudyApp {
   constructor() {
@@ -92,3 +92,6 @@ app.init().catch(err => {
       <div style="font-size:13px;color:#5A7A88;">${err.message}</div>
     </div>`;
 });
+
+// Offline: register the root-level service worker on every load (relative path works under GitHub Pages' /<repo>/).
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
