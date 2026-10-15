@@ -5,6 +5,7 @@
 // App deps load lazily so this file also runs standalone (preview) without them.
 import { PACKS, FEEL, STEPS, STEP1_GOAL } from './speak-data.js?v=4';
 import { audioFile } from './speak-audio.js?v=1';
+import { breakdown } from './speak-gloss.js?v=1';
 
 const DEPS = { db: null, getSettings: () => ({ showDevanagari: true, voice: 'm', showPlayful: false }), saveSetting: () => {}, toPronunciation: () => '', hasAudio: () => true };
 const depsReady = Promise.all([
@@ -85,6 +86,13 @@ export class SpeakTab {
     let t = document.getElementById('sp-toast');
     if (!t) { t = document.createElement('div'); t.id = 'sp-toast'; t.className = 'sp-toast'; document.body.appendChild(t); }
     t.textContent = m; t.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+  // 💡 detail: word-by-word chips (Burmese · roman · meaning) + tips where the sound differs from the spelling.
+  parts(text, parch = false) {
+    const b = breakdown(text), tips = [...new Map(b.filter(x => x.tip).map(x => [x.my, x])).values()];
+    if (b.length < 2 && !tips.length) return '';
+    return `<div class="sp-parts ${parch ? 'parch' : ''}">${b.length > 1 ? `<div class="sp-chips">${b.map(x => `<span class="sp-chip"><b class="my">${x.my}</b>${x.ro ? `<i>${esc(x.ro)}</i>` : ''}${x.en ? `<small>${esc(x.en)}</small>` : ''}</span>`).join('<span class="sp-plus">+</span>')}</div>` : ''}
+      ${tips.map(x => `<div class="sp-tip">🔈 <b class="my">${x.my}</b> ${esc(x.tip)}</div>`).join('')}</div>`;
   }
   sayBtn(t, label = 'Hear', cls = 'sm ghost') { return `<button class="sp-btn ${cls} sp-say" data-sp="say" data-t="${t}" data-state="${DEPS.hasAudio(t) ? 'idle' : 'off'}"><i class="sp-say-ic"></i>${label}</button>`; }
   // Phase 3: rebuild said/miss and ladder counts from Supabase rows [{item, pack, step, ok, created_at}] so progress follows the user across devices.
@@ -186,7 +194,7 @@ export class SpeakTab {
       <div class="sp-list">${p.words.map((w, i) => { const o = this.open === i, k = this.key(p, w), dv = this.dev(w.my), miss = this.S.miss[k] > 0; return `<div class="sp-word ${o ? 'open' : ''} ${miss ? 'miss' : ''}" data-sp="word" data-i="${i}">
         ${this.pic(w)}
         <div class="flex-1" style="min-width:0"><div class="my sp-my">${w.my}</div><div class="sp-sub">${dv ? `<b>${dv}</b> · ` : ''}<span>${w.ro}</span></div>
-          ${o ? `<div class="sp-fade sp-d" style="margin-top:8px">${esc(w.sit)}${w.note ? `<div class="my sp-hint">💡 ${w.note}</div>` : ''}
+          ${o ? `<div class="sp-fade sp-d" style="margin-top:8px">${esc(w.sit)}${w.note ? `<div class="my sp-hint">💡 ${w.note}</div>` : ''}${this.parts(w.my)}
             ${p.id === 'feel' ? `<div class="my" style="margin-top:6px"><span style="color:var(--text)">I\u2019m ${w.en.toLowerCase()}:</span> ${me} ${w.my} <span style="color:var(--yellow)">· ${meR} ${w.ro}</span></div>` : ''}
             <div class="sp-row" style="margin-top:8px">${this.sayBtn(w.my)}<button class="sp-btn sm green" data-sp="mark" data-i="${i}">${this.S.said[k] ? '✓ Said it' : 'I said it'}</button></div></div>` : ''}</div>
         <div class="sp-en">${w.en}${miss ? ' 🔁' : this.S.said[k] ? ' ✓' : ''}</div></div>`; }).join('')}</div>
@@ -216,7 +224,7 @@ export class SpeakTab {
     <div class="pad">
       <div class="section-label sp-lbl" style="margin-top:4px">${p.food ? 'What\u2019s this dish called?' : 'What would you say?'}</div>
       <div class="sp-parch">${Q.shown
-        ? `<div class="sp-fade"><div class="my sp-big">${w.my}</div><div class="sp-ro">${w.ro}</div>${dv ? `<div class="sp-dv">${dv}</div>` : ''}<div class="sp-sit" style="margin-top:10px;font-size:15px;color:#6A5A2A">${w.en}</div>${w.note ? `<div class="my sp-hint parch">💡 ${w.note}</div>` : ''}</div>`
+        ? `<div class="sp-fade"><div class="my sp-big">${w.my}</div><div class="sp-ro">${w.ro}</div>${dv ? `<div class="sp-dv">${dv}</div>` : ''}<div class="sp-sit" style="margin-top:10px;font-size:15px;color:#6A5A2A">${w.en}</div>${w.note ? `<div class="my sp-hint parch">💡 ${w.note}</div>` : ''}${this.parts(w.my, true)}</div>`
         : `${w.img ? this.pic(w, 'sp-emo') : `<div class="sp-emo">${w.emo}</div>`}<div class="sp-sit">${esc(w.sit)}</div>${p.food ? '' : `<div class="sp-ro" style="font-size:15px;color:#8A7A4A">${w.en}</div>`}`}</div>
       ${Q.shown
         ? `<div class="sp-row" style="margin-top:14px"><button class="sp-btn ghost" data-sp="rate" data-v="0">Not yet</button><button class="sp-btn green" data-sp="rate" data-v="1">Said it ✓</button></div>

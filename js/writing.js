@@ -2,7 +2,7 @@
 // Sticky header, correct/wrong marks, Supabase persistence
 
 import { db } from './supabase.js';
-import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=8';
+import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=9';
 
 export class WritingPractice {
   constructor(app) {

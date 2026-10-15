@@ -1,0 +1,44 @@
+# Generates missing Speak clips in the cloud, so new words get audio without a PC.
+# Runs when js/speak-data.js changes on main, or by hand: Actions → "Speak audio" → Run workflow.
+# Needs repo secrets AZURE_SPEECH_KEY and AZURE_SPEECH_REGION (Settings → Secrets and variables → Actions).
+name: Speak audio
+
+on:
+  push:
+    branches: [main]
+    paths: ['js/speak-data.js', 'js/speak-audio.js', 'tools/speak-audio-list.mjs', 'tools/gen_speak_audio.py']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: speak-audio
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: List every playable text
+        run: node tools/speak-audio-list.mjs
+      - name: Generate missing clips
+        env:
+          AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
+          AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
+        run: python tools/gen_speak_audio.py
+      - name: Commit new clips
+        run: |
+          git add audio/speak
+          if git diff --cached --quiet; then echo "No new clips."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Speak audio: generate missing clips"
+          git push

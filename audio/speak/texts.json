@@ -400,6 +400,66 @@
   "file": "audio/speak/m/8f8a4e03.mp3"
  },
  {
+  "text": "ချစ်စရာကောင်းတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/5e919201.mp3"
+ },
+ {
+  "text": "မင်းကို သတိရတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/b46bb888.mp3"
+ },
+ {
+  "text": "တကယ်လား",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/ed10447f.mp3"
+ },
+ {
+  "text": "လူလိမ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/95751c1d.mp3"
+ },
+ {
+  "text": "မစနဲ့",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/f1f87f36.mp3"
+ },
+ {
+  "text": "အတူတူ စားရအောင်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/82a28f30.mp3"
+ },
+ {
+  "text": "ရယ်စရာကောင်းတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/64159411.mp3"
+ },
+ {
+  "text": "မင်းကို ကြိုက်တယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/e2026eb4.mp3"
+ },
+ {
+  "text": "ချောတယ်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/5768332c.mp3"
+ },
+ {
+  "text": "နောက်တာပါ",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/e4e17918.mp3"
+ },
+ {
+  "text": "ဖုန်းဆက်နော်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/cc8a08d5.mp3"
+ },
+ {
+  "text": "ကောင်းကောင်းအိပ်နော်",
+  "voice": "my-MM-ThihaNeural",
+  "file": "audio/speak/m/b18e1725.mp3"
+ },
+ {
   "text": "ကျွန်တော်အိပ်ချင်တယ်",
   "voice": "my-MM-ThihaNeural",
   "file": "audio/speak/m/3b75e711.mp3"
@@ -1023,6 +1083,66 @@
   "text": "ဝေးလား",
   "voice": "my-MM-NilarNeural",
   "file": "audio/speak/f/8f8a4e03.mp3"
+ },
+ {
+  "text": "ချစ်စရာကောင်းတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/5e919201.mp3"
+ },
+ {
+  "text": "မင်းကို သတိရတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/b46bb888.mp3"
+ },
+ {
+  "text": "တကယ်လား",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/ed10447f.mp3"
+ },
+ {
+  "text": "လူလိမ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/95751c1d.mp3"
+ },
+ {
+  "text": "မစနဲ့",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/f1f87f36.mp3"
+ },
+ {
+  "text": "အတူတူ စားရအောင်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/82a28f30.mp3"
+ },
+ {
+  "text": "ရယ်စရာကောင်းတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/64159411.mp3"
+ },
+ {
+  "text": "မင်းကို ကြိုက်တယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/e2026eb4.mp3"
+ },
+ {
+  "text": "ချောတယ်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/5768332c.mp3"
+ },
+ {
+  "text": "နောက်တာပါ",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/e4e17918.mp3"
+ },
+ {
+  "text": "ဖုန်းဆက်နော်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/cc8a08d5.mp3"
+ },
+ {
+  "text": "ကောင်းကောင်းအိပ်နော်",
+  "voice": "my-MM-NilarNeural",
+  "file": "audio/speak/f/b18e1725.mp3"
  },
  {
   "text": "ကျွန်မအိပ်ချင်တယ်",
