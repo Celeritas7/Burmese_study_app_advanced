@@ -111,6 +111,22 @@ export const PACKS = [
     ['Straight ahead', 'တည့်တည့်', 'teh teh', 'Keep going, no turns', '⬆️'],
     ['Is it far?', 'ဝေးလား', 'way la', 'Deciding whether to walk or take a taxi', '🗺️'],
   ].map(row) },
+  // Phase 11 — "Just for fun 😏". Shown below the normal packs only when Settings → Show playful pack is on.
+  // Casual register (မင်း = intimate "you"): friends only, never with elders or strangers.
+  { id: 'fun', emoji: '😏', color: '#FF4FA3', title: 'Just for fun', desc: 'Teasing & flirting, for friends', playful: true, words: [
+    ['You\u2019re cute', 'ချစ်စရာကောင်းတယ်', 'chit sa ya kaung deh', 'They just did something adorable', '😍'],
+    ['I miss you', 'မင်းကို သတိရတယ်', 'min go tha-di ya deh', 'Texting a friend who moved away', '🥺', '', 'မင်း = casual “you”. Only for close friends.'],
+    ['Really?', 'တကယ်လား', 'da geh la', 'They claim they cooked it themselves', '🤨'],
+    ['Liar!', 'လူလိမ်', 'lu lein', 'They say they\u2019ve never once been late', '😏'],
+    ['Don\u2019t tease me', 'မစနဲ့', 'ma sa neh', 'They keep poking fun at your accent', '🙈'],
+    ['Let\u2019s eat together', 'အတူတူ စားရအောင်', 'a tu tu sa ya aung', 'It\u2019s lunchtime and they\u2019re alone', '🍽️'],
+    ['You\u2019re funny', 'ရယ်စရာကောင်းတယ်', 'yi sa ya kaung deh', 'Their joke actually landed', '😂'],
+    ['I like you', 'မင်းကို ကြိုက်တယ်', 'min go kyaik deh', 'Say it, then change the subject fast', '😳'],
+    ['Looking good', 'ချောတယ်', 'chaw deh', 'New haircut day', '😎', '', 'Works for anyone: handsome or pretty.'],
+    ['Just kidding', 'နောက်တာပါ', 'nauk ta ba', 'Your joke went a bit too far', '😜'],
+    ['Call me, okay?', 'ဖုန်းဆက်နော်', 'phone set naw', 'Parting at the bus stop', '📱', '', 'နော် softens it: “…okay?”'],
+    ['Sleep well', 'ကောင်းကောင်းအိပ်နော်', 'kaung kaung eik naw', 'Ending a late-night chat', '😴'],
+  ].map(row) },
 ];
 
 // Ladder. Step 1 = try STEP1_GOAL words in "How I feel". Steps 2–4 are tile drills on FEEL.

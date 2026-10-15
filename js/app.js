@@ -11,7 +11,7 @@ import { SentencesPage } from './sentences.js';
 import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
-import { SpeakTab } from './speak.js?v=5';
+import { SpeakTab } from './speak.js?v=6';
 
 class BurmeseStudyApp {
   constructor() {

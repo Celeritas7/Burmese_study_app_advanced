@@ -1,7 +1,7 @@
 // ═══ SERVICE WORKER ═══
 // Lives at the app ROOT (next to index.html) so its scope covers the whole app.
 // All paths are relative, so it works under GitHub Pages' /<repo>/ sub-path.
-const CACHE_NAME = 'burmese-study-v4';   // bump whenever new clips are generated, so install re-runs
+const CACHE_NAME = 'burmese-study-v5';   // bump whenever new clips are generated, so install re-runs
 const AUDIO_CACHE = 'burmese-audio-v1';   // separate: survives app-code cache bumps
 const ASSETS = [
   './', 'index.html', 'css/styles.css',

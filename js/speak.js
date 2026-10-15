@@ -3,13 +3,13 @@
 // Drop in js/speak.js (+ js/speak-data.js). Progress lives in localStorage;
 // every answer is also logged to Supabase `speak_log` (fire-and-forget).
 // App deps load lazily so this file also runs standalone (preview) without them.
-import { PACKS, FEEL, STEPS, STEP1_GOAL } from './speak-data.js?v=3';
+import { PACKS, FEEL, STEPS, STEP1_GOAL } from './speak-data.js?v=4';
 import { audioFile } from './speak-audio.js?v=1';
 
-const DEPS = { db: null, getSettings: () => ({ showDevanagari: true }), toPronunciation: () => '', hasAudio: () => true };
+const DEPS = { db: null, getSettings: () => ({ showDevanagari: true, voice: 'm', showPlayful: false }), saveSetting: () => {}, toPronunciation: () => '', hasAudio: () => true };
 const depsReady = Promise.all([
   import('./supabase.js').then(m => { DEPS.db = m.db; }).catch(() => {}),
-  import('./settings.js').then(m => { DEPS.getSettings = m.getSettings; }).catch(() => {}),
+  import('./settings.js').then(m => { DEPS.getSettings = m.getSettings; DEPS.saveSetting = m.saveSetting; }).catch(() => {}),
   import('https://celeritas7.github.io/language-utils/burmese.js?v=9').then(m => { DEPS.toPronunciation = m.toPronunciation; }).catch(() => {}),
 ]);
 // MP3s that actually exist: audio/speak/clips.json is written by tools/gen_speak_audio.py (texts.json entries whose file was generated).
@@ -36,18 +36,23 @@ export class SpeakTab {
     this.S = { said: {}, miss: {}, gender: 'm', steps: {}, day: '', today: 0, ...s };
     this.S.miss ??= {};
     if (this.S.day !== dayKey()) { this.S.day = dayKey(); this.S.today = 0; }
-    DEPS.hasAudio = t => CLIPS.has(audioFile(t, this.S.gender));
-    Promise.all([depsReady, clipsReady]).then(() => { if (this.container && (!this.app?.activeTab || this.app.activeTab === 'speak')) this.render(this.container); });
+    DEPS.hasAudio = t => CLIPS.has(audioFile(t, this.voice));
+    Promise.all([depsReady, clipsReady]).then(() => {
+      // Phase 8: the ♂/♀ choice moved to Settings → Voice. Carry over the old Speak-only choice once.
+      try { const raw = JSON.parse(localStorage.getItem('burmese_app_settings') || '{}'); if (!('voice' in raw) && this.S.gender) DEPS.saveSetting('voice', this.S.gender); } catch {} if (this.container && (!this.app?.activeTab || this.app.activeTab === 'speak')) this.render(this.container); });
   }
 
   save() { localStorage.setItem(LS, JSON.stringify(this.S)); }
   log(row) { DEPS.db?.insert('speak_log', row).catch(() => {}); }
   dev(my) { try { return DEPS.getSettings().showDevanagari ? DEPS.toPronunciation(my, { tones: false }) : ''; } catch { return ''; } }
-  me() { return this.S.gender === 'm' ? ['ကျွန်တော်', 'kya-naw'] : ['ကျွန်မ', 'kya-ma']; }
+  get voice() { try { return DEPS.getSettings().voice === 'f' ? 'f' : 'm'; } catch { return 'm'; } }   // app-wide, from Settings
+  me() { return this.voice === 'm' ? ['ကျွန်တော်', 'kya-naw'] : ['ကျွန်မ', 'kya-ma']; }
+  // Packs the user can see: the playful pack only when Settings → Show playful pack is on.
+  packs() { let on = false; try { on = !!DEPS.getSettings().showPlayful; } catch {} return PACKS.filter(p => !p.playful || on); }
   key(p, w) { return p.id + '|' + w.en; }
   saidCount(p) { return p.words.filter(w => this.S.said[this.key(p, w)]).length; }
   missed(p) { return p.words.filter(w => this.S.miss[this.key(p, w)] > 0); }
-  allMissed() { return PACKS.flatMap(p => this.missed(p).map(w => ({ p, w }))); }
+  allMissed() { return this.packs().flatMap(p => this.missed(p).map(w => ({ p, w }))); }
   // Image if the word has one (and it loaded), else the emoji tile.
   pic(w, cls = 'sp-tile dark') { return w.img ? `<img class="sp-img" src="${w.img}" alt="" onerror="this.outerHTML='<div class=&quot;${cls}&quot;>${w.emo}</div>'">` : `<div class="${cls}">${w.emo}</div>`; }
   // Plays the pre-generated clip in the ♂/♀ voice. If the clip won't play, falls back to device speech (when it has a Burmese voice).
@@ -56,7 +61,7 @@ export class SpeakTab {
     try { speechSynthesis.cancel(); } catch {}
     this.audio?.pause();
     if (!DEPS.hasAudio(t)) return Promise.resolve(false);
-    const a = this.audio = new Audio(audioFile(t, this.S.gender));
+    const a = this.audio = new Audio(audioFile(t, this.voice));
     return new Promise(res => {
       a.onplaying = onStart; a.onended = a.onpause = () => res(true);   // pause = interrupted by the next clip
       a.play().catch(() => this.audio === a ? this.tts(t, onStart).then(res) : res(true));
@@ -129,7 +134,9 @@ export class SpeakTab {
 
   // ---------- Home ----------
   homeView() {
-    const total = PACKS.reduce((a, p) => a + p.words.length, 0), said = PACKS.reduce((a, p) => a + this.saidCount(p), 0);
+    const vis = this.packs(), fun = vis.find(p => p.playful);
+    const total = vis.reduce((a, p) => a + p.words.length, 0), said = vis.reduce((a, p) => a + this.saidCount(p), 0);
+    const [me] = this.me(), voiceLabel = this.voice === 'm' ? '♂ ' + me + ' · male voice' : '♀ ' + me + ' · female voice';
     const grammarOpen = this.stepState(1) === 'done', misses = this.allMissed();
     return `<div class="pad">
       <div class="sp-h1">Speak first 🗣</div><div class="sp-muted">Words you can say today, grammar later</div>
@@ -139,15 +146,21 @@ export class SpeakTab {
       ${misses.length ? `<div class="sp-goal pink"><div class="sp-tile" style="background:rgba(255,107,138,.1);border-color:rgba(255,107,138,.25)">🔁</div>
         <div class="flex-1"><div class="sp-b">${misses.length} to say again</div><div class="sp-muted">${misses.slice(0, 3).map(m => m.w.en).join(' · ')}${misses.length > 3 ? ' · …' : ''}</div></div>
         <button class="sp-btn sm pink" data-sp="misses">Retry →</button></div>` : ''}
-      <div class="section-label sp-lbl">Your voice</div>
-      <div class="sp-card sp-row"><div class="flex-1"><div class="sp-t">${this.S.gender === 'm' ? '♂ ကျွန်တော် · male voice' : '♀ ကျွန်မ · female voice'}</div><div class="sp-d">Sets the word for “I” and who you hear on 🔊</div></div>
-        <div class="sp-gender"><button class="sp-pill ${this.S.gender === 'm' ? 'on' : ''}" data-sp="gender" data-v="m">♂</button><button class="sp-pill ${this.S.gender === 'f' ? 'on' : ''}" data-sp="gender" data-v="f">♀</button></div></div>
       <div class="section-label sp-lbl">Packs</div>
-      <div class="sp-list">${PACKS.map(p => `<button class="sp-item" data-sp="pack" data-pack="${p.id}">
+      <div class="sp-list">${vis.filter(p => !p.playful).map(p => `<button class="sp-item" data-sp="pack" data-pack="${p.id}">
         <div class="sp-tile" style="background:${p.color}1F;border-color:${p.color}4D">${p.emoji}</div>
         <div class="flex-1" style="min-width:0"><div class="sp-t">${p.title}</div><div class="sp-d">${p.desc} · ${p.words.length} words${this.missed(p).length ? ` · <span style="color:var(--pink)">${this.missed(p).length} to retry</span>` : ''}</div>
           <div class="sp-bar"><i style="width:${this.saidCount(p) / p.words.length * 100}%"></i></div></div>
         <div class="sp-chev">›</div></button>`).join('')}</div>
+      ${fun ? `<div class="section-label sp-lbl" style="display:flex;align-items:center;gap:8px"><span>Just for fun 😏</span><span style="font-size:10px;font-weight:700;color:${fun.color};border:1.5px solid ${fun.color}66;border-radius:999px;padding:1px 7px;text-transform:none;letter-spacing:0">friends only</span></div>
+      <div class="sp-list"><button class="sp-item" data-sp="pack" data-pack="${fun.id}" style="border-color:${fun.color}4D">
+        <div class="sp-tile" style="background:${fun.color}1F;border-color:${fun.color}4D">${fun.emoji}</div>
+        <div class="flex-1" style="min-width:0"><div class="sp-t">${fun.title}</div><div class="sp-d">${fun.desc} · ${fun.words.length} lines${this.missed(fun).length ? ` · <span style="color:var(--pink)">${this.missed(fun).length} to retry</span>` : ''}</div>
+          <div class="sp-bar"><i style="width:${this.saidCount(fun) / fun.words.length * 100}%;background:${fun.color}"></i></div></div>
+        <div class="sp-chev">›</div></button></div>
+      <div class="sp-d" style="margin-top:6px">Casual “you” (မင်း) throughout. Hide this pack in Settings when showing the app to others.</div>` : ''}
+      <div class="sp-card sp-row" style="margin-top:18px"><div class="flex-1"><div class="sp-t">${voiceLabel}</div><div class="sp-d">Your word for “I” and who you hear on 🔊</div></div>
+        <button class="sp-btn sm ghost" data-sp="settings">Change</button></div>
       <div class="section-label sp-lbl">Your ladder</div>
       <div class="sp-card">${STEPS.map((s, i) => { const st = this.stepState(i); return `<div class="sp-step ${st}">
         <div class="sp-dot ${st}">${st === 'done' ? '✓' : i + 1}</div>
@@ -169,7 +182,7 @@ export class SpeakTab {
     const [me, meR] = this.me();
     return `<div class="sp-top"><button class="sp-back" data-sp="home">← Back</button><div class="sp-h3 flex-1">${p.emoji} ${p.title}</div></div>
     <div class="pad">
-      <div class="sp-muted" style="margin-bottom:12px">${p.food ? 'Tap a dish to hear it and see what it is.' : 'Tap a word to hear it. Each line is one chunk — say it as-is.'}</div>
+      <div class="sp-muted" style="margin-bottom:12px">${p.food ? 'Tap a dish to hear it and see what it is.' : p.playful ? 'Friends only — never with elders or strangers. Tap a line to hear it.' : 'Tap a word to hear it. Each line is one chunk — say it as-is.'}</div>
       <div class="sp-list">${p.words.map((w, i) => { const o = this.open === i, k = this.key(p, w), dv = this.dev(w.my), miss = this.S.miss[k] > 0; return `<div class="sp-word ${o ? 'open' : ''} ${miss ? 'miss' : ''}" data-sp="word" data-i="${i}">
         ${this.pic(w)}
         <div class="flex-1" style="min-width:0"><div class="my sp-my">${w.my}</div><div class="sp-sub">${dv ? `<b>${dv}</b> · ` : ''}<span>${w.ro}</span></div>
@@ -285,7 +298,7 @@ export class SpeakTab {
       if (this.S.said[this.key(p, w)]) return;
       this.markSaid(p, w); this.log({ pack: p.id, item: w.en, step: 1, ok: true }); this.render(this.container);
     },
-    gender: el => { this.S.gender = el.dataset.v; this.save(); this.render(this.container); },
+    settings: () => this.app?.showSettings?.(),
     start: el => this.startQuiz(PACKS.find(p => p.id === el.dataset.pack)),
     show: () => { this.Q.shown = true; this.render(this.container); this.speak(this.Q.items[this.Q.i].w.my); },
     rate: el => {
