@@ -1,0 +1,1107 @@
+// ═══ STUDY TAB ═══
+import { db } from './supabase.js';
+import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=8';
+import { Modal } from './modal.js';
+import { Quiz } from './quiz.js';
+import { getSettings } from './settings.js';
+import { buildGroups } from './hubexplorer.js';
+
+const WORD_TREE_CSS = `<style>
+.wt-forest{max-height:60vh;overflow-y:auto;margin:0 -4px;scrollbar-width:thin;scrollbar-color:var(--border-light,#2A3A42) transparent;}
+.wt-forest::-webkit-scrollbar{width:6px;}
+.wt-forest::-webkit-scrollbar-thumb{background:var(--border-light,#2A3A42);border-radius:3px;}
+.wt-forest::-webkit-scrollbar-track{background:transparent;}
+.wt-card{margin:8px 0;padding:6px 2px 10px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
+.wt-card.wt-has-study{border-color:rgba(206,130,255,0.4);}
+.wt-card.wt-synth{border-style:dashed;border-color:rgba(255,200,0,0.45);}
+.wt-badge.wt-synth-badge{background:rgba(255,200,0,0.12);color:var(--yellow);}
+.wt-meta{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:2px;}
+.wt-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(28,176,246,0.12);color:var(--blue);}
+.wt-gloss{font-size:10px;color:var(--text-muted);}
+.wt-scroll{overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:var(--border-light,#2A3A42) transparent;}
+.wt-scroll::-webkit-scrollbar{height:5px;}
+.wt-scroll::-webkit-scrollbar-thumb{background:var(--border-light,#2A3A42);border-radius:3px;}
+.wt-scroll::-webkit-scrollbar-track{background:transparent;}
+.wt-tree{display:inline-block;min-width:100%;padding:6px 10px 2px;text-align:center;}
+.wt-tree ul{display:flex;justify-content:center;padding-top:18px;position:relative;list-style:none;}
+.wt-tree li{list-style:none;position:relative;padding:18px 6px 0;text-align:center;}
+.wt-tree li::before,.wt-tree li::after{content:'';position:absolute;top:0;right:50%;width:50%;height:18px;border-top:2px solid var(--border-light,#2A3A42);}
+.wt-tree li::after{right:auto;left:50%;border-left:2px solid var(--border-light,#2A3A42);}
+.wt-tree li:first-child::before{border:0;}
+.wt-tree li:last-child::after{border:0;}
+.wt-tree li:last-child::before{border-right:2px solid var(--border-light,#2A3A42);border-radius:0 7px 0 0;}
+.wt-tree li:first-child::after{border-left:2px solid var(--border-light,#2A3A42);border-radius:7px 0 0 0;}
+.wt-tree li:only-child::before,.wt-tree li:only-child::after{display:none;}
+.wt-tree ul ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid var(--border-light,#2A3A42);width:0;height:18px;}
+.wt-tree>ul,.wt-tree>ul>li{padding-top:0;}
+.wt-tree>ul>li::before,.wt-tree>ul>li::after{display:none;}
+.wt-node{display:inline-flex;flex-direction:column;align-items:center;border-radius:12px;cursor:pointer;position:relative;background:var(--bg);padding:9px 12px;min-width:60px;max-width:150px;transition:box-shadow .18s,border-color .18s;}
+.wt-my{font-size:19px;font-weight:800;line-height:1.15;white-space:nowrap;}
+.wt-hubwrap{display:inline-flex;align-items:stretch;}
+.wt-hub{background:rgba(88,204,2,0.10);border:2px solid rgba(88,204,2,0.55);}
+.wt-hub .wt-my{color:var(--green);font-size:22px;}
+.wt-chev{display:flex;align-items:center;justify-content:center;width:26px;margin-left:6px;background:rgba(88,204,2,0.08);border:2px solid rgba(88,204,2,0.30);border-radius:10px;color:var(--green);cursor:pointer;font-weight:800;}
+.wt-spoke{border:2px solid var(--border-light,#2A3A42);}
+.wt-spoke .wt-my{color:var(--text);font-size:17px;}
+.wt-detail{display:none;margin-top:7px;padding-top:7px;border-top:1px dashed var(--border-light,#2A3A42);width:100%;}
+.wt-node.wt-open .wt-detail{display:block;}
+.wt-node.wt-open{box-shadow:0 8px 24px -12px #000;}
+.wt-pron{font-size:12px;font-weight:700;color:var(--yellow);white-space:nowrap;}
+.wt-mean{font-size:11px;color:var(--text);margin-top:2px;line-height:1.3;}
+.wt-studying{border-color:var(--purple) !important;box-shadow:0 0 0 4px rgba(206,130,255,0.18),0 0 22px -4px rgba(206,130,255,0.5) !important;}
+.wt-studying .wt-my{color:var(--purple) !important;}
+.wt-tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--purple);color:#1b0f26;font-size:8px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.wt-jump{margin-top:7px;padding:4px 10px;border-radius:8px;background:rgba(28,176,246,0.14);color:var(--blue);font-size:10px;font-weight:800;border:1px solid rgba(28,176,246,0.35);cursor:pointer;font-family:var(--font);}
+.wt-jump:hover{background:rgba(28,176,246,0.24);}
+</style>`;
+
+const MODES = [
+  { id: 'burmese', icon: 'မ', label: 'Myanmar→EN' },
+  { id: 'deva', icon: 'द', label: 'Deva→Myanmar' },
+  { id: 'meaning', icon: 'En', label: 'EN→Myanmar' },
+  { id: 'writing', icon: '✍', label: 'Write' }
+];
+
+const SOURCES = [
+  { id: 'kg_book', name: 'KG Book', icon: '🪷', color: '#FF6B8A' },
+  { id: 'words', name: 'Main Words', icon: '💬', color: '#58CC02' },
+  { id: 'recipes', name: 'Recipes', icon: '🍜', color: '#CE82FF' },
+  { id: 'colloquial', name: 'Colloquial Burmese', icon: '🎓', color: '#FFC800' }
+];
+
+const RATINGS = [
+  { icon: '○', label: 'New', color: '#6B7280' },
+  { icon: '✓', label: 'Got it', color: '#58CC02' },
+  { icon: '💬', label: 'Seen', color: '#1CB0F6' },
+  { icon: '🔥', label: 'Easy', color: '#FFC800' },
+  { icon: '🤔', label: 'Fuzzy', color: '#CE82FF' },
+  { icon: '✗', label: 'Nope', color: '#FF6B8A' },
+  { icon: '✍', label: 'Write', color: '#FF9600' } // index 6 — knew it AND can write it (strongest)
+];
+
+// Visual order only — data indices stay stable: … Easy, Write, Fuzzy, Nope
+const RATING_ORDER = [0, 1, 2, 3, 6, 4, 5];
+
+export class StudyTab {
+  constructor(app) {
+    this.app = app;
+    this.phase = 'setup'; // setup | session
+    this.mode = 'burmese';
+    this.wordsPerSession = 10;
+    this.selectedSource = null;
+    this.courseUnit = null;        // set by CourseTab: filter session to a unit's words
+    this.onSessionComplete = null; // set by CourseTab: fires once when results render
+    this.words = [];
+    this.currentIdx = 0;
+    this.revealLevel = 0;
+    this.ratings = {};
+    this.wordCounts = {};
+    this.sentenceCounts = {};
+    this.anchorsCache = {};
+    this.quiz = null;
+  }
+
+  async init() {
+    try {
+      this.wordCounts = await db.getWordCounts();
+    } catch { /* offline fallback */ }
+  }
+
+  render(container) {
+    if (this.phase === 'setup') {
+      if (this.autoStart) { this.autoStart = false; return this.startSession(container); }
+      this.renderSetup(container);
+    } else if (this.phase === 'quiz') {
+      this.quiz.render(container);
+    } else if (this.phase === 'results') {
+      this.renderResults(container);
+    } else {
+      this.renderSession(container);
+    }
+  }
+
+  // ─── SETUP SCREEN ───
+  renderSetup(container) {
+    // Course mode: fetch the unit's word count once per unit for the chip + source row
+    if (this.courseUnit != null && this._unitCountFor !== this.courseUnit) {
+      this._unitCountFor = this.courseUnit;
+      this._unitCount = null;
+      db.getUnitWords(this.courseUnit).then(ws => {
+        this._unitCount = ws.length;
+        if (this.phase === 'setup' && this.courseUnit === this._unitCountFor) this.render(container);
+      }).catch(() => { this._unitCount = 0; });
+    }
+    const TEST_TYPES = [
+      { id: 'burmese', glyph: 'မ',  label: 'Myanmar' },
+      { id: 'deva',    glyph: 'द',  label: 'Reading' },
+      { id: 'writing', glyph: '✍', label: 'Writing' },
+    ];
+
+    container.innerHTML = `
+      <div class="pad">
+        <div class="setup-header">
+          <button class="setup-back" id="setup-back">‹</button>
+          <div>
+            <div class="setup-h1">Study session</div>
+            <div class="setup-h2">Set up your session</div>
+          </div>
+        </div>
+
+        ${this.courseUnit != null ? `
+          <div id="course-chip" style="display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;
+            border:2px solid var(--blue);border-radius:22px;background:rgba(255,255,255,0.02);">
+            <span style="font-size:16px;">🗺</span>
+            <span style="flex:1;font-size:13px;font-weight:700;color:var(--blue);">Unit ${this.courseUnit}${this._unitCount ? ` · ${this._unitCount} words` : ''}</span>
+            <button id="course-chip-exit" style="width:24px;height:24px;border:none;border-radius:50%;background:rgba(255,255,255,0.08);
+              color:var(--text-muted);font-size:12px;font-family:var(--font);cursor:pointer;line-height:1;">✕</button>
+          </div>` : ''}
+        <div class="section-label" style="color:var(--text-muted);">Test type</div>
+        <div class="test-grid">
+          ${TEST_TYPES.map(t => `
+            <button class="test-card ${this.mode === t.id ? 'active' : ''}" data-mode="${t.id}">
+              <div class="tc-glyph">${t.glyph}</div>
+              <div class="tc-label">${t.label}</div>
+            </button>`).join('')}
+        </div>
+
+        <div class="balance-row">
+          <button class="balance-btn active" data-balance="equal">⚡ All Equal</button>
+          <button class="balance-btn" data-balance="custom">🎚 Custom</button>
+        </div>
+
+        <div class="section-label" style="color:var(--text-muted);">Words per level</div>
+        <div class="num-row">
+          ${[5,10,15,20,30].map(n => `
+            <button class="num-btn ${this.wordsPerSession === n ? 'active' : ''}" data-num="${n}">${n}</button>`).join('')}
+        </div>
+
+        ${SOURCES.map(s => {
+          const inCourse = this.courseUnit != null && s.id === 'colloquial';
+          const count = inCourse ? (this._unitCount ?? '...') : (this.wordCounts[s.id] || (s.disabled ? 0 : '...'));
+          const active = this.selectedSource === s.id;
+          return `
+            <button class="source-card ${active ? 'active' : ''}" data-source="${s.id}"
+              style="${active ? `color:${s.color};` : ''}">
+              <div class="sc-badge" style="background:${s.color};">${s.icon}</div>
+              <div class="flex-1">
+                <div class="sc-name">${s.name}</div>
+                <div class="sc-avail">${s.disabled ? 'Coming soon' : inCourse ? `Unit ${this.courseUnit} · ${count} words` : `${count} words available`}</div>
+              </div>
+              <div class="sc-count" style="${active ? `color:${s.color};` : ''}">${count || '—'}</div>
+            </button>`;
+        }).join('')}
+
+        <button class="btn-primary" id="start-btn" style="background:var(--green);margin-top:8px;">▶ Start Session</button>
+        <button class="btn-primary" id="quiz-btn" style="background:var(--purple);margin-top:8px;">🧠 Quiz Mode →</button>
+      </div>`;
+
+    // Event listeners
+    container.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.mode = btn.dataset.mode;
+        this.render(container);
+      });
+    });
+
+    container.querySelectorAll('[data-num]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.wordsPerSession = parseInt(btn.dataset.num);
+        this.render(container);
+      });
+    });
+
+    container.querySelectorAll('[data-source]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('disabled')) return;
+        const src = btn.dataset.source;
+        this.courseUnit = null; // manual source pick leaves course mode
+        this.selectedSource = this.selectedSource === src ? null : src;
+        this.render(container);
+      });
+    });
+
+    container.querySelector('#course-chip-exit')?.addEventListener('click', () => {
+      this.courseUnit = null;
+      this.onSessionComplete = null;
+      this.render(container);
+    });
+
+    container.querySelector('#start-btn').addEventListener('click', () => this.startSession(container));
+    container.querySelector('#quiz-btn').addEventListener('click', () => this.startQuiz(container));
+  
+    // Back button → go Home
+    container.querySelector('#setup-back')?.addEventListener('click', () => this.app.switchTab('home'));
+
+    // All Equal / Custom toggle (visual for now)
+    container.querySelectorAll('[data-balance]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('[data-balance]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  }
+  
+  // ─── START QUIZ ───
+  async startQuiz(container) {
+    container.innerHTML = '<div class="pad text-center" style="padding-top:40vh;"><div style="font-size:24px;">Loading...</div></div>';
+    try {
+      const opts = {};
+      if (this.selectedSource) opts.source = this.selectedSource;
+      const words = await db.getWords(opts);
+      if (words.length < 4) {
+        container.innerHTML = '<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--text-muted);">Need at least 4 words for quiz.</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>';
+        container.querySelector('#back-btn').addEventListener('click', () => { this.phase = 'setup'; this.render(container); });
+        return;
+      }
+      this.quiz = new Quiz(this.app, words, () => {
+        this.phase = 'setup';
+        this.quiz = null;
+        this.render(this.app.contentEl);
+      });
+      this.phase = 'quiz';
+      this.quiz.render(container);
+    } catch (err) {
+      console.error('Quiz load error:', err);
+      container.innerHTML = `<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--pink);">Connection error</div><div style="font-size:13px;color:var(--text-muted);margin-top:8px;">${err.message}</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>`;
+      container.querySelector('#back-btn').addEventListener('click', () => { this.phase = 'setup'; this.render(container); });
+    }
+  }
+
+  // ─── START SESSION ───
+  async startSession(container) {
+    container.innerHTML = '<div class="pad text-center" style="padding-top:40vh;"><div style="font-size:24px;">Loading...</div></div>';
+
+    try {
+      const opts = { limit: this.wordsPerSession };
+      if (this.selectedSource) opts.source = this.selectedSource;
+      let words = null;
+      // Course mode: try the unit-tagged slice first; fall back to the full
+      // source if the unit column/tags don't exist yet or come back empty.
+      if (this.courseUnit != null && this.selectedSource === 'colloquial') {
+        try { words = await db.getWords({ ...opts, unit: this.courseUnit }); } catch { words = null; }
+      }
+      if (!words || !words.length) words = await db.getWords(opts);
+
+      // Shuffle
+      words = words.sort(() => Math.random() - 0.5).slice(0, this.wordsPerSession);
+
+      if (words.length === 0) {
+        container.innerHTML = '<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--text-muted);">No words found. Try a different source.</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>';
+        container.querySelector('#back-btn').addEventListener('click', () => {
+          this.phase = 'setup';
+          this.render(container);
+        });
+        return;
+      }
+
+      this.words = words;
+      this.currentIdx = 0;
+      this.revealLevel = 0;
+      this.ratings = {};
+      this.sentenceCounts = {};
+      this.phase = 'session';
+
+      // Batch load sentence counts for all words in session
+      try {
+        this.sentenceCounts = await db.getSentenceCountsForWords(words.map(w => w.id));
+      } catch { /* offline, skip */ }
+
+      this.render(container);
+    } catch (err) {
+      console.error('Failed to load words:', err);
+      container.innerHTML = `<div class="pad text-center" style="padding-top:30vh;">
+        <div style="font-size:18px;color:var(--pink);">Connection error</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">${err.message}</div>
+        <button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button>
+      </div>`;
+      container.querySelector('#back-btn').addEventListener('click', () => {
+        this.phase = 'setup';
+        this.render(container);
+      });
+    }
+  }
+
+  // ─── FLASHCARD SESSION ───
+  renderSession(container) {
+    const w = this.words[this.currentIdx];
+    if (!w) return;
+
+    const settings = getSettings();
+    const dev = settings.showDevanagari ? toPronunciation(w.burmese_word, { tones: false }) : '';
+    const rating = this.ratings[w.id];
+    const total = this.words.length;
+    const progress = ((this.currentIdx + 1) / total * 100);
+
+    // Determine what to show based on mode
+    let primaryText;
+    switch (this.mode) {
+      case 'meaning': case 'writing':
+        primaryText = w.english_meaning || '(no meaning)';
+        break;
+      case 'deva':
+        primaryText = settings.showDevanagari ? toPronunciation(w.burmese_word, { tones: false }) : w.burmese_word;
+        break;
+      default:
+        primaryText = w.burmese_word;
+    }
+
+    const fontSizeMap = { small: '32px', normal: '42px', large: '52px' };
+    const fontSize = (this.mode === 'meaning' || this.mode === 'writing') ? '24px' : (fontSizeMap[settings.fontSize] || '42px');
+
+    // Show sentence in word card after reading is revealed
+    const devaLevel = w.hint ? 2 : 1; // deva is at level 2 if hint exists, level 1 if not
+    const sentenceInCard = (this.revealLevel >= devaLevel && w.sentence)
+      ? `<div style="font-size:14px;color:rgba(0,0,0,0.4);margin-top:8px;font-weight:400;">${w.sentence}</div>`
+      : '';
+
+    container.innerHTML = `
+      <div class="pad-sm">
+        <!-- Top bar -->
+        <div class="fc-top">
+          <div class="fc-title">📖 ${w.burmese_word} ${dev ? `<span>${dev}</span>` : ''}</div>
+          <button class="fc-close" id="fc-close">✕</button>
+        </div>
+        <div class="fc-counter">${this.currentIdx + 1} / ${total}</div>
+
+        <!-- Mode toggles -->
+        <div style="display:flex; gap:5px; justify-content:center; margin-bottom:12px;">
+          ${MODES.map(m => `
+            <button class="mode-btn ${this.mode === m.id ? 'active' : ''}" data-mode="${m.id}"
+              style="padding:5px 13px; border-radius:10px; font-size:11px; font-weight:700;">
+              <span class="mode-icon" style="font-size:11px;">${m.icon}</span>
+              ${this.mode === m.id ? `<span class="mode-text" style="margin:0 0 0 3px; font-size:10px;">${m.label}</span>` : ''}
+            </button>
+          `).join('')}
+        </div>
+
+        <!-- Word card -->
+        <div class="word-card">
+          <div class="word-card-text" style="font-size:${fontSize};">${primaryText}</div>
+          ${sentenceInCard}
+        </div>
+
+        <!-- Reveal box -->
+        <div class="reveal-box ${this.revealLevel > 0 ? 'revealed' : ''}" id="reveal-box">
+          ${this.renderReveal(w, dev)}
+        </div>
+
+        <!-- Action row -->
+        <div class="action-row">
+          <button class="btn-story" id="btn-story">📝 My Story</button>
+          <button class="btn-story" id="btn-tree" style="background:var(--green);">🌳 Tree</button>
+          <button class="btn-action" style="color:var(--orange);" id="btn-edit">✏️</button>
+          <button class="btn-action" style="color:var(--pink);" id="btn-flag">🚩</button>
+        </div>
+
+        <!-- Rating -->
+        <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:8px;">Change Rating</div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">
+          ${RATING_ORDER.map((i) => {
+            const r = RATINGS[i];
+            const isActive = rating === i;
+            const isNope = i === 5;
+            const size = '42px';
+            const bg = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.15)' : `${r.color}15`);
+            const border = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.4)' : 'var(--border)');
+            const iconColor = isActive ? '#fff' : r.color;
+            const radius = isNope ? '12px' : '22px';
+            return `
+              <button data-rating="${i}" style="
+                width:${size};height:${size};border-radius:${radius};
+                display:flex;align-items:center;justify-content:center;
+                font-size:${isNope ? '18px' : '17px'};cursor:pointer;
+                background:${bg};border:2px solid ${border};
+                color:${iconColor};transition:all 0.15s;font-family:var(--font);
+              ">${r.icon}</button>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-row">
+          <button class="btn-nav btn-prev" id="btn-prev" ${this.currentIdx === 0 ? 'disabled' : ''}>← Prev</button>
+          <button class="btn-nav btn-shuffle" id="btn-shuffle">🎲</button>
+          <button class="btn-nav btn-next" id="btn-next">${this.currentIdx === this.words.length - 1 ? 'Finish ✓' : 'Next →'}</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${progress}%;"></div>
+        </div>
+
+        <!-- Sentences -->
+        <button class="sentences-toggle" id="btn-sentences">💬 Sentences${(this.sentenceCounts?.[w.id] || 0) > 0 ? ` (${this.sentenceCounts[w.id]} linked)` : ''} ▼</button>
+      </div>
+    `;
+
+    this.bindSessionEvents(container, w, dev);
+  }
+
+  renderReveal(w, dev) {
+    if (this.revealLevel === 0) {
+      return '<div class="reveal-placeholder">👆 Tap to reveal</div>';
+    }
+
+    const settings = getSettings();
+    const hasHint = !!w.hint;
+    // Build reveal layers dynamically
+    const layers = [];
+    if (hasHint) layers.push({ type: 'hint', html: `<div style="text-align:center;font-size:14px;color:#1CB0F6;margin-bottom:6px;">💡 ${w.hint}</div>` });
+    if (settings.showDevanagari && dev) {
+      layers.push({ type: 'deva', html: `<div style="text-align:center;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:6px;">${dev}</div>` });
+    }
+    layers.push({ type: 'meaning', html: `<div style="text-align:center;font-size:20px;font-weight:700;color:var(--green);">${w.english_meaning || '(unknown)'}</div>` });
+
+    const maxLevel = layers.length;
+    let html = '';
+    for (let i = 0; i < Math.min(this.revealLevel, maxLevel); i++) {
+      html += layers[i].html;
+    }
+
+    if (this.revealLevel < maxLevel) {
+      const next = layers[this.revealLevel]?.type;
+      const label = next === 'deva' ? 'reading' : next === 'meaning' ? 'meaning' : '';
+      html += `<div class="reveal-more">👆 tap to reveal ${label}</div>`;
+    }
+
+    return html;
+  }
+
+  getMaxRevealLevel(w) {
+    const settings = getSettings();
+    return (w.hint ? 1 : 0) + (settings.showDevanagari ? 1 : 0) + 1; // hint(optional) + deva(optional) + meaning
+  }
+
+  bindSessionEvents(container, word, dev) {
+    // Close
+    container.querySelector('#fc-close').addEventListener('click', () => {
+      this.phase = 'setup';
+      this.render(container);
+    });
+
+    // Mode toggles
+    container.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.mode = btn.dataset.mode;
+        this.render(container);
+      });
+    });
+
+    // Reveal
+    container.querySelector('#reveal-box').addEventListener('click', () => {
+      const maxLevel = this.getMaxRevealLevel(word);
+      if (this.revealLevel < maxLevel) {
+        this.revealLevel++;
+        const box = container.querySelector('#reveal-box');
+        box.innerHTML = this.renderReveal(word, dev);
+        if (this.revealLevel >= maxLevel) box.classList.add('revealed');
+      }
+    });
+
+    // Ratings
+    container.querySelectorAll('[data-rating]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const r = parseInt(btn.dataset.rating);
+        this.ratings[word.id] = r;
+        this.render(container);
+
+        // Log to Supabase
+        try {
+          await db.logProgress({ type: 'rating', wordId: word.id, result: RATINGS[r].label });
+          await db.upsertUserState(word.id, r);
+        } catch { /* offline, skip */ }
+      });
+    });
+
+    // Navigation
+    container.querySelector('#btn-prev').addEventListener('click', () => {
+      this.currentIdx = Math.max(0, this.currentIdx - 1);
+      this.revealLevel = 0;
+      this.render(container);
+    });
+
+    container.querySelector('#btn-next').addEventListener('click', () => {
+      if (this.currentIdx >= this.words.length - 1) {
+        // Last card → show session results
+        this.phase = 'results';
+        this.render(container);
+        return;
+      }
+      this.currentIdx++;
+      this.revealLevel = 0;
+      this.render(container);
+    });
+
+    container.querySelector('#btn-shuffle').addEventListener('click', () => {
+      this.currentIdx = Math.floor(Math.random() * this.words.length);
+      this.revealLevel = 0;
+      this.render(container);
+    });
+
+    // Story modal
+    container.querySelector('#btn-story').addEventListener('click', () => this.showStoryModal(word));
+
+    // Word Tree modal
+    container.querySelector('#btn-tree').addEventListener('click', () => this.showWordTreeModal(word, container));
+
+    // Edit modal
+    container.querySelector('#btn-edit').addEventListener('click', () => this.showEditModal(word));
+
+    // Flag modal
+    container.querySelector('#btn-flag').addEventListener('click', () => this.showFlagModal(word, dev));
+
+    // Sentences
+    container.querySelector('#btn-sentences').addEventListener('click', () => this.showSentencesModal(word));
+  }
+
+  // ─── SESSION RESULTS ───
+  renderResults(container) {
+    if (this.onSessionComplete) { const cb = this.onSessionComplete; this.onSessionComplete = null; cb(); }
+    const total = this.words.length;
+    const rated = Object.keys(this.ratings).length;
+    const gotIt = Object.values(this.ratings).filter(r => r === 1 || r === 3 || r === 6).length; // Got it + Easy + Write
+    const fuzzy = Object.values(this.ratings).filter(r => r === 4).length;
+    const nope = Object.values(this.ratings).filter(r => r === 5).length;
+    const pct = total > 0 ? Math.round((gotIt / total) * 100) : 0;
+    const emoji = pct >= 90 ? '🌟' : pct >= 70 ? '👏' : pct >= 50 ? '💪' : '📚';
+    const msg = pct >= 90 ? 'Excellent!' : pct >= 70 ? 'Good job!' : pct >= 50 ? 'Keep going!' : 'Keep practicing!';
+    const barColor = pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--pink)';
+
+    container.innerHTML = `
+      <div class="pad">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:48px;margin-bottom:8px;">${emoji}</div>
+          <div style="font-size:24px;font-weight:800;color:var(--text);">${msg}</div>
+          <div style="font-size:14px;color:var(--text-muted);margin-top:4px;">
+            ${rated} of ${total} words rated
+          </div>
+        </div>
+
+        <div style="height:12px;background:var(--surface);border-radius:6px;margin-bottom:24px;padding:2px;border:2px solid var(--border);">
+          <div style="height:100%;border-radius:4px;background:${barColor};width:${pct}%;transition:width 0.6s;"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px;">
+          <div class="srs-stat">
+            <div class="srs-stat-num" style="color:var(--green);">${gotIt}</div>
+            <div class="srs-stat-label">Strong</div>
+          </div>
+          <div class="srs-stat">
+            <div class="srs-stat-num" style="color:var(--purple);">${fuzzy}</div>
+            <div class="srs-stat-label">Fuzzy</div>
+          </div>
+          <div class="srs-stat">
+            <div class="srs-stat-num" style="color:var(--pink);">${nope}</div>
+            <div class="srs-stat-label">Nope</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="color:var(--text-muted);">Words</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
+          ${this.words.map(w => {
+            const r = this.ratings[w.id];
+            const rInfo = r !== undefined ? RATINGS[r] : null;
+            const color = rInfo ? rInfo.color : 'var(--text-muted)';
+            const label = rInfo ? rInfo.label : 'Not rated';
+            const dev = toPronunciation(w.burmese_word, { tones: false });
+            return `
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;
+                background:var(--surface);border:2px solid var(--border);">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:16px;font-weight:700;color:var(--text);">${w.burmese_word}</div>
+                  <div style="font-size:11px;color:var(--yellow);">${dev}</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:13px;font-weight:700;color:${color};">${rInfo ? rInfo.icon : '—'} ${label}</div>
+                  <div style="font-size:11px;color:var(--green);">${w.english_meaning || ''}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button id="res-new" class="btn-nav btn-prev" style="flex:1;">New Session</button>
+          <button id="res-done" class="btn-nav btn-next" style="flex:1;">Done ✓</button>
+        </div>
+      </div>
+    `;
+
+    container.querySelector('#res-new').addEventListener('click', () => {
+      this.phase = 'setup';
+      this.render(container);
+    });
+
+    container.querySelector('#res-done').addEventListener('click', () => {
+      this.phase = 'setup';
+      this.render(container);
+    });
+  }
+
+  // ─── MODALS ───
+
+  async showHubSpokeModal(word) {
+    let anchors = [];
+    let spokes = [];
+    try {
+      anchors = await db.getAnchorForWord(word.burmese_word);
+      if (anchors.length > 0) {
+        spokes = await db.getSpokesForAnchor(anchors[0].burmese_word);
+      }
+    } catch { /* offline */ }
+
+    const hub = anchors[0];
+    const hubWord = hub ? hub.burmese_word : '—';
+    const hubMeaning = hub ? (hub.meaning || '') : 'No hub found';
+
+    Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--green);">🌿 ${hubWord}</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div class="mb-4 input-label">Meaning</div>
+      <div style="font-size:14px; color:var(--text); margin-bottom:14px;">${hubMeaning}</div>
+      <div class="mb-8 input-label">Spokes (${spokes.length} words)</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+        ${spokes.length > 0 ? spokes.map(s => `
+          <div style="padding:8px 16px; border-radius:12px; background:rgba(88,204,2,0.08); border:2px solid rgba(88,204,2,0.15);">
+            <div style="font-size:16px; font-weight:700; color:var(--green);">${s.burmese_word}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${s.english_meaning || ''}</div>
+          </div>
+        `).join('') : '<div style="color:var(--text-muted); font-size:13px;">No spokes found</div>'}
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button style="flex:1; padding:10px; border-radius:12px; background:rgba(255,107,138,0.08); border:1px solid rgba(255,107,138,0.2); color:var(--pink); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font);">🚩 Wrong hub</button>
+        <button style="flex:1; padding:10px; border-radius:12px; background:rgba(28,176,246,0.08); border:1px solid rgba(28,176,246,0.2); color:var(--blue); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--font);">📝 Request story</button>
+      </div>
+    `, { borderColor: 'var(--green)' });
+  }
+
+  showStoryModal(word) {
+    Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--purple);">📝 My Story</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div style="background:var(--bg); border-radius:12px; padding:10px 14px; margin-bottom:14px; border:1px solid var(--border);">
+        <span style="font-size:16px; font-weight:700; color:var(--text);">${word.burmese_word}</span>
+        <span style="font-size:12px; color:var(--blue); margin-left:6px;">${toPronunciation(word.burmese_word, { tones: false })}</span>
+        <div style="font-size:12px; color:var(--green); margin-top:3px;">${word.english_meaning || ''}</div>
+      </div>
+      <div class="input-label">Your mnemonic story</div>
+      <textarea class="input-field mb-12" placeholder="Write a story to remember this word..." id="story-input"></textarea>
+      <button class="btn-primary" style="background:var(--purple);">Save Story</button>
+    `, { borderColor: 'var(--purple)' });
+  }
+
+  async showWordTreeModal(word, container) {
+    const studying = word.burmese_word;
+    let consonants = [], words = [];
+    try {
+      [consonants, words] = await Promise.all([db.getConsonants(), db.getWords()]);
+    } catch (e) { console.error('Tree load error:', e); }
+
+    this.allWords = words;
+    const { hubs, fillers } = buildGroups(consonants, words);
+
+    // ─── virtual hubs: recurring syllable chunks that have no word row ───
+    const isSylB = (str, pos) => { if (pos <= 0 || pos >= str.length) return true; const c = str.charCodeAt(pos); return c >= 0x1000 && c <= 0x1021; };
+    const consCount = s => [...s].filter(c => { const k = c.charCodeAt(0); return k >= 0x1000 && k <= 0x1021; }).length;
+    {
+      const existing = new Set(words.map(w => (w.burmese_word || '').trim()));
+      const claimed = new Set();
+      hubs.forEach(h => { claimed.add(h.word); h.spokes.forEach(s => claimed.add(s.word)); });
+      const free = words.filter(w => !w.is_filler && !claimed.has((w.burmese_word || '').trim()));
+      const chunkMap = new Map(); // chunk -> Map(word -> meaning)
+      for (const w of free) {
+        const bw = (w.burmese_word || '').trim();
+        for (let pos = 1; pos < bw.length; pos++) {
+          if (!isSylB(bw, pos)) continue;
+          for (const chunk of [bw.slice(0, pos), bw.slice(pos)]) {
+            if (existing.has(chunk) || !consCount(chunk)) continue;
+            if (!chunkMap.has(chunk)) chunkMap.set(chunk, new Map());
+            chunkMap.get(chunk).set(bw, w.english_meaning || '');
+          }
+        }
+      }
+      // need 2+ words sharing the chunk; skip particle-like chunks (1 consonant grabbing 10+ words)
+      const cands = [...chunkMap.entries()].filter(([c, m]) => m.size >= 2 && !(consCount(c) <= 1 && m.size >= 10));
+      cands.sort((a, b) => b[0].length - a[0].length || b[1].size - a[1].size); // longer (more specific) chunks claim first
+      const taken = new Set();
+      for (const [chunk, m] of cands) {
+        const spokes = [...m.entries()].filter(([wd]) => !taken.has(wd)).map(([word, meaning]) => ({ word, meaning }));
+        if (spokes.length < 2) continue;
+        spokes.forEach(s => taken.add(s.word));
+        hubs.push({ id: null, word: chunk, meaning: '', virtual: true, spokes });
+      }
+    }
+    const vCount = hubs.filter(h => h.virtual).length;
+
+    const sorted = [...hubs].sort((a, b) => {
+      const aS = a.word === studying || a.spokes.some(s => s.word === studying);
+      const bS = b.word === studying || b.spokes.some(s => s.word === studying);
+      if (aS !== bS) return aS ? -1 : 1;
+      return b.spokes.length - a.spokes.length;
+    });
+    const inTree = sorted.length && (sorted[0].word === studying || sorted[0].spokes.some(s => s.word === studying));
+    const totalSpokes = sorted.reduce((n, h) => n + h.spokes.length, 0);
+    const esc = s => (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    const nodeHTML = (w, meaning, cls, virtual) => {
+      const isStudy = w === studying;
+      return `<div class="wt-node ${cls}${isStudy ? ' wt-studying' : ''}" tabindex="0">
+        ${isStudy ? '<span class="wt-tag">studying</span>' : ''}
+        <span class="wt-my">${esc(w)}</span>
+        <div class="wt-detail">
+          <div class="wt-pron">${esc(toPronunciation(w, { tones:false }))}</div>
+          <div class="wt-mean">${virtual ? '<em style="color:var(--text-muted);">not in your list</em>' : esc(meaning)}</div>
+          ${isStudy || virtual ? '' : `<button class="wt-jump" data-jump="${esc(w)}">Study this →</button>`}
+        </div>
+      </div>`;
+    };
+
+    const treeHTML = (hub, synth) => {
+      const dashed = synth || hub.virtual;
+      const studyHub = hub.word === studying;
+      const hasStudy = studyHub || hub.spokes.some(s => s.word === studying);
+      return `<div class="wt-card${hasStudy ? ' wt-has-study' : ''}${dashed ? ' wt-synth' : ''}">
+        <div class="wt-meta"><span class="wt-badge${dashed ? ' wt-synth-badge' : ''}">${hub.virtual ? 'virtual · ' : synth ? 'component · ' : ''}${hub.spokes.length} spoke${hub.spokes.length!==1?'s':''}</span>
+        <span class="wt-gloss">${hub.virtual ? 'shared part — no entry yet' : esc(hub.meaning)}</span></div>
+        <div class="wt-scroll"><div class="wt-tree"><ul><li>
+          <div class="wt-hubwrap">
+            ${nodeHTML(hub.word, hub.meaning, 'wt-hub', hub.virtual)}
+            <div class="wt-chev" title="Fold">▾</div>
+          </div>
+          <ul class="wt-spokes">${hub.spokes.map(s => `<li>${nodeHTML(s.word, s.meaning, 'wt-spoke')}</li>`).join('')}</ul>
+        </li></ul></div></div>
+      </div>`;
+    };
+
+    // ─── hubless case: explain why + synthetic component trees ───
+    // part matches anywhere inside whole, as long as both ends land on syllable boundaries
+    const isPart = (whole, part) => {
+      whole = (whole || '').trim(); part = (part || '').trim();
+      if (!part || part.length >= whole.length) return false;
+      let idx = whole.indexOf(part);
+      while (idx !== -1) {
+        if (isSylB(whole, idx) && isSylB(whole, idx + part.length)) return true;
+        idx = whole.indexOf(part, idx + 1);
+      }
+      return false;
+    };
+    let whyHTML = '', synthCards = '';
+    if (!inTree) {
+      const comps = words.filter(w => w.burmese_word !== studying && isPart(studying, w.burmese_word));
+      if (!comps.length) {
+        whyHTML = `${esc(studying)} is not in any hub — none of its parts exist as words in your list`;
+      } else {
+        const reasons = comps.map(c => {
+          const cw = c.burmese_word;
+          if (c.is_filler) return `${esc(cw)} exists but is flagged filler`;
+          const af = fillers.find(f => f.id === c.id);
+          if (af) return `${esc(cw)} exists but is auto-filler (${af.reason})`;
+          const asSpoke = hubs.find(h => h.spokes.some(s => s.word === cw));
+          if (asSpoke) return `${esc(cw)} exists but is already a spoke under ${esc(asSpoke.word)}`;
+          return `${esc(cw)} is in your list but formed no hub`;
+        });
+        whyHTML = `${esc(studying)} is not in any hub — ${reasons.join(' · ')}`;
+        // synthetic tree per component: every word containing it, fillers included
+        synthCards = comps.map(c => {
+          const cw = (c.burmese_word || '').trim();
+          const spokes = words
+            .filter(w => w.burmese_word !== c.burmese_word && isPart(w.burmese_word, cw))
+            .map(w => ({ word: (w.burmese_word || '').trim(), meaning: w.english_meaning || '' }));
+          // keep the studied word visible even if we cap a huge component (e.g. အ)
+          const capped = spokes.length > 30
+            ? spokes.filter(s => s.word === studying).concat(spokes.filter(s => s.word !== studying).slice(0, 29))
+            : spokes;
+          return capped.length ? treeHTML({ word: cw, meaning: c.english_meaning || '', spokes: capped }, true) : '';
+        }).join('');
+      }
+    }
+
+    const box = Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--green);">🌿 Word Tree</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+        All hubs · ${sorted.length} hubs${vCount ? ` (${vCount} virtual)` : ''} · ${totalSpokes} spokes · tap a word for details${inTree ? '' : ` · <span style="color:var(--yellow);">${whyHTML}</span>`}
+      </div>
+      <div class="wt-forest" id="wt-forest">
+        ${synthCards}${sorted.length ? sorted.map(h => treeHTML(h)).join('') : '<div style="color:var(--text-muted);padding:24px;text-align:center;">No hubs generated</div>'}
+      </div>
+      ${WORD_TREE_CSS}
+    `, { borderColor: 'var(--green)' });
+
+    const forest = box.querySelector('#wt-forest');
+    forest.addEventListener('click', e => {
+      const jump = e.target.closest('.wt-jump');
+      if (jump) {
+        const target = jump.dataset.jump;
+        let idx = this.words.findIndex(w => w.burmese_word === target);
+        if (idx < 0) {
+          const w = (this.allWords || []).find(w => w.burmese_word === target);
+          if (!w) return;
+          this.words.push(w);
+          idx = this.words.length - 1;
+        }
+        this.currentIdx = idx;
+        this.revealLevel = 0;
+        Modal.close();
+        this.render(container);
+        return;
+      }
+      const chev = e.target.closest('.wt-chev');
+      if (chev) {
+        const sp = chev.closest('.wt-card').querySelector('.wt-spokes');
+        const folded = sp.style.display === 'none';
+        sp.style.display = folded ? '' : 'none';
+        chev.textContent = folded ? '▾' : '▸';
+        return;
+      }
+      const node = e.target.closest('.wt-node');
+      if (node) node.classList.toggle('wt-open');
+    });
+
+    // start each tree centered on its hub (wide trees otherwise open scrolled to the left edge)
+    forest.querySelectorAll('.wt-scroll').forEach(el => {
+      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+    });
+    const studyNode = forest.querySelector('.wt-studying');
+    if (studyNode) {
+      studyNode.classList.add('wt-open');
+      const card = studyNode.closest('.wt-card');
+      forest.scrollTop += card.getBoundingClientRect().top - forest.getBoundingClientRect().top - 12;
+      // center horizontally on the studied word, not the hub
+      const sc = card.querySelector('.wt-scroll');
+      sc.scrollLeft += studyNode.getBoundingClientRect().left - sc.getBoundingClientRect().left - (sc.clientWidth - studyNode.offsetWidth) / 2;
+    }
+  }
+
+  showEditModal(word) {
+    Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--orange);">✏️ Edit Word</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div class="input-label">Hint</div>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <input class="input-field" placeholder="e.g. Used when greeting..." value="${word.hint || ''}" id="hint-input">
+        <button style="padding:8px 16px; border-radius:12px; background:var(--orange); color:var(--bg); border:none; font-weight:700; cursor:pointer; font-family:var(--font); white-space:nowrap;">Save</button>
+      </div>
+      <div class="input-label">Burmese Sentence</div>
+      <textarea class="input-field mb-12" placeholder="e.g. နေကောင်းပါတယ်" id="sentence-my-input"></textarea>
+      <div class="input-label">English Meaning</div>
+      <input class="input-field mb-12" placeholder="e.g. I'm doing well" id="meaning-input">
+      <button class="btn-primary" style="background:var(--orange);">Save & Link</button>
+    `, { borderColor: 'var(--orange)' });
+  }
+
+  showFlagModal(word, dev) {
+    const box = Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--pink);">🚩 Flag word issue</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div style="background:var(--bg); border-radius:12px; padding:10px 14px; margin-bottom:14px; border:1px solid var(--border);">
+        <span style="font-size:16px; font-weight:700; color:var(--text);">${word.burmese_word}</span>
+        <span style="font-size:12px; color:var(--blue); margin-left:6px;">${dev}</span>
+        <div style="font-size:12px; color:var(--green); margin-top:3px;">${word.english_meaning || ''}</div>
+      </div>
+      <div class="input-label mb-8">Issue type</div>
+      <div class="issue-grid">
+        <button class="issue-btn" data-issue="deva">
+          <div class="issue-icon" style="color:var(--yellow);">द</div>
+          <div class="issue-title">Wrong Deva</div>
+          <div class="issue-desc">Transliteration wrong</div>
+        </button>
+        <button class="issue-btn" data-issue="meaning">
+          <div class="issue-icon" style="color:var(--green);">En</div>
+          <div class="issue-title">Wrong meaning</div>
+          <div class="issue-desc">English is wrong</div>
+        </button>
+        <button class="issue-btn" data-issue="sentence">
+          <div class="issue-icon" style="color:var(--blue);">文</div>
+          <div class="issue-title">Bad sentence</div>
+          <div class="issue-desc">Context issue</div>
+        </button>
+        <button class="issue-btn" data-issue="notaword">
+          <div class="issue-icon" style="color:var(--pink);">✕</div>
+          <div class="issue-title">Not a word</div>
+          <div class="issue-desc">Shouldn't be here</div>
+        </button>
+      </div>
+      <div class="input-label mb-4">Comment (what's wrong?)</div>
+      <textarea class="input-field mb-12" placeholder="e.g. Devanagari should be..." id="flag-comment"></textarea>
+      <button class="btn-primary" style="background:var(--pink);">🚩 Submit Flag</button>
+    `, { borderColor: 'var(--pink)' });
+
+    // Issue type selection
+    if (box) {
+      box.querySelectorAll('[data-issue]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          box.querySelectorAll('[data-issue]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    }
+  }
+
+  async showSentencesModal(word) {
+    const settings = getSettings();
+    // Show loading
+    Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--blue);">💬 Sentences</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</div>
+    `, { borderColor: 'var(--blue)' });
+
+    // Load data
+    let linkedIds = new Set();
+    let linkedSentences = [];
+    let textMatched = [];
+
+    try {
+      const links = await db.getSentencesForWord(word.id);
+      linkedSentences = links
+        .filter(link => link.burmese_app_sentences?.burmese_text)
+        .map(link => ({ ...link.burmese_app_sentences, rating: link.rating || 0 }));
+      linkedIds = new Set(linkedSentences.map(s => s.id));
+    } catch { /* junction table may not have RLS yet */ }
+
+    try {
+      textMatched = await db.searchSentencesByText(word.burmese_word);
+      textMatched = textMatched.filter(s => !linkedIds.has(s.id));
+    } catch { /* offline */ }
+
+    const total = linkedSentences.length + textMatched.length;
+    const renderStars = (sid, rating) => [1,2,3].map(n =>
+      `<button class="sent-star" data-sid="${sid}" data-star="${n}" style="
+        font-size:16px;background:none;border:none;cursor:pointer;padding:2px;color:${n <= rating ? '#FFC800' : 'var(--border)'};
+      ">${n <= rating ? '★' : '☆'}</button>`
+    ).join('');
+
+    // Close loading modal, open real one
+    Modal.close();
+    const box = Modal.show(`
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--blue);">💬 Sentences (${total})</div>
+        <button class="modal-close" data-modal-close>✕ Close</button>
+      </div>
+      <div style="background:var(--bg); border-radius:12px; padding:10px 14px; margin-bottom:14px; border:1px solid var(--border);">
+        <span style="font-size:16px; font-weight:700;">${word.burmese_word}</span>
+        <span style="font-size:12px; color:var(--green); margin-left:6px;">${word.english_meaning || ''}</span>
+      </div>
+
+      ${linkedSentences.length > 0 ? `
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">✓ Linked (${linkedSentences.length})</div>
+        ${linkedSentences.map(s => `
+          <div class="sent-card" data-sid="${s.id}" style="padding:10px 12px;border-radius:12px;background:rgba(88,204,2,0.06);border:2px solid rgba(88,204,2,0.2);margin-bottom:6px;">
+            <div style="display:flex;align-items:start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
+                ${settings.showDevanagari ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toPronunciation(s.burmese_text, { tones: false })}</div>` : ''}
+                <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <div class="sent-stars" data-sid="${s.id}">${renderStars(s.id, s.rating)}</div>
+                <button class="sent-unlink" data-sid="${s.id}" style="padding:2px 6px;border-radius:6px;font-size:9px;font-weight:700;
+                  background:rgba(255,107,138,0.1);border:1px solid rgba(255,107,138,0.25);color:var(--pink);cursor:pointer;font-family:var(--font);">✕</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+
+      ${textMatched.length > 0 ? `
+        <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin:${linkedSentences.length > 0 ? '12px' : '0'} 0 6px;">Found in text (${textMatched.length})</div>
+        ${textMatched.map(s => `
+          <div class="sent-card" data-sid="${s.id}" style="padding:10px 12px;border-radius:12px;background:var(--surface);border:2px solid var(--border);margin-bottom:6px;">
+            <div style="display:flex;align-items:start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">${s.burmese_text}</div>
+                ${settings.showDevanagari ? `<div style="font-size:12px;color:var(--yellow);margin-bottom:3px;">${toPronunciation(s.burmese_text, { tones: false })}</div>` : ''}
+                <div style="font-size:12px;color:var(--text-muted);">${s.english_text || ''}</div>
+              </div>
+              <button class="sent-link" data-sid="${s.id}" style="padding:4px 8px;border-radius:8px;font-size:10px;font-weight:700;
+                background:rgba(28,176,246,0.1);border:1px solid rgba(28,176,246,0.25);color:var(--blue);cursor:pointer;font-family:var(--font);white-space:nowrap;">+ Link</button>
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+
+      ${total === 0 ? '<div style="color:var(--text-muted);text-align:center;padding:20px;font-size:13px;">No sentences contain this word</div>' : ''}
+    `, { borderColor: 'var(--blue)' });
+
+    if (!box) return;
+
+    // Link buttons
+    box.querySelectorAll('.sent-link').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = parseInt(btn.dataset.sid);
+        try {
+          await db.linkWordSentence(word.id, sid);
+          btn.textContent = '✓';
+          btn.style.color = 'var(--green)';
+          btn.style.borderColor = 'rgba(88,204,2,0.25)';
+          btn.style.background = 'rgba(88,204,2,0.1)';
+          btn.disabled = true;
+          // Update card style
+          const card = btn.closest('.sent-card');
+          if (card) {
+            card.style.borderColor = 'rgba(88,204,2,0.2)';
+            card.style.background = 'rgba(88,204,2,0.06)';
+          }
+          this.sentenceCounts[word.id] = (this.sentenceCounts[word.id] || 0) + 1;
+        } catch (e) {
+          btn.textContent = 'Error';
+          btn.style.color = 'var(--pink)';
+        }
+      });
+    });
+
+    // Unlink buttons
+    box.querySelectorAll('.sent-unlink').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = parseInt(btn.dataset.sid);
+        try {
+          await db.unlinkWordSentence(word.id, sid);
+          const card = btn.closest('.sent-card');
+          if (card) {
+            card.style.opacity = '0.3';
+            card.style.pointerEvents = 'none';
+          }
+          this.sentenceCounts[word.id] = Math.max(0, (this.sentenceCounts[word.id] || 0) - 1);
+        } catch (e) {
+          btn.textContent = 'Err';
+        }
+      });
+    });
+
+    // Star rating buttons
+    box.querySelectorAll('.sent-star').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const sid = parseInt(btn.dataset.sid);
+        const star = parseInt(btn.dataset.star);
+        // Toggle: if tapping the same star that's already the rating, set to 0
+        const starsContainer = btn.closest('.sent-stars');
+        const currentStars = starsContainer.querySelectorAll('.sent-star');
+        const currentRating = Array.from(currentStars).filter(s => s.textContent === '★').length;
+        const newRating = (star === currentRating) ? 0 : star;
+
+        try {
+          await db.rateSentenceLink(word.id, sid, newRating);
+          // Update star display
+          currentStars.forEach(s => {
+            const n = parseInt(s.dataset.star);
+            s.textContent = n <= newRating ? '★' : '☆';
+            s.style.color = n <= newRating ? '#FFC800' : 'var(--border)';
+          });
+        } catch { /* offline */ }
+      });
+    });
+  }
+}

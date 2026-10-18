@@ -708,3 +708,10 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 @keyframes spBars{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
 .sp-toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--surface);border:2px solid var(--border-light);border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--text);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
 .sp-toast.show{opacity:1}
+/* Phase 12: round 🔊 for lists + the parchment word card */
+.sp-btn.au-rnd{width:34px;height:34px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.sp-btn.au-rnd.parch{border-color:var(--card-border);background:rgba(229,192,123,.18);color:var(--card-text)}
+.au-corner{position:absolute;top:10px;right:10px}
+.au-chip{font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px;flex:none;margin-top:6px}
+.au-chip.f{background:rgba(255,107,138,.15);color:var(--pink)}
+.au-chip.m{background:rgba(28,176,246,.15);color:var(--blue)}

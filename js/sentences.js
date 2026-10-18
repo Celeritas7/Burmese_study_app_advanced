@@ -1,9 +1,11 @@
 // ═══ SENTENCES PAGE ═══
 // Browse and practice all sentences
 // Search, filter by category, practice mode (hide English)
+// Phase 12: 🔊 on every sentence (works in practice mode without revealing)
 
 import { db } from './supabase.js';
 import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=8';
+import { sayBtn, voiceChip } from './app-audio.js?v=1';   // Phase 12
 
 export class SentencesPage {
   constructor(app) {
@@ -128,8 +130,13 @@ export class SentencesPage {
         transition:all 0.15s;
       ">
         ${hasBurmese ? `
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">${s.burmese_text}</div>
-          <div style="font-size:12px;color:var(--yellow);margin-bottom:4px;">${dev}</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">${s.burmese_text}</div>
+              <div style="font-size:12px;color:var(--yellow);margin-bottom:4px;">${dev}</div>
+            </div>
+            ${voiceChip(s.burmese_text)}${sayBtn(s.burmese_text)}
+          </div>
         ` : `
           <div style="font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:4px;">Burmese text not yet added</div>
         `}
@@ -206,8 +213,13 @@ export class SentencesPage {
     const dev = s.burmese_text ? toPronunciation(s.burmese_text, { tones: false }) : '';
     return `
       ${s.burmese_text ? `
-        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">${s.burmese_text}</div>
-        <div style="font-size:12px;color:var(--yellow);margin-bottom:4px;">${dev}</div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;">${s.burmese_text}</div>
+            <div style="font-size:12px;color:var(--yellow);margin-bottom:4px;">${dev}</div>
+          </div>
+          ${voiceChip(s.burmese_text)}${sayBtn(s.burmese_text)}
+        </div>
       ` : ''}
       <div style="font-size:13px;color:var(--green);line-height:1.5;font-weight:600;">${s.english_text || ''}</div>
     `;

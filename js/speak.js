@@ -24,6 +24,8 @@ const ROUND = 6;               // questions per practice / build round
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);
 const dayKey = () => new Date().toISOString().slice(0, 10);
+// Phase 14: local calendar day for the streak (matches Stats → Speak).
+const localDay = d => { const x = d ? new Date(d) : new Date(); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
 
 export class SpeakTab {
   constructor(app) {
@@ -33,8 +35,9 @@ export class SpeakTab {
     this.Q = null;      // practice round
     this.B = null;      // build round
     const s = JSON.parse(localStorage.getItem(LS) || '{}');
-    this.S = { said: {}, miss: {}, gender: 'm', steps: {}, day: '', today: 0, ...s };
+    this.S = { said: {}, miss: {}, gender: 'm', steps: {}, day: '', today: 0, days: {}, ...s };
     this.S.miss ??= {};
+    this.S.days ??= {};
     if (this.S.day !== dayKey()) { this.S.day = dayKey(); this.S.today = 0; }
     DEPS.hasAudio = t => CLIPS.has(audioFile(t, this.voice));
     Promise.all([depsReady, clipsReady]).then(() => {
@@ -43,7 +46,9 @@ export class SpeakTab {
   }
 
   save() { localStorage.setItem(LS, JSON.stringify(this.S)); }
-  log(row) { DEPS.db?.insert('speak_log', row).catch(() => {}); }
+  log(row) { this.S.days[localDay()] = 1; this.save(); DEPS.db?.insert('speak_log', row).catch(() => {}); }
+  // Days in a row with at least one answer; today not done yet doesn't break it until tomorrow.
+  streak() { const d = new Date(); if (!this.S.days[localDay(d)]) d.setDate(d.getDate() - 1); let n = 0; while (this.S.days[localDay(d)]) { n++; d.setDate(d.getDate() - 1); } return n; }
   dev(my) { try { return DEPS.getSettings().showDevanagari ? DEPS.toPronunciation(my, { tones: false }) : ''; } catch { return ''; } }
   get voice() { try { return DEPS.getSettings().voice === 'f' ? 'f' : 'm'; } catch { return 'm'; } }   // app-wide, from Settings
   me() { return this.voice === 'm' ? ['ကျွန်တော်', 'kya-naw'] : ['ကျွန်မ', 'kya-ma']; }
@@ -91,6 +96,7 @@ export class SpeakTab {
   hydrate(rows) {
     const miss = {}, built = {};
     for (const r of [...rows].sort((a, b) => a.created_at < b.created_at ? -1 : 1)) {
+      this.S.days[localDay(r.created_at)] = 1;
       if (r.step > 1) { if (r.ok) built[r.step - 1] = (built[r.step - 1] || 0) + 1; continue; }   // ladder: correct builds per step
       const k = r.pack + '|' + r.item; this.S.said[k] = 1; miss[k] = r.ok ? 0 : (miss[k] || 0) + 1;
     }
@@ -139,9 +145,9 @@ export class SpeakTab {
     const [me] = this.me(), voiceLabel = this.voice === 'm' ? '♂ ' + me + ' · male voice' : '♀ ' + me + ' · female voice';
     const grammarOpen = this.stepState(1) === 'done', misses = this.allMissed();
     return `<div class="pad">
-      <div class="sp-h1">Speak first 🗣</div><div class="sp-muted">Words you can say today, grammar later</div>
+      <div style="display:flex;align-items:flex-start;gap:10px"><div class="flex-1"><div class="sp-h1">Speak first 🗣</div><div class="sp-muted">Words you can say today, grammar later</div></div>${this.app?.tabs?.stats ? '<button class="sp-btn sm ghost" data-sp="stats" style="padding:6px 10px;font-size:12px">📊 Stats</button>' : ''}</div>
       <div class="sp-goal"><div class="sp-tile" style="background:rgba(88,204,2,.1);border-color:rgba(88,204,2,.25)">🎯</div>
-        <div class="flex-1"><div class="sp-b">Say 3 things out loud today</div><div class="sp-muted">${Math.min(this.S.today, 3)} / 3 · ${said} of ${total} words tried</div></div>
+        <div class="flex-1"><div class="sp-b">Say 3 things out loud today</div><div class="sp-muted">${Math.min(this.S.today, 3)} / 3 · ${this.streak() > 1 ? `🔥 ${this.streak()}-day streak` : `${said} of ${total} words tried`}</div></div>
         <button class="sp-btn sm green" data-sp="start" data-pack="feel">Go →</button></div>
       ${misses.length ? `<div class="sp-goal pink"><div class="sp-tile" style="background:rgba(255,107,138,.1);border-color:rgba(255,107,138,.25)">🔁</div>
         <div class="flex-1"><div class="sp-b">${misses.length} to say again</div><div class="sp-muted">${misses.slice(0, 3).map(m => m.w.en).join(' · ')}${misses.length > 3 ? ' · …' : ''}</div></div>
@@ -299,6 +305,7 @@ export class SpeakTab {
       this.markSaid(p, w); this.log({ pack: p.id, item: w.en, step: 1, ok: true }); this.render(this.container);
     },
     settings: () => this.app?.showSettings?.(),
+    stats: () => this.app?.tabs?.stats?.openSpeak?.(),   // Phase 14
     start: el => this.startQuiz(PACKS.find(p => p.id === el.dataset.pack)),
     show: () => { this.Q.shown = true; this.render(this.container); this.speak(this.Q.items[this.Q.i].w.my); },
     rate: el => {

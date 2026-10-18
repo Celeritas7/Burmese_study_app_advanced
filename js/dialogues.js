@@ -1,9 +1,13 @@
 // ═══ DIALOGUES TAB ═══
 // Colloquial Burmese textbook - Preliminary + Units 1-15
 // Launches as a sub-page from More tab
+// Phase 12: 🔊 per line, Play all, A/B speakers with one voice each (swap per dialogue).
 
 import { db } from './supabase.js';
 import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=8';
+import { sayBtn, forcedVoice, playAll, stopAll } from './app-audio.js?v=1';
+
+const DV_KEY = 'dialogue_voices';   // { "1_2": { A: 'f', B: 'm' } } — only dialogues the user swapped
 
 const UNIT_INFO = [
   { unit: 0, title: 'Preliminary', subtitle: 'Greetings, script and numbers', color: '#1CB0F6', icon: '🔤' },
@@ -23,6 +27,8 @@ const UNIT_INFO = [
   { unit: 14, title: 'Unit 14', subtitle: 'Getting sick', color: '#FFC800', icon: '🤒' },
   { unit: 15, title: 'Unit 15', subtitle: 'Talking about where you are', color: '#CE82FF', icon: '📍' },
 ];
+
+const TONE = { m: ['rgba(28,176,246,0.15)', 'var(--blue)'], f: ['rgba(255,107,138,0.15)', 'var(--pink)'] };
 
 export class DialoguesTab {
   constructor(app) {
@@ -62,6 +68,35 @@ export class DialoguesTab {
       }
     }
     return dialogues;
+  }
+
+  dialogueSents(key) { const [u, d] = key.split('_').map(Number); return this.getDialoguesForUnit(u)[d] || []; }
+
+  // A/B per line: the optional `speaker` column wins, otherwise alternate from the previous line.
+  speakers(sents) {
+    const out = [];
+    sents.forEach((s, i) => { out[i] = (s.speaker === 'A' || s.speaker === 'B') ? s.speaker : i === 0 ? 'A' : (out[i - 1] === 'A' ? 'B' : 'A'); });
+    return out;
+  }
+
+  // Voices: the user's swap → else the first ကျွန်မ / ကျွန်တော် decides that speaker → else A ♂, B ♀.
+  voicesFor(key, sents) {
+    try { const saved = JSON.parse(localStorage.getItem(DV_KEY) || '{}')[key]; if (saved) return saved; } catch {}
+    const spk = this.speakers(sents);
+    for (let i = 0; i < sents.length; i++) {
+      const f = forcedVoice(sents[i].burmese_text);
+      if (f) { const o = f === 'm' ? 'f' : 'm'; return spk[i] === 'A' ? { A: f, B: o } : { A: o, B: f }; }
+    }
+    return { A: 'm', B: 'f' };
+  }
+
+  // Keep the line being played on screen without scrollIntoView.
+  keepVisible(el) {
+    const r = el.getBoundingClientRect();
+    if (r.top >= 70 && r.bottom <= window.innerHeight - 90) return;
+    const d = r.top - window.innerHeight / 3, sc = this.app.contentEl;
+    if (sc && sc.scrollHeight > sc.clientHeight + 4) sc.scrollBy({ top: d, behavior: 'smooth' });
+    else window.scrollBy({ top: d, behavior: 'smooth' });
   }
 
   async render(container) {
@@ -135,6 +170,7 @@ export class DialoguesTab {
 
     // Wire events
     container.querySelector('#dial-back').addEventListener('click', () => {
+      stopAll();
       this.app.tabs.more.render(this.app.contentEl);
     });
 
@@ -143,6 +179,7 @@ export class DialoguesTab {
         const u = parseInt(btn.dataset.unit);
         this.expandedUnit = this.expandedUnit === u ? null : u;
         this.expandedDialogue = null;
+        stopAll();
         this.render(container);
       });
     });
@@ -153,7 +190,39 @@ export class DialoguesTab {
         e.stopPropagation();
         const d = btn.dataset.dialogue;
         this.expandedDialogue = this.expandedDialogue === d ? null : d;
+        stopAll();
         this.render(container);
+      });
+    });
+
+    // ⇄ Swap voices — remembered per dialogue
+    container.querySelectorAll('[data-dial-swap]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.dialSwap, v = this.voicesFor(key, this.dialogueSents(key));
+        let all = {}; try { all = JSON.parse(localStorage.getItem(DV_KEY) || '{}'); } catch {}
+        all[key] = { A: v.B, B: v.A };
+        localStorage.setItem(DV_KEY, JSON.stringify(all));
+        stopAll();
+        this.render(container);
+      });
+    });
+
+    // Play all — highlights the current line, stops at the first line with no clip; tap again to stop
+    container.querySelectorAll('[data-dial-play]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.state === 'playing') { stopAll(); return; }
+        const key = btn.dataset.dialPlay, sents = this.dialogueSents(key);
+        const spk = this.speakers(sents), v = this.voicesFor(key, sents);
+        const rows = [...container.querySelectorAll(`[data-dl="${key}"] .dial-line`)];
+        const items = sents.map((s, i) => ({ text: s.burmese_text, voice: v[spk[i]], row: rows[i], btn: rows[i]?.querySelector('[data-au]') }))
+          .filter(it => it.text && it.row);
+        btn.dataset.state = 'playing';
+        playAll(items, i => {
+          rows.forEach(r => { r.style.background = ''; });
+          if (i < 0) { btn.dataset.state = 'idle'; return; }
+          items[i].row.style.background = 'rgba(28,176,246,0.08)';
+          this.keepVisible(items[i].row);
+        });
       });
     });
   }
@@ -194,41 +263,55 @@ export class DialoguesTab {
             </button>
 
             <!-- Sentences -->
-            ${isOpen ? `
-              <div style="padding:8px 16px 14px;">
-                ${sents.map((s, i) => `
-                  <div style="
-                    display:flex; gap:10px; padding:10px 0;
-                    ${i < sents.length - 1 ? `border-bottom:1px solid ${info.color}10;` : ''}
-                    animation: fadeSlide 0.2s ease;
-                    animation-delay: ${i * 0.03}s;
-                    animation-fill-mode: both;
-                  ">
-                    <div style="width:6px; min-height:20px; border-radius:3px; background:${info.color}30; margin-top:2px;"></div>
-                    <div style="flex:1;">
-                      ${s.burmese_text ? `
-                        <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px;">
-                          ${s.burmese_text}
-                        </div>
-                        <div style="font-size:12px; color:${info.color}; margin-bottom:4px;">
-                          ${toPronunciation(s.burmese_text, { tones: false })}
-                        </div>
-                      ` : `
-                        <div style="font-size:11px; color:var(--text-dim); font-style:italic; margin-bottom:4px;">
-                          Burmese text not yet added
-                        </div>
-                      `}
-                      <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">
-                        ${s.english_text}
-                      </div>
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
+            ${isOpen ? this.renderLines(info, key, sents) : ''}
           `;
         }).join('')}
       </div>
     `;
+  }
+
+  renderLines(info, key, sents) {
+    const spk = this.speakers(sents), v = this.voicesFor(key, sents);
+    const chip = p => { const [bg, c] = TONE[v[p]]; return `<span style="font-size:10px;font-weight:800;border-radius:999px;padding:3px 8px;background:${bg};color:${c};">${p} · ${v[p] === 'f' ? '♀' : '♂'}</span>`; };
+    return `
+      <div data-dl="${key}" style="padding:8px 16px 14px;">
+        <div style="display:flex; align-items:center; gap:6px; padding:2px 0 8px;">
+          <button class="sp-btn sm ghost sp-say" data-dial-play="${key}" data-state="idle" style="padding:6px 10px;font-size:12px;"><i class="sp-say-ic"></i>Play all</button>
+          ${chip('A')}${chip('B')}
+          <button data-dial-swap="${key}" style="margin-left:auto;background:none;border:none;color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);padding:6px 0;">⇄ Swap voices</button>
+        </div>
+        ${sents.map((s, i) => {
+          const [bg, c] = TONE[v[spk[i]]];
+          return `
+          <div class="dial-line" style="
+            display:flex; gap:10px; padding:10px 6px; margin:0 -6px; border-radius:10px; transition:background 0.2s;
+            ${i < sents.length - 1 ? `border-bottom:1px solid ${info.color}10;` : ''}
+            animation: fadeSlide 0.2s ease;
+            animation-delay: ${i * 0.03}s;
+            animation-fill-mode: both;
+          ">
+            <div style="width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+              flex:none; margin-top:3px; font-size:11px; font-weight:800; background:${bg}; color:${c};">${spk[i]}</div>
+            <div style="flex:1; min-width:0;">
+              ${s.burmese_text ? `
+                <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px;">
+                  ${s.burmese_text}
+                </div>
+                <div style="font-size:12px; color:${info.color}; margin-bottom:4px;">
+                  ${toPronunciation(s.burmese_text, { tones: false })}
+                </div>
+              ` : `
+                <div style="font-size:11px; color:var(--text-dim); font-style:italic; margin-bottom:4px;">
+                  Burmese text not yet added
+                </div>
+              `}
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                ${s.english_text}
+              </div>
+            </div>
+            ${s.burmese_text ? sayBtn(s.burmese_text, { voice: v[spk[i]] }) : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
   }
 }

@@ -1,14 +1,14 @@
 // ═══ SERVICE WORKER ═══
 // Lives at the app ROOT (next to index.html) so its scope covers the whole app.
 // All paths are relative, so it works under GitHub Pages' /<repo>/ sub-path.
-const CACHE_NAME = 'burmese-study-v5';   // bump whenever new clips are generated, so install re-runs
+const CACHE_NAME = 'burmese-study-v6';   // bump whenever new clips are generated, so install re-runs
 const AUDIO_CACHE = 'burmese-audio-v1';   // separate: survives app-code cache bumps
 const ASSETS = [
   './', 'index.html', 'css/styles.css',
   'js/app.js', 'js/study.js', 'js/quiz.js', 'js/srs.js', 'js/more.js', 'js/modal.js',
   'js/supabase.js', 'js/dialogues.js', 'js/hubexplorer.js', 'js/stats.js', 'js/writing.js',
   'js/sentences.js', 'js/settings.js', 'js/course.js', 'js/home.js',
-  'js/speak.js', 'js/speak-data.js', 'js/speak-audio.js',
+  'js/speak.js', 'js/speak-data.js', 'js/speak-audio.js', 'js/app-audio.js', 'audio/app/clips.json',
   'https://celeritas7.github.io/language-utils/burmese.js?v=9'
 ];
 
@@ -37,6 +37,19 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const req = event.request, url = new URL(req.url);
+  // Phase 12: app clips in Supabase Storage. Content-hashed, so cache first.
+  // Fetched in cors mode so the cache holds a real (not opaque) response.
+  if (req.method === 'GET' && url.hostname.includes('supabase.co') && url.pathname.includes('/storage/v1/object/public/audio/')) {
+    event.respondWith(caches.open(AUDIO_CACHE).then(async c => {
+      const hit = await c.match(url.href);
+      if (hit) return hit;
+      const res = await fetch(url.href, { mode: 'cors' });
+      if (res.ok) c.put(url.href, res.clone());
+      return res;
+    }));
+    return;
+  }
+
   if (req.method !== 'GET' || url.hostname.includes('supabase.co')) return;
 
   // Clips are content-hashed (file name = hash of the text), so they never change: cache first.

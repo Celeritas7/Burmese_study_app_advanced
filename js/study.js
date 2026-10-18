@@ -4,6 +4,7 @@ import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-ut
 import { Modal } from './modal.js';
 import { Quiz } from './quiz.js';
 import { getSettings } from './settings.js';
+import { sayBtn, autoPlay } from './app-audio.js?v=1';   // Phase 12
 import { buildGroups } from './hubexplorer.js';
 
 const WORD_TREE_CSS = `<style>
@@ -375,7 +376,8 @@ export class StudyTab {
         </div>
 
         <!-- Word card -->
-        <div class="word-card">
+        <div class="word-card" style="position:relative;">
+          ${this.mode === 'burmese' ? sayBtn(w.burmese_word, { parch: true, corner: true }) : ''}
           <div class="word-card-text" style="font-size:${fontSize};">${primaryText}</div>
           ${sentenceInCard}
         </div>
@@ -464,6 +466,12 @@ export class StudyTab {
       html += `<div class="reveal-more">👆 tap to reveal ${label}</div>`;
     }
 
+    // Phase 12: in Deva / EN / Write modes 🔊 only appears once fully revealed, so sound never gives the answer away.
+    if (this.mode !== 'burmese' && this.revealLevel >= maxLevel) {
+      html += `<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;">
+        <span style="font-size:24px;font-weight:800;color:var(--text);">${w.burmese_word}</span>${sayBtn(w.burmese_word)}</div>`;
+    }
+
     return html;
   }
 
@@ -495,6 +503,9 @@ export class StudyTab {
         const box = container.querySelector('#reveal-box');
         box.innerHTML = this.renderReveal(word, dev);
         if (this.revealLevel >= maxLevel) box.classList.add('revealed');
+        // Phase 12: Settings → Play sound on reveal. Myanmar mode: first tap; other modes: once the Burmese is shown.
+        if (this.mode === 'burmese' ? this.revealLevel === 1 : this.revealLevel >= maxLevel)
+          autoPlay(word.burmese_word, container.querySelector('.word-card [data-au]') || box.querySelector('[data-au]'));
       }
     });
 
@@ -611,6 +622,7 @@ export class StudyTab {
                   <div style="font-size:16px;font-weight:700;color:var(--text);">${w.burmese_word}</div>
                   <div style="font-size:11px;color:var(--yellow);">${dev}</div>
                 </div>
+                ${sayBtn(w.burmese_word)}
                 <div style="text-align:right;">
                   <div style="font-size:13px;font-weight:700;color:${color};">${rInfo ? rInfo.icon : '—'} ${label}</div>
                   <div style="font-size:11px;color:var(--green);">${w.english_meaning || ''}</div>

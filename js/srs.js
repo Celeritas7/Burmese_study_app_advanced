@@ -2,6 +2,7 @@
 import { db } from './supabase.js';
 import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=8';
 import { getSettings } from './settings.js';
+import { sayBtn, autoPlay } from './app-audio.js?v=1';   // Phase 12
 
 const SRS_RESPONSES = [
   { label: 'Again', icon: '✗', color: '#FF6B8A', mastery: -2 },
@@ -199,7 +200,8 @@ export class SRSTab {
         </div>
 
         <!-- Word card -->
-        <div class="word-card">
+        <div class="word-card" style="position:relative;">
+          ${sayBtn(w.burmese_word, { parch: true, corner: true })}
           <div class="word-card-text" style="font-size:${cardFontSize};">${w.burmese_word}</div>
         </div>
 
@@ -242,6 +244,8 @@ export class SRSTab {
           const box = container.querySelector('#reveal-box');
           box.innerHTML = this.renderReveal(w, dev, hasHint, maxLevel);
         }
+        // Phase 12: Settings → Play sound on reveal (after the re-render so the button it animates is the live one)
+        if (this.revealLevel === 1) autoPlay(w.burmese_word, container.querySelector('.word-card [data-au]'));
       }
     });
 
@@ -365,6 +369,7 @@ export class SRSTab {
                   <div style="font-size:16px;font-weight:700;color:var(--text);">${r.word}</div>
                   ${settings.showDevanagari ? `<div style="font-size:11px;color:var(--yellow);">${toPronunciation(r.word, { tones: false })}</div>` : ''}
                 </div>
+                ${sayBtn(r.word)}
                 <div style="text-align:right;">
                   <div style="font-size:12px;font-weight:700;color:${color};">${r.response}</div>
                   <div class="srs-levels" style="margin-top:2px;">

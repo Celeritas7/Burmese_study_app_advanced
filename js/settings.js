@@ -11,7 +11,8 @@ const DEFAULTS = {
   sessionSize: 10,
   theme: 'dark',           // dark only for now
   voice: 'm',              // m = ♂ ကျွန်တော် (Thiha), f = ♀ ကျွန်မ (Nilar) — used by every 🔊 in the app
-  showPlayful: false       // "Just for fun 😏" pack on Speak home
+  showPlayful: false,      // "Just for fun 😏" pack on Speak home
+  autoPlay: false          // Phase 12: say the word when a Study / Review card is revealed
 };
 
 export function getSettings() {
@@ -67,6 +68,19 @@ export class SettingsPage {
                 ">${label}</button>
               `).join('')}
             </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);">
+            <div style="min-width:0;">
+              <div style="font-size:14px;font-weight:600;color:var(--text);">Play sound on reveal</div>
+              <div style="font-size:11px;color:var(--text-muted);">Study & Review say the word when you reveal the card</div>
+            </div>
+            <button class="set-toggle" data-key="autoPlay" style="
+              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;
+              background:${s.autoPlay ? 'var(--green)' : 'var(--border)'};
+            ">
+              <div style="width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;
+                transition:all 0.2s;${s.autoPlay ? 'left:23px;' : 'left:3px;'}"></div>
+            </button>
           </div>
         </div>
 
@@ -197,6 +211,16 @@ export class SettingsPage {
                 background:var(--purple);border:none;color:#fff;font-family:var(--font);">Cache Now</button>
             </div>
           </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div style="min-width:0;">
+                <div style="font-size:14px;font-weight:600;color:var(--text);">Audio for offline</div>
+                <div style="font-size:11px;color:var(--text-muted);" id="audio-status">Clips are saved the first time you play them</div>
+              </div>
+              <button id="btn-audio-dl" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
+                background:var(--purple);border:none;color:#fff;font-family:var(--font);">Download all</button>
+            </div>
+          </div>
         </div>
 
         <!-- App Info -->
@@ -209,6 +233,29 @@ export class SettingsPage {
 
     // Check SW status
     this.checkServiceWorker(container);
+
+    // Audio for offline (Phase 12): N of M saved + Download all
+    import('./app-audio.js?v=1').then(A => {
+      const st = container.querySelector('#audio-status'), btn = container.querySelector('#btn-audio-dl');
+      if (!st || !btn) return;
+      if (!('caches' in window)) { st.textContent = 'Not supported in this browser'; btn.disabled = true; btn.style.opacity = '.5'; return; }
+      const show = async () => {
+        const { saved, total } = await A.savedCount();
+        if (!total) return;
+        st.style.color = 'var(--text-muted)';
+        st.textContent = `${saved.toLocaleString()} of ${total.toLocaleString()} clips saved on this device`;
+        if (saved >= total) { btn.textContent = '✓ All saved'; btn.disabled = true; btn.style.opacity = '.6'; }
+      };
+      show();
+      btn.addEventListener('click', async () => {
+        btn.disabled = true; btn.textContent = 'Downloading…';
+        const r = await A.downloadAll((n, t) => { st.style.color = 'var(--yellow)'; st.textContent = `Downloading ${n.toLocaleString()} / ${t.toLocaleString()}…`; });
+        if (r.failed) {
+          st.style.color = 'var(--pink)'; st.textContent = `${r.failed} clips failed. Check your connection and try again.`;
+          btn.disabled = false; btn.textContent = 'Retry';
+        } else { btn.textContent = 'Download all'; show(); }
+      });
+    }).catch(() => {});
 
     // Back
     container.querySelector('#set-back').addEventListener('click', () => {
