@@ -12,6 +12,7 @@ import { SettingsPage } from './settings.js';
 import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
 import { SpeakTab } from './speak.js?v=7';
+import { SongsPage } from './songs.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -47,6 +48,7 @@ class BurmeseStudyApp {
     this.tabs.sentences = new SentencesPage(this);
     this.tabs.settings = new SettingsPage(this);
     this.tabs.speak = new SpeakTab(this);
+    this.tabs.songs = new SongsPage(this);
 
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
@@ -80,6 +82,7 @@ class BurmeseStudyApp {
   showWriting() { this.showSubPage('writing'); }
   showSentences() { this.showSubPage('sentences'); }
   showSettings() { this.showSubPage('settings'); }
+  showSongs() { this.showSubPage('songs'); }
 }
 
 const app = new BurmeseStudyApp();
