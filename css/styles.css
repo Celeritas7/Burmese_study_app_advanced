@@ -571,6 +571,55 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .home-brand { font-size: 17px; font-weight: 800; flex: 1; }
 .home-stats { display: flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 12px; background: var(--surface); border: 2px solid var(--border); color: var(--text); font-size: 12px; font-weight: 800; cursor: pointer; font-family: var(--font); }
 .home-icon { background: none; border: none; cursor: pointer; font-size: 17px; color: var(--text-muted); }
+.home-music { padding: 6px; border-radius: 10px; background: rgba(255,107,138,0.1); }
+
+/* ═══ BURMESE SONG LIBRARY ═══ */
+.songs-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.songs-back { background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+  color: var(--text); cursor: pointer; font: inherit; font-size: 20px; width: 40px; height: 40px; }
+.songs-intro { background: linear-gradient(130deg, rgba(255,107,138,0.16), rgba(206,130,255,0.1));
+  border: 1px solid rgba(255,107,138,0.25); border-radius: 16px; padding: 16px;
+  color: var(--text); font-size: 12px; line-height: 1.7; margin-bottom: 16px; }
+.songs-tools { display: flex; gap: 8px; align-items: stretch; }
+.songs-search { min-width: 0; flex: 1; background: var(--surface); border: 2px solid var(--border);
+  border-radius: 12px; padding: 12px; color: var(--text); font: inherit; font-size: 12px; }
+.songs-search:focus, .song-form input:focus { outline: none; border-color: var(--pink); }
+.songs-add { border: none; border-radius: 12px; background: var(--pink); color: var(--bg);
+  padding: 0 14px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.songs-status { min-height: 18px; margin: 6px 0 12px; color: var(--green); font-size: 11px; }
+.songs-list { display: flex; flex-direction: column; gap: 12px; }
+.song-card { border: 2px solid var(--border); background: var(--surface); border-radius: 18px; padding: 16px; }
+.song-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.song-art { flex: 0 0 50px; width: 50px; height: 50px; border-radius: 15px;
+  background: rgba(255,107,138,0.15); border: 2px solid rgba(255,107,138,0.25);
+  color: var(--pink); font-size: 27px; display: grid; place-items: center; }
+.song-title { font-size: 17px; font-weight: 800; overflow-wrap: anywhere; }
+.song-artist { margin-top: 4px; font-size: 12px; color: #A0B5BF; overflow-wrap: anywhere; }
+.song-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.song-link { display: flex; align-items: center; justify-content: center; min-height: 42px;
+  background: var(--elevated); border: 1px solid var(--border-light); border-radius: 11px;
+  padding: 8px; font-size: 11px; font-weight: 800; color: var(--text); text-decoration: none; text-align: center; }
+.song-link-main { background: var(--pink); border-color: var(--pink); color: var(--bg); }
+.song-edit-link { background: transparent; border: none; color: var(--blue); font: inherit;
+  font-size: 11px; font-weight: 700; padding: 14px 0 0; cursor: pointer; }
+.songs-empty { text-align: center; padding: 26px 12px; font-size: 13px; color: var(--text-muted); }
+.songs-editor:empty { display: none; }
+.song-form { background: var(--surface); border: 2px solid var(--pink); border-radius: 18px;
+  margin-top: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.song-form-title { font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+.song-form label { color: var(--text); font-size: 11px; font-weight: 700; }
+.song-form label span { color: var(--text-muted); font-weight: 400; }
+.song-form input { width: 100%; background: var(--bg); border: 2px solid var(--border-light);
+  color: var(--text); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 12px; margin-bottom: 4px; }
+.song-form input[readonly] { color: var(--text-muted); }
+.song-form-error { color: var(--red); font-size: 11px; min-height: 14px; }
+.song-form-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.song-form-buttons button { font: inherit; font-size: 12px; font-weight: 800; border: none;
+  border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+.song-save { background: var(--green); color: var(--bg); }
+.song-cancel { background: var(--border-light); color: var(--text); }
+.song-remove { background: rgba(255,75,75,0.12); color: var(--red); margin-left: auto; }
+.songs-footnote { color: #93A8B2; margin-top: 18px; font-size: 11px; line-height: 1.6; }
 
 .home-wm { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .home-wm span { position: absolute; font-weight: 800; line-height: 1; color: var(--focus); opacity: 0.06; }

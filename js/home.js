@@ -25,6 +25,7 @@ export class HomeTab {
         <div class="home-header">
           <div class="home-logo">မ</div>
           <div class="home-brand">Burmese Study</div>
+          <button class="home-icon home-music" id="home-music" aria-label="Burmese songs" title="Burmese songs">🎵</button>
           <button class="home-stats" id="home-stats">📊 Stats</button>
           <button class="home-icon" id="home-settings">⚙️</button>
         </div>
@@ -58,6 +59,7 @@ export class HomeTab {
       study.startSession(this.app.contentEl);
     });
     container.querySelector('#home-stats').addEventListener('click', () => this.app.showStats());
+    container.querySelector('#home-music').addEventListener('click', () => this.app.showSongs());
     container.querySelector('#home-settings').addEventListener('click', () => this.app.showSettings());
   }
 }
