@@ -1,14 +1,65 @@
 // ═══ BURMESE MUSIC LIBRARY ═══
-// The starter entry lives in the app; personal additions and links stay on this device.
-// Do not put unverified YouTube video/channel URLs into the starter catalog.
+// Curated starter entries live in the app; personal additions and links stay on this device.
 const STORAGE_KEY = 'burmese_song_library_v1';
+
+export const SONG_CATEGORIES = [
+  { id: 'kids', label: 'Children & Alphabet', burmese: 'ကလေးသီချင်းများ', icon: '🧸', focus: 'Letters, numbers and repetition' },
+  { id: 'love', label: 'Love & Feelings', burmese: 'အချစ်သီချင်းများ', icon: '❤️', focus: 'Emotions and relationships' },
+  { id: 'daily', label: 'Daily Life', burmese: 'နေ့စဉ်ဘဝ', icon: '🏡', focus: 'Family, food and everyday actions' },
+  { id: 'nature', label: 'Nature & Animals', burmese: 'သဘာဝနှင့် တိရစ္ဆာန်များ', icon: '🌿', focus: 'Weather, plants and animals' },
+  { id: 'folk', label: 'Traditional & Folk', burmese: 'ရိုးရာသီချင်းများ', icon: '🪕', focus: 'Culture and traditional expressions' },
+  { id: 'festival', label: 'Festivals', burmese: 'ပွဲတော်သီချင်းများ', icon: '🎉', focus: 'Celebrations and seasons' },
+  { id: 'pop', label: 'Modern Pop', burmese: 'ခေတ်ပေါ်သီချင်းများ', icon: '🎤', focus: 'Everyday conversational expressions' },
+  { id: 'other', label: 'Other', burmese: 'အခြား', icon: '🎶', focus: 'Personal discoveries' }
+];
+
+const validCategory = value => SONG_CATEGORIES.some(item => item.id === value) ? value : 'other';
+const normalizeWords = value => Array.isArray(value) ? value.filter(word => typeof word === 'string').slice(0, 12) : [];
 
 export const STARTER_SONGS = [
   {
     id: 'arzani-yin-yin-lay-yuu',
     artist: 'အဆိုတော် အာဇာနည်',
     title: 'ယဉ်ယဉ်လေးရူး',
+    category: 'pop',
+    learningWords: ['ယဉ်ယဉ်', 'ရူး'],
     videoUrl: '',
+    channelUrl: ''
+  },
+  {
+    id: 'myanmar-alphabet-ka-to-a',
+    artist: 'Myanmar Alphabet · Learning song',
+    title: 'သံစဉ်ကဗျာ ဗျည်းအက္ခရာ { က မှ အ }',
+    category: 'kids',
+    learningWords: ['က', 'ခ', 'ဂ'],
+    videoUrl: 'https://www.youtube.com/watch?v=UZ0WYXWRg1Q',
+    channelUrl: ''
+  },
+  {
+    id: 'ma-nhote-sat-chin-bu',
+    artist: 'ရဲလေး ft. လွှမ်းပိုင်, အိမ့်ချစ်, Bobby Soxer',
+    title: 'မနှုတ်ဆက်ချင်ဘူး',
+    category: 'love',
+    learningWords: ['နှုတ်ဆက်', 'မ…ချင်ဘူး'],
+    videoUrl: 'https://www.youtube.com/watch?v=t7Tlvi03syQ',
+    channelUrl: ''
+  },
+  {
+    id: 'myanmar-children-zoo',
+    artist: 'Little Thumbling · ကလေးသီချင်း',
+    title: 'တိရိစ္ဆာန်ဉယျာဉ်သို့',
+    category: 'nature',
+    learningWords: ['တိရိစ္ဆာန်', 'ဉယျာဉ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=iKtxvCvn8qM',
+    channelUrl: ''
+  },
+  {
+    id: 'ydnm-thingyan-2026',
+    artist: 'Various Artists · YDNM Music',
+    title: 'သင်္ကြန်သီချင်းများ | Thingyan 2026',
+    category: 'festival',
+    learningWords: ['သင်္ကြန်', 'မိုး', 'နှစ်သစ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=oHVgsEe3aJc',
     channelUrl: ''
   }
 ];
@@ -48,6 +99,13 @@ export function youtubeSearchUrl(terms) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(terms)}`;
 }
 
+export function filterSongs(songs, category = 'all', search = '') {
+  const query = String(search).toLocaleLowerCase().trim();
+  return songs.filter(song =>
+    (category === 'all' || song.category === category) &&
+    `${song.title} ${song.artist} ${(song.learningWords || []).join(' ')}`.toLocaleLowerCase().includes(query));
+}
+
 export function loadSongs(storage = localStorage) {
   let stored = [];
   try {
@@ -60,11 +118,17 @@ export function loadSongs(storage = localStorage) {
   const saved = stored.filter(validEntry);
   const result = STARTER_SONGS.map(base => {
     const updated = saved.find(song => song.id === base.id);
-    return { ...base, videoUrl: updated?.videoUrl || '', channelUrl: updated?.channelUrl || '' };
+    return { ...base,
+      category: updated?.category ? validCategory(updated.category) : base.category,
+      learningWords: updated?.learningWords ? normalizeWords(updated.learningWords) : base.learningWords,
+      videoUrl: updated?.videoUrl ?? base.videoUrl,
+      channelUrl: updated?.channelUrl ?? base.channelUrl
+    };
   });
   for (const song of saved) {
     if (result.some(base => base.id === song.id)) continue;
     result.push({ id: song.id, artist: song.artist, title: song.title,
+      category: validCategory(song.category), learningWords: normalizeWords(song.learningWords),
       videoUrl: song.videoUrl || '', channelUrl: song.channelUrl || '' });
   }
   return result;
@@ -76,6 +140,7 @@ export class SongsPage {
     this.storage = storage;
     this.songs = loadSongs(storage);
     this.search = '';
+    this.activeCategory = 'all';
     this.editId = null;
     this.message = '';
   }
@@ -102,12 +167,15 @@ export class SongsPage {
             <div class="app-subtitle">Listen, discover & learn from music</div>
           </div>
         </div>
-        <div class="songs-intro">Find Burmese songs on YouTube or save a direct video and artist-channel link for next time.</div>
+        <div class="songs-intro">Pick a theme, listen to a song, and practise a few repeated Burmese words. Add your own songs and YouTube links as you discover them.</div>
+        <div class="songs-category-title">Choose a learning theme</div>
+        <div class="songs-categories" id="songs-categories" aria-label="Song categories"></div>
         <div class="songs-tools">
           <input class="songs-search" id="songs-search" type="search" maxlength="100"
             placeholder="Search song or artist…" aria-label="Search songs" value="${escapeSongHTML(this.search)}">
           <button class="songs-add" data-song-action="add">+ Song</button>
         </div>
+        <div class="songs-count" id="songs-count"></div>
         <div class="songs-status" id="songs-status" role="status">${escapeSongHTML(this.message)}</div>
         <div class="songs-list" id="songs-list"></div>
         <div class="songs-editor" id="songs-editor"></div>
@@ -119,6 +187,12 @@ export class SongsPage {
       if (!button) return;
       const action = button.dataset.songAction;
       if (action === 'back') return this.app.tabs.more.render(this.app.contentEl);
+      if (action === 'filter') {
+        this.activeCategory = button.dataset.category;
+        this.renderFilters();
+        this.renderList();
+        return;
+      }
       if (action === 'add') this.editId = 'new';
       if (action === 'edit') this.editId = button.dataset.id;
       if (action === 'cancel') this.editId = null;
@@ -132,6 +206,7 @@ export class SongsPage {
         }
       }
       this.renderEditor();
+      this.renderFilters();
       this.renderList();
       container.querySelector('#songs-status').textContent = this.message;
     };
@@ -145,41 +220,74 @@ export class SongsPage {
       event.preventDefault();
       this.submitForm(event.target);
     };
+    this.renderFilters();
     this.renderList();
     this.renderEditor();
+  }
+
+  renderFilters() {
+    const counts = Object.fromEntries(SONG_CATEGORIES.map(item => [item.id,
+      this.songs.filter(song => song.category === item.id).length]));
+    const filters = [{ id: 'all', icon: '🎵', label: 'All', count: this.songs.length },
+      ...SONG_CATEGORIES.map(item => ({ ...item, count: counts[item.id] }))];
+    this.container.querySelector('#songs-categories').innerHTML = filters.map(item => `
+      <button class="songs-category ${this.activeCategory === item.id ? 'active' : ''}"
+        type="button" data-song-action="filter" data-category="${item.id}"
+        aria-pressed="${this.activeCategory === item.id}">
+        <span>${item.icon} ${escapeSongHTML(item.label)}</span><span class="songs-category-count">${item.count}</span>
+      </button>`).join('');
   }
 
   renderList() {
     const list = this.container.querySelector('#songs-list');
     const query = this.search.toLocaleLowerCase().trim();
-    const matches = this.songs.filter(song => `${song.title} ${song.artist}`.toLocaleLowerCase().includes(query));
-    list.innerHTML = matches.length ? matches.map(song => {
+    const matches = filterSongs(this.songs, this.activeCategory, query);
+    this.container.querySelector('#songs-count').textContent = `${matches.length} song${matches.length === 1 ? '' : 's'} in this view`;
+    const card = song => {
       const video = validatedYouTubeUrl(song.videoUrl, 'video');
       const channel = validatedYouTubeUrl(song.channelUrl, 'channel');
       const search = youtubeSearchUrl(`${song.artist} ${song.title}`);
       const channelSearch = youtubeSearchUrl(`${song.artist} official channel`);
+      const category = SONG_CATEGORIES.find(item => item.id === song.category) || SONG_CATEGORIES.at(-1);
+      const words = normalizeWords(song.learningWords);
       return `<article class="song-card">
         <div class="song-card-top">
           <div class="song-art" aria-hidden="true">♫</div>
           <div class="flex-1">
             <div class="song-title">${escapeSongHTML(song.title)}</div>
             <div class="song-artist">${escapeSongHTML(song.artist)}</div>
+            <div class="song-theme">${category.icon} ${escapeSongHTML(category.label)}</div>
           </div>
+        </div>
+        <div class="song-word-focus"><span>Words to notice</span>
+          <div>${words.length ? words.map(word => `<span class="song-word-chip">${escapeSongHTML(word)}</span>`).join('') :
+            `<span class="song-word-suggestion">${escapeSongHTML(category.focus)}</span>`}</div>
         </div>
         <div class="song-actions">
           <a href="${escapeSongHTML(video || search)}" target="_blank" rel="noopener noreferrer" class="song-link song-link-main">${video ? '▶ Watch on YouTube' : '⌕ Find song on YouTube'}</a>
           <a href="${escapeSongHTML(channel || channelSearch)}" target="_blank" rel="noopener noreferrer" class="song-link">${channel ? '♫ Artist channel' : '⌕ Find artist channel'}</a>
         </div>
-        <button class="song-edit-link" data-song-action="edit" data-id="${escapeSongHTML(song.id)}">🔗 ${video || channel ? 'Edit YouTube links' : 'Add YouTube links'}</button>
+        <button class="song-edit-link" data-song-action="edit" data-id="${escapeSongHTML(song.id)}">✎ Edit category, words & links</button>
       </article>`;
-    }).join('') : '<div class="songs-empty">No songs found. Try another search or add one.</div>';
+    };
+    if (!matches.length) {
+      list.innerHTML = '<div class="songs-empty">No songs in this category yet. Add one with + Song.</div>';
+    } else if (this.activeCategory === 'all' && !query) {
+      list.innerHTML = SONG_CATEGORIES.map(category => {
+        const group = matches.filter(song => song.category === category.id);
+        return group.length ? `<div class="song-group-heading">${category.icon} ${escapeSongHTML(category.label)} <span>${group.length}</span></div>${group.map(card).join('')}` : '';
+      }).join('');
+    } else {
+      list.innerHTML = matches.map(card).join('');
+    }
   }
 
   renderEditor() {
     const panel = this.container.querySelector('#songs-editor');
     if (!this.editId) { panel.innerHTML = ''; return; }
     const isNew = this.editId === 'new';
-    const song = isNew ? { title: '', artist: '', videoUrl: '', channelUrl: '' } :
+    const song = isNew ? { title: '', artist: '', category: this.activeCategory === 'all' ? 'other' : this.activeCategory,
+      learningWords: [], videoUrl: '', channelUrl: '' } :
       this.songs.find(item => item.id === this.editId);
     if (!song) { this.editId = null; panel.innerHTML = ''; return; }
     const custom = !isNew && !STARTER_SONGS.some(item => item.id === song.id);
@@ -187,8 +295,14 @@ export class SongsPage {
       <div class="song-form-title">${isNew ? 'Add a Burmese song' : 'Song details & YouTube links'}</div>
       <label for="song-title">Song title</label>
       <input id="song-title" name="title" required maxlength="120" value="${escapeSongHTML(song.title)}" ${isNew || custom ? '' : 'readonly'}>
-      <label for="song-artist">Artist / singer</label>
+      <label for="song-artist">Artist / source</label>
       <input id="song-artist" name="artist" required maxlength="120" value="${escapeSongHTML(song.artist)}" ${isNew || custom ? '' : 'readonly'}>
+      <label for="song-category">Category</label>
+      <select id="song-category" name="category">
+        ${SONG_CATEGORIES.map(item => `<option value="${item.id}" ${song.category === item.id ? 'selected' : ''}>${item.icon} ${escapeSongHTML(item.label)} (${escapeSongHTML(item.burmese)})</option>`).join('')}
+      </select>
+      <label for="song-words">Words to remember <span>(comma-separated, up to 12)</span></label>
+      <input id="song-words" name="words" maxlength="260" placeholder="ချစ်, မင်္ဂလာ, ကျေးဇူး" value="${escapeSongHTML(normalizeWords(song.learningWords).join(', '))}">
       <label for="song-video">YouTube video or playlist URL <span>(optional)</span></label>
       <input id="song-video" name="videoUrl" type="url" placeholder="https://www.youtube.com/watch?v=…" value="${escapeSongHTML(song.videoUrl)}">
       <label for="song-channel">YouTube artist channel URL <span>(optional)</span></label>
@@ -206,6 +320,8 @@ export class SongsPage {
     const data = new FormData(form);
     const title = String(data.get('title') || '').trim();
     const artist = String(data.get('artist') || '').trim();
+    const category = validCategory(String(data.get('category') || 'other'));
+    const learningWords = String(data.get('words') || '').split(/[,，၊]/).map(word => word.trim()).filter(Boolean).slice(0, 12);
     const videoUrl = validatedYouTubeUrl(data.get('videoUrl'), 'video');
     const channelUrl = validatedYouTubeUrl(data.get('channelUrl'), 'channel');
     const error = form.querySelector('#song-form-error');
@@ -215,11 +331,11 @@ export class SongsPage {
 
     if (this.editId === 'new') {
       this.songs.push({ id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        title, artist, videoUrl, channelUrl });
+        title, artist, category, learningWords, videoUrl, channelUrl });
     } else {
       const song = this.songs.find(item => item.id === this.editId);
       if (!song) return;
-      Object.assign(song, { videoUrl, channelUrl });
+      Object.assign(song, { category, learningWords, videoUrl, channelUrl });
       if (!STARTER_SONGS.some(item => item.id === song.id)) Object.assign(song, { title, artist });
     }
     this.save();
