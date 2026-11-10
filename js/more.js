@@ -11,7 +11,7 @@ const ITEMS = [
   { icon: '🔌', label: 'Supabase', desc: db.connected ? 'Connected' : 'Not connected', color: db.connected ? '#58CC02' : '#FF4B4B' },
   { icon: '⚙️', label: 'Settings', desc: 'Theme & preferences', color: '#5A7A88' },
   { icon: '🔍', label: 'Devanagari Audit', desc: 'Review transliteration', color: '#FFC800' },
-  { icon: '🎵', label: 'Burmese Songs', desc: 'Songs by theme · vocabulary practice', color: '#FF6B8A', badge: 'NEW' }
+  { icon: '🎵', label: 'Songs & Chants', desc: 'Music, Metta chants · vocabulary practice', color: '#FF6B8A', badge: 'NEW' }
 ];
 
 export class MoreTab {

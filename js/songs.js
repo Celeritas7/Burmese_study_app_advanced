@@ -7,6 +7,7 @@ export const SONG_CATEGORIES = [
   { id: 'love', label: 'Love & Feelings', burmese: 'အချစ်သီချင်းများ', icon: '❤️', focus: 'Emotions and relationships' },
   { id: 'daily', label: 'Daily Life', burmese: 'နေ့စဉ်ဘဝ', icon: '🏡', focus: 'Family, food and everyday actions' },
   { id: 'nature', label: 'Nature & Animals', burmese: 'သဘာဝနှင့် တိရစ္ဆာန်များ', icon: '🌿', focus: 'Weather, plants and animals' },
+  { id: 'spiritual', label: 'Spiritual & Metta Chants', burmese: 'မေတ္တာပို့နှင့် ဓမ္မတေးများ', icon: '🙏', focus: 'Loving-kindness, compassion and peace' },
   { id: 'folk', label: 'Traditional & Folk', burmese: 'ရိုးရာသီချင်းများ', icon: '🪕', focus: 'Culture and traditional expressions' },
   { id: 'festival', label: 'Festivals', burmese: 'ပွဲတော်သီချင်းများ', icon: '🎉', focus: 'Celebrations and seasons' },
   { id: 'pop', label: 'Modern Pop', burmese: 'ခေတ်ပေါ်သီချင်းများ', icon: '🎤', focus: 'Everyday conversational expressions' },
@@ -60,6 +61,24 @@ export const STARTER_SONGS = [
     category: 'festival',
     learningWords: ['သင်္ကြန်', 'မိုး', 'နှစ်သစ်'],
     videoUrl: 'https://www.youtube.com/watch?v=oHVgsEe3aJc',
+    channelUrl: ''
+  },
+  {
+    id: 'metta-chant-dhamma-blossom',
+    artist: 'ဓမ္မအသိပွင့်လန်းရာ · Dhamma Blossom (Pali with Burmese subtitles)',
+    title: 'မေတ္တာပို့ ဓမ္မတေး (The Chant of Metta)',
+    category: 'spiritual',
+    learningWords: ['မေတ္တာ', 'သတ္တဝါ', 'ငြိမ်းချမ်း'],
+    videoUrl: 'https://www.youtube.com/watch?v=VvpeNTrV5ak',
+    channelUrl: 'https://www.youtube.com/@dhammablossom'
+  },
+  {
+    id: 'metta-sutta-burmese-phonetic',
+    artist: 'AA MM (Pali chant with Burmese pronunciation subtitles)',
+    title: 'မေတ္တာသုတ် (မြန်မာအသံထွက် စာတန်းထိုး)',
+    category: 'spiritual',
+    learningWords: ['မေတ္တာ', 'သုတ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=M3U4OamBis8',
     channelUrl: ''
   }
 ];
@@ -163,8 +182,8 @@ export class SongsPage {
         <div class="songs-header">
           <button class="songs-back" data-song-action="back" aria-label="Back to More">←</button>
           <div class="flex-1">
-            <div class="app-title">🎵 Burmese Songs</div>
-            <div class="app-subtitle">Listen, discover & learn from music</div>
+            <div class="app-title">🎵 Songs & Chants</div>
+            <div class="app-subtitle">Listen, discover & learn Burmese</div>
           </div>
         </div>
         <div class="songs-intro">Pick a theme, listen to a song, and practise a few repeated Burmese words. Add your own songs and YouTube links as you discover them.</div>
@@ -259,7 +278,7 @@ export class SongsPage {
             <div class="song-theme">${category.icon} ${escapeSongHTML(category.label)}</div>
           </div>
         </div>
-        <div class="song-word-focus"><span>Words to notice</span>
+        <div class="song-word-focus"><span>Words / themes to notice</span>
           <div>${words.length ? words.map(word => `<span class="song-word-chip">${escapeSongHTML(word)}</span>`).join('') :
             `<span class="song-word-suggestion">${escapeSongHTML(category.focus)}</span>`}</div>
         </div>

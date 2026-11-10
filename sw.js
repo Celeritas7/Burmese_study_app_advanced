@@ -1,7 +1,7 @@
 // ═══ SERVICE WORKER ═══
 // Lives at the app ROOT (next to index.html) so its scope covers the whole app.
 // All paths are relative, so it works under GitHub Pages' /<repo>/ sub-path.
-const CACHE_NAME = 'burmese-study-v8';   // bump for new song categories and asset updates
+const CACHE_NAME = 'burmese-study-v9';   // bump for spiritual chant category and assets
 const AUDIO_CACHE = 'burmese-audio-v1';   // separate: survives app-code cache bumps
 const ASSETS = [
   './', 'index.html', 'css/styles.css',

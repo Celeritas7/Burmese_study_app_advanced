@@ -13,7 +13,7 @@ function memoryStorage() {
 
 test('the original song and verified category starters are available by default', () => {
   const songs = loadSongs(memoryStorage());
-  assert.equal(songs.length, 5);
+  assert.equal(songs.length, 7);
   assert.equal(songs[0].artist, 'အဆိုတော် အာဇာနည်');
   assert.equal(songs[0].title, 'ယဉ်ယဉ်လေးရူး');
   assert.equal(songs[0].category, 'pop');
@@ -23,7 +23,13 @@ test('the original song and verified category starters are available by default'
   assert.equal(songs[2].videoUrl, 'https://www.youtube.com/watch?v=t7Tlvi03syQ');
   assert.equal(songs[3].category, 'nature');
   assert.equal(songs[4].category, 'festival');
+  assert.equal(songs[5].category, 'spiritual');
+  assert.equal(songs[5].videoUrl, 'https://www.youtube.com/watch?v=VvpeNTrV5ak');
+  assert.equal(songs[5].channelUrl, 'https://www.youtube.com/@dhammablossom');
+  assert.equal(songs[6].category, 'spiritual');
+  assert.equal(songs[6].videoUrl, 'https://www.youtube.com/watch?v=M3U4OamBis8');
   assert(SONG_CATEGORIES.some(item => item.id === 'festival'));
+  assert(SONG_CATEGORIES.some(item => item.id === 'spiritual'));
 });
 
 test('song links and new songs persist without duplicating the starter', () => {
@@ -34,10 +40,10 @@ test('song links and new songs persist without duplicating the starter', () => {
     category: 'nature', learningWords: ['မိုး', 'ပန်း'], videoUrl: '', channelUrl: '' });
   assert.equal(page.save(), true);
   const loaded = loadSongs(storage);
-  assert.equal(loaded.length, 6);
+  assert.equal(loaded.length, 8);
   assert.equal(loaded[0].videoUrl, 'https://www.youtube.com/watch?v=abcdef12345');
-  assert.equal(loaded[5].title, 'Test title');
-  assert.deepEqual(loaded[5].learningWords, ['မိုး', 'ပန်း']);
+  assert.equal(loaded[7].title, 'Test title');
+  assert.deepEqual(loaded[7].learningWords, ['မိုး', 'ပန်း']);
   assert.equal(STARTER_SONGS[0].videoUrl, '');
 });
 
@@ -50,11 +56,11 @@ test('old saved songs and user-edited URLs survive addition of new curated songs
       videoUrl: '', channelUrl: '' }
   ]));
   const loaded = loadSongs(storage);
-  assert.equal(loaded.length, 6);
+  assert.equal(loaded.length, 8);
   assert.equal(loaded[0].videoUrl, 'https://youtu.be/abcdef12');
   assert.equal(loaded[0].category, 'pop');
-  assert.equal(loaded[5].category, 'other');
-  assert.deepEqual(loaded[5].learningWords, []);
+  assert.equal(loaded[7].category, 'other');
+  assert.deepEqual(loaded[7].learningWords, []);
 });
 
 test('category filters and word search find the right songs', () => {
@@ -64,6 +70,8 @@ test('category filters and word search find the right songs', () => {
   assert.equal(filterSongs(songs, 'all', 'နှုတ်ဆက်').length, 1);
   assert.equal(filterSongs(songs, 'nature').length, 1);
   assert.equal(filterSongs(songs, 'festival').length, 1);
+  assert.equal(filterSongs(songs, 'spiritual').length, 2);
+  assert.equal(filterSongs(songs, 'spiritual', 'မေတ္တာ').length, 2);
   assert.equal(filterSongs(songs, 'daily').length, 0);
 });
 
