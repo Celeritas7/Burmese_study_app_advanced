@@ -580,14 +580,28 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .songs-intro { background: linear-gradient(130deg, rgba(255,107,138,0.16), rgba(206,130,255,0.1));
   border: 1px solid rgba(255,107,138,0.25); border-radius: 16px; padding: 16px;
   color: var(--text); font-size: 12px; line-height: 1.7; margin-bottom: 16px; }
+.songs-category-title { color: var(--text); font-size: 12px; font-weight: 800; margin-bottom: 9px; }
+.songs-categories { display: flex; overflow-x: auto; gap: 8px; padding: 0 0 14px;
+  scrollbar-width: thin; scrollbar-color: var(--border-light) transparent; }
+.songs-category { display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+  border: 1px solid var(--border-light); border-radius: 12px; padding: 9px 10px;
+  background: var(--surface); color: var(--text); cursor: pointer; font: inherit;
+  font-size: 11px; font-weight: 700; }
+.songs-category.active { border-color: var(--pink); background: rgba(255,107,138,0.16); }
+.songs-category-count { border-radius: 7px; padding: 2px 5px; background: var(--bg);
+  color: #B7C7CF; font-size: 10px; }
+.songs-count { font-size: 11px; color: #A1B6C0; margin-top: 12px; }
 .songs-tools { display: flex; gap: 8px; align-items: stretch; }
 .songs-search { min-width: 0; flex: 1; background: var(--surface); border: 2px solid var(--border);
   border-radius: 12px; padding: 12px; color: var(--text); font: inherit; font-size: 12px; }
-.songs-search:focus, .song-form input:focus { outline: none; border-color: var(--pink); }
+.songs-search:focus, .song-form input:focus, .song-form select:focus { outline: none; border-color: var(--pink); }
 .songs-add { border: none; border-radius: 12px; background: var(--pink); color: var(--bg);
   padding: 0 14px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .songs-status { min-height: 18px; margin: 6px 0 12px; color: var(--green); font-size: 11px; }
 .songs-list { display: flex; flex-direction: column; gap: 12px; }
+.song-group-heading { display: flex; align-items: center; gap: 7px; margin-top: 8px;
+  font-size: 14px; font-weight: 800; }
+.song-group-heading span { color: #A1B6C0; font-size: 11px; }
 .song-card { border: 2px solid var(--border); background: var(--surface); border-radius: 18px; padding: 16px; }
 .song-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .song-art { flex: 0 0 50px; width: 50px; height: 50px; border-radius: 15px;
@@ -595,6 +609,14 @@ textarea.input-field { min-height: 60px; resize: vertical; }
   color: var(--pink); font-size: 27px; display: grid; place-items: center; }
 .song-title { font-size: 17px; font-weight: 800; overflow-wrap: anywhere; }
 .song-artist { margin-top: 4px; font-size: 12px; color: #A0B5BF; overflow-wrap: anywhere; }
+.song-theme { margin-top: 7px; font-size: 10px; color: var(--pink); font-weight: 800; }
+.song-word-focus { margin: 0 0 14px; border-radius: 11px; background: var(--bg);
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+.song-word-focus > span { font-size: 10px; color: #A1B6C0; font-weight: 700; }
+.song-word-focus > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.song-word-chip { display: inline-block; background: rgba(88,204,2,0.13); border: 1px solid rgba(88,204,2,0.23);
+  border-radius: 8px; padding: 4px 8px; color: var(--text); font-size: 12px; font-weight: 700; }
+.song-word-suggestion { font-size: 11px; color: #9AB0BB; }
 .song-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .song-link { display: flex; align-items: center; justify-content: center; min-height: 42px;
   background: var(--elevated); border: 1px solid var(--border-light); border-radius: 11px;
@@ -609,7 +631,7 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .song-form-title { font-weight: 800; font-size: 15px; margin-bottom: 4px; }
 .song-form label { color: var(--text); font-size: 11px; font-weight: 700; }
 .song-form label span { color: var(--text-muted); font-weight: 400; }
-.song-form input { width: 100%; background: var(--bg); border: 2px solid var(--border-light);
+.song-form input, .song-form select { width: 100%; background: var(--bg); border: 2px solid var(--border-light);
   color: var(--text); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 12px; margin-bottom: 4px; }
 .song-form input[readonly] { color: var(--text-muted); }
 .song-form-error { color: var(--red); font-size: 11px; min-height: 14px; }

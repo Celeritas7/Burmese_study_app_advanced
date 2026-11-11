@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STARTER_SONGS, escapeSongHTML, loadSongs, SongsPage,
+import { SONG_CATEGORIES, STARTER_SONGS, escapeSongHTML, filterSongs, loadSongs, SongsPage,
   validatedYouTubeUrl, youtubeSearchUrl } from '../js/songs.js';
 
 function memoryStorage() {
@@ -11,12 +11,25 @@ function memoryStorage() {
   };
 }
 
-test('the exact requested Burmese artist and title are available by default', () => {
+test('the original song and verified category starters are available by default', () => {
   const songs = loadSongs(memoryStorage());
-  assert.equal(songs.length, 1);
+  assert.equal(songs.length, 7);
   assert.equal(songs[0].artist, 'အဆိုတော် အာဇာနည်');
   assert.equal(songs[0].title, 'ယဉ်ယဉ်လေးရူး');
+  assert.equal(songs[0].category, 'pop');
   assert.equal(songs[0].videoUrl, '');
+  assert.equal(songs[1].category, 'kids');
+  assert.equal(songs[2].category, 'love');
+  assert.equal(songs[2].videoUrl, 'https://www.youtube.com/watch?v=t7Tlvi03syQ');
+  assert.equal(songs[3].category, 'nature');
+  assert.equal(songs[4].category, 'festival');
+  assert.equal(songs[5].category, 'spiritual');
+  assert.equal(songs[5].videoUrl, 'https://www.youtube.com/watch?v=VvpeNTrV5ak');
+  assert.equal(songs[5].channelUrl, 'https://www.youtube.com/@dhammablossom');
+  assert.equal(songs[6].category, 'spiritual');
+  assert.equal(songs[6].videoUrl, 'https://www.youtube.com/watch?v=M3U4OamBis8');
+  assert(SONG_CATEGORIES.some(item => item.id === 'festival'));
+  assert(SONG_CATEGORIES.some(item => item.id === 'spiritual'));
 });
 
 test('song links and new songs persist without duplicating the starter', () => {
@@ -24,13 +37,42 @@ test('song links and new songs persist without duplicating the starter', () => {
   const page = new SongsPage({}, storage);
   page.songs[0].videoUrl = 'https://www.youtube.com/watch?v=abcdef12345';
   page.songs.push({ id: 'custom-one', artist: 'Test artist', title: 'Test title',
-    videoUrl: '', channelUrl: '' });
+    category: 'nature', learningWords: ['မိုး', 'ပန်း'], videoUrl: '', channelUrl: '' });
   assert.equal(page.save(), true);
   const loaded = loadSongs(storage);
-  assert.equal(loaded.length, 2);
+  assert.equal(loaded.length, 8);
   assert.equal(loaded[0].videoUrl, 'https://www.youtube.com/watch?v=abcdef12345');
-  assert.equal(loaded[1].title, 'Test title');
+  assert.equal(loaded[7].title, 'Test title');
+  assert.deepEqual(loaded[7].learningWords, ['မိုး', 'ပန်း']);
   assert.equal(STARTER_SONGS[0].videoUrl, '');
+});
+
+test('old saved songs and user-edited URLs survive addition of new curated songs', () => {
+  const storage = memoryStorage();
+  storage.setItem('burmese_song_library_v1', JSON.stringify([
+    { id: 'arzani-yin-yin-lay-yuu', artist: 'အဆိုတော် အာဇာနည်',
+      title: 'ယဉ်ယဉ်လေးရူး', videoUrl: 'https://youtu.be/abcdef12', channelUrl: '' },
+    { id: 'custom-before-categories', artist: 'Old artist', title: 'Old song',
+      videoUrl: '', channelUrl: '' }
+  ]));
+  const loaded = loadSongs(storage);
+  assert.equal(loaded.length, 8);
+  assert.equal(loaded[0].videoUrl, 'https://youtu.be/abcdef12');
+  assert.equal(loaded[0].category, 'pop');
+  assert.equal(loaded[7].category, 'other');
+  assert.deepEqual(loaded[7].learningWords, []);
+});
+
+test('category filters and word search find the right songs', () => {
+  const songs = loadSongs(memoryStorage());
+  assert.equal(filterSongs(songs, 'kids').length, 1);
+  assert.equal(filterSongs(songs, 'love')[0].title, 'မနှုတ်ဆက်ချင်ဘူး');
+  assert.equal(filterSongs(songs, 'all', 'နှုတ်ဆက်').length, 1);
+  assert.equal(filterSongs(songs, 'nature').length, 1);
+  assert.equal(filterSongs(songs, 'festival').length, 1);
+  assert.equal(filterSongs(songs, 'spiritual').length, 2);
+  assert.equal(filterSongs(songs, 'spiritual', 'မေတ္တာ').length, 2);
+  assert.equal(filterSongs(songs, 'daily').length, 0);
 });
 
 test('external links are limited to real HTTPS YouTube videos and channels', () => {
