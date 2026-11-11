@@ -14,6 +14,8 @@ const SRS_RESPONSES = [
 ];
 
 const INTERVALS_HOURS = [0, 1, 4, 8, 24, 72, 168, 336]; // mastery 0→7
+const escapeSyncText = value => String(value || '').replace(/[&<>"']/g, char =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 export class SRSTab {
   constructor(app, storage = localStorage) {
@@ -29,6 +31,14 @@ export class SRSTab {
     this.revealLevel = 0;
     this.sessionResults = [];
     this.responsePending = false;
+    this.container = null;
+    this.app.songReviewSync?.subscribe(({ queueChanged }) => {
+      if (!this.container || this.phase !== 'queue' || this.app.activeTab !== 'srs') return;
+      if (queueChanged) this.loadQueue().then(() => {
+        if (this.app.activeTab === 'srs' && this.phase === 'queue') this.renderQueue(this.container);
+      });
+      else this.renderSyncPanel(this.container);
+    });
   }
 
   async loadQueue() {
@@ -75,11 +85,15 @@ export class SRSTab {
       this.loaded = true;
     } catch (err) {
       console.error('SRS load error:', err);
-      this.queue = [];
+      // If the network drops mid-session, keep already fetched Study words
+      // available for reviewing the local song queue until the next reload.
+      this.queue = combineSongReviewQueue([], readSongReviewQueue(this.storage),
+        this.wordMap, Date.now());
     }
   }
 
   async render(container) {
+    this.container = container;
     // Song review items may be added from the Songs sub-page without recreating this tab.
     if (!this.loaded || this.phase === 'queue') await this.loadQueue();
     switch (this.phase) {
@@ -101,7 +115,9 @@ export class SRSTab {
         <div style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">
           ${dueNow.length} due now · ${this.queue.length} total
         </div>
-        ${fromSongs ? `<div class="srs-song-note">🎵 ${fromSongs} song word${fromSongs === 1 ? '' : 's'} in this review queue. Song scheduling stays on this device.</div>` : ''}
+        ${fromSongs ? `<div class="srs-song-note">🎵 ${fromSongs} song word${fromSongs === 1 ? '' : 's'} in this review queue. Reviews work offline; Google sign-in can sync them across devices.</div>` : ''}
+
+        <div id="song-review-sync" class="song-sync-card"></div>
 
         <div class="srs-stats">
           <div class="srs-stat">
@@ -155,6 +171,8 @@ export class SRSTab {
       </div>
     `;
 
+    this.renderSyncPanel(container);
+
     container.querySelector('#start-review')?.addEventListener('click', () => {
       this.startReview(container);
     });
@@ -162,8 +180,48 @@ export class SRSTab {
       button.addEventListener('click', () => {
         const wordId = button.dataset.removeSongReview;
         if (!confirm('Stop song-based reminders for this word? Its regular Study reviews will remain.')) return;
-        if (removeSongReview(this.storage, wordId)) this.render(container);
+        if (removeSongReview(this.storage, wordId)) {
+          this.app.songReviewSync?.afterLocalChange();
+          this.render(container);
+        }
       });
+    });
+  }
+
+  // Optional account controls live only in Review; no login is required to study.
+  renderSyncPanel(container) {
+    const target = container.querySelector('#song-review-sync');
+    if (!target) return;
+    const sync = this.app.songReviewSync;
+    if (!sync) { target.hidden = true; return; }
+    const state = sync.getState();
+    const statusText = state.status === 'syncing' ? 'Syncing reviews…'
+      : state.status === 'synced' ? '✓ Song reviews synced'
+        : state.status === 'connecting' ? 'Checking your account…'
+          : state.status === 'error' ? '⚠ Sync needs attention'
+            : 'Reviews currently stay on this device';
+    target.innerHTML = `
+      <div class="song-sync-header">☁️ Song review sync <span class="song-sync-status">${statusText}</span></div>
+      ${state.signedIn ? `
+        <div class="song-sync-detail">Signed in as ${escapeSyncText(state.email || 'Google account')}. Your song reviews are private to this account.</div>
+        <div class="song-sync-actions"><button type="button" data-song-sync="now" ${state.status === 'syncing' ? 'disabled' : ''}>↻ Sync now</button>
+          <button type="button" data-song-sync="out">Sign out</button></div>
+      ` : `
+        <div class="song-sync-detail">Optional: sign in with Google to review the same song words on your phone and iPad. Offline reviews still work.</div>
+        <button type="button" class="song-sync-login" data-song-sync="google">Continue with Google</button>
+      `}
+      ${state.message ? `<div class="song-sync-error">${escapeSyncText(state.message)}</div>` : ''}
+    `;
+    target.querySelector('[data-song-sync="google"]')?.addEventListener('click', async () => {
+      try { await sync.signInGoogle(); }
+      catch (err) { alert(`Google sign-in could not start: ${err.message}`); }
+    });
+    target.querySelector('[data-song-sync="now"]')?.addEventListener('click', () => {
+      sync.sync().catch(() => {}); // Errors appear in the sync panel; local reviews are safe.
+    });
+    target.querySelector('[data-song-sync="out"]')?.addEventListener('click', async () => {
+      try { await sync.signOut(); }
+      catch (err) { alert(`Sign-out failed: ${err.message}`); }
     });
   }
 
@@ -291,6 +349,7 @@ export class SRSTab {
             alert('Could not save the song review on this device. Check storage permissions and try again.');
             return;
           }
+          this.app.songReviewSync?.afterLocalChange();
         }
 
         this.sessionResults.push({
