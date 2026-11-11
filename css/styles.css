@@ -643,6 +643,47 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .song-vocab-retry { margin-top: 10px; padding: 8px 12px; background: var(--elevated);
   color: var(--text); border: 1px solid var(--border-light); border-radius: 9px;
   font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
+.song-practice-primary { display: block; width: 100%; min-height: 44px; margin-top: 12px;
+  padding: 10px 14px; background: var(--green); color: var(--bg); border: none;
+  border-radius: 11px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.song-practice-start { margin-bottom: 4px; }
+.song-practice { padding: 12px; background: var(--surface); border: 1px solid rgba(88,204,2,0.25);
+  border-radius: 12px; }
+.song-practice-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.song-practice-header strong { color: var(--text); font-size: 13px; }
+.song-practice-close { flex: 0 0 auto; font: inherit; font-size: 11px; color: var(--text-muted);
+  background: transparent; border: 1px solid var(--border-light); border-radius: 9px;
+  padding: 7px 9px; cursor: pointer; }
+.song-practice-progress { display: flex; justify-content: space-between; gap: 8px; color: #A1B6C0;
+  font-size: 11px; margin-bottom: 6px; }
+.song-practice-track { height: 7px; background: var(--border); border-radius: 7px; overflow: hidden; }
+.song-practice-track > div { height: 100%; background: var(--green); border-radius: inherit; }
+.song-practice-word { font-size: 29px; font-weight: 800; line-height: 1.6; text-align: center;
+  overflow-wrap: anywhere; margin-top: 16px; }
+.song-practice-pronunciation { text-align: center; color: #A1B6C0; font-size: 11px; margin-bottom: 14px; }
+.song-practice-prompt { font-size: 12px; text-align: center; margin: 8px 0 12px; font-weight: 700; }
+.song-practice-answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: 8px; }
+.song-practice-option { border: 1px solid var(--border-light); background: var(--bg); color: var(--text);
+  border-radius: 11px; padding: 12px 10px; font: inherit; font-size: 12px; line-height: 1.5;
+  font-weight: 700; min-height: 48px; overflow-wrap: anywhere; cursor: pointer; text-align: left; }
+.song-practice-option.correct { border-color: var(--green); background: rgba(88,204,2,0.15); }
+.song-practice-option.incorrect { border-color: var(--red); background: rgba(255,75,75,0.12); }
+.song-practice-option:disabled { cursor: default; opacity: 0.82; }
+.song-practice-option.correct:disabled { opacity: 1; }
+.song-practice-reveal { padding: 12px; border-radius: 11px; background: var(--bg);
+  color: var(--text); font-size: 13px; text-align: center; overflow-wrap: anywhere; }
+.song-practice-grades { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.song-practice-grades button { padding: 12px 7px; border-radius: 10px; background: var(--bg);
+  border: 1px solid var(--border-light); color: var(--text); font: inherit;
+  font-size: 11px; font-weight: 800; cursor: pointer; }
+.song-practice-feedback { margin: 12px 0 0; font-size: 12px; overflow-wrap: anywhere; }
+.song-practice-feedback.correct { color: var(--green); }
+.song-practice-feedback.incorrect { color: var(--yellow); }
+.song-practice-result { text-align: center; font-size: 27px; font-weight: 800; color: var(--green); margin: 18px 0; }
+.song-practice-primary:focus-visible, .song-practice-option:focus-visible,
+.song-practice-grades button:focus-visible, .song-practice-close:focus-visible {
+  outline: 2px solid var(--green); outline-offset: 2px; }
 .song-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .song-link { display: flex; align-items: center; justify-content: center; min-height: 42px;
   background: var(--elevated); border: 1px solid var(--border-light); border-radius: 11px;
