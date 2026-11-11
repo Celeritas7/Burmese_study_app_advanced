@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { SONG_CATEGORIES, STARTER_SONGS, escapeSongHTML, filterSongs, loadSongs, SongsPage,
   validatedYouTubeUrl, youtubeSearchUrl } from '../js/songs.js';
 import { indexStudyWords, matchStudyWord, normalizeSongWord } from '../js/song-vocabulary.js';
+import { getSongPracticeWords, makeSongPracticeQuestions, shuffleSongItems } from '../js/song-practice.js';
 
 function memoryStorage() {
   const values = new Map();
@@ -159,4 +160,94 @@ test('vocabulary lookup can be retried after a connection failure', async () => 
   assert.equal(page.studyWordsState, 'ready');
   assert.equal(requests, 2);
   assert.match(page.renderVocabulary(page.songs[0], ['ရူး']), /crazy/);
+});
+
+test('song practice uses only unique exact Study matches with real meanings', () => {
+  const rows = [
+    { burmese_word: 'မေတ္တာ', english_meaning: 'loving-kindness' },
+    { burmese_word: 'ရူး', english_meaning: 'crazy' },
+    { burmese_word: 'မိုး', english_meaning: 'rain' },
+    { burmese_word: 'အေး', english_meaning: 'cold' },
+    { burmese_word: 'ပန်း', english_meaning: 'flower' },
+    { burmese_word: 'သုတ်', english_meaning: ' ' }
+  ];
+  const index = indexStudyWords(rows);
+  assert.deepEqual(getSongPracticeWords([' မေတ္တာ ', 'မေတ္တာ', 'မေတ္တာပို့', 'သုတ်'], index),
+    [{ word: 'မေတ္တာ', meaning: 'loving-kindness' }]);
+  const questions = makeSongPracticeQuestions(['မေတ္တာ', 'ရူး', 'မေတ္တာ', 'missing'], index, rows, () => 0);
+  assert.equal(questions.length, 2);
+  for (const question of questions) {
+    assert.equal(question.type, 'choice');
+    assert.equal(question.options.length, 4);
+    assert.equal(new Set(question.options.map(s => s.toLowerCase())).size, 4);
+    assert.equal(question.options[question.correctIndex], question.meaning);
+  }
+  assert.deepEqual(shuffleSongItems([1, 2, 3], () => 0), [2, 3, 1]);
+});
+
+test('practice falls back to reveal and self-grade when distractors are unavailable', () => {
+  const rows = [{ burmese_word: 'မေတ္တာ', english_meaning: 'loving-kindness' }];
+  const index = indexStudyWords(rows);
+  const questions = makeSongPracticeQuestions(['မေတ္တာ'], index, rows, () => 0);
+  assert.equal(questions.length, 1);
+  assert.equal(questions[0].type, 'recall');
+  assert.deepEqual(questions[0].options, []);
+});
+
+test('song quiz scores each answer once, hides hints, and never saves Study progress', async () => {
+  const rows = [
+    { burmese_word: 'ယဉ်ယဉ်', english_meaning: 'gently' },
+    { burmese_word: 'ရူး', english_meaning: 'crazy' },
+    { burmese_word: 'မိုး', english_meaning: 'rain' },
+    { burmese_word: 'အေး', english_meaning: 'cold' }
+  ];
+  const originalRows = JSON.stringify(rows);
+  const storage = memoryStorage();
+  const page = new SongsPage({}, storage, async () => rows);
+  await page.loadStudyVocabulary();
+  const song = page.songs[0];
+  page.openVocabularyId = song.id;
+  page.startPractice(song.id);
+  assert.equal(page.practice.questions.length, 2);
+  const first = page.practice.questions[0];
+  assert.doesNotMatch(page.renderVocabulary(song, song.learningWords), /song-vocab-item-main/);
+  page.nextPractice(); // Cannot skip an unanswered question.
+  assert.equal(page.practice.index, 0);
+  page.answerPractice(first.correctIndex);
+  page.answerPractice(first.correctIndex); // Cannot score again.
+  assert.equal(page.practice.correct, 1);
+  assert.match(page.renderPractice(song), /Correct!/);
+  page.nextPractice();
+  const second = page.practice.questions[1];
+  const wrong = second.options.findIndex((_, index) => index !== second.correctIndex);
+  page.answerPractice(wrong);
+  assert.equal(page.practice.correct, 1);
+  assert.match(page.renderPractice(song), /Not quite/);
+  page.nextPractice();
+  assert.equal(page.practice.index, 2);
+  assert.match(page.renderPractice(song), /1 \/ 2/);
+  assert.equal(JSON.stringify(rows), originalRows);
+  assert.equal(storage.getItem('burmese_song_library_v1'), null);
+  page.startPractice(song.id);
+  assert.equal(page.practice.index, 0);
+  assert.equal(page.practice.correct, 0);
+});
+
+test('recall mode requires reveal before grading and escapes dictionary text', async () => {
+  const rows = [{ burmese_word: 'မေတ္တာ', english_meaning: '<love & kindness>' }];
+  const page = new SongsPage({}, memoryStorage(), async () => rows);
+  await page.loadStudyVocabulary();
+  const song = page.songs[5];
+  page.openVocabularyId = song.id;
+  page.startPractice(song.id);
+  assert.equal(page.practice.questions.length, 1);
+  page.gradePractice(true);
+  assert.equal(page.practice.answered, null);
+  page.revealPractice();
+  assert.match(page.renderPractice(song), /&lt;love &amp; kindness&gt;/);
+  assert.doesNotMatch(page.renderPractice(song), /<love & kindness>/);
+  page.gradePractice(false);
+  assert.equal(page.practice.correct, 0);
+  page.nextPractice();
+  assert.match(page.renderPractice(song), /0 \/ 1/);
 });

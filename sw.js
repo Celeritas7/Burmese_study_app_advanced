@@ -1,13 +1,13 @@
 // ═══ SERVICE WORKER ═══
 // Lives at the app ROOT (next to index.html) so its scope covers the whole app.
 // All paths are relative, so it works under GitHub Pages' /<repo>/ sub-path.
-const CACHE_NAME = 'burmese-study-v11';  // Phase 4A song vocabulary explorer
+const CACHE_NAME = 'burmese-study-v12';  // Phase 4B song vocabulary practice
 const AUDIO_CACHE = 'burmese-audio-v1';   // separate: survives app-code cache bumps
 const ASSETS = [
   './', 'index.html', 'css/styles.css',
   'js/app.js', 'js/study.js', 'js/quiz.js', 'js/srs.js', 'js/more.js', 'js/modal.js',
   'js/supabase.js', 'js/dialogues.js', 'js/hubexplorer.js', 'js/stats.js', 'js/writing.js',
-  'js/sentences.js', 'js/settings.js', 'js/course.js', 'js/home.js', 'js/songs.js', 'js/song-vocabulary.js', 'js/burmese.js',
+  'js/sentences.js', 'js/settings.js', 'js/course.js', 'js/home.js', 'js/songs.js', 'js/song-vocabulary.js', 'js/song-practice.js', 'js/burmese.js',
   'js/speak.js', 'js/speak-data.js', 'js/speak-audio.js', 'js/app-audio.js', 'audio/app/clips.json',
   'https://celeritas7.github.io/language-utils/burmese.js?v=9'
 ];

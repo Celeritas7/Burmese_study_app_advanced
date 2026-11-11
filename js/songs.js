@@ -3,6 +3,7 @@
 // learningWords are topic prompts, not verified verbatim song lyrics.
 import { toDev } from './burmese.js';
 import { indexStudyWords, matchStudyWord } from './song-vocabulary.js';
+import { getSongPracticeWords, makeSongPracticeQuestions } from './song-practice.js';
 
 // Load the existing Study data only when a song's vocabulary is opened.
 const getStudyWords = async () => (await import('./supabase.js')).db.getWords();
@@ -320,9 +321,11 @@ export class SongsPage {
     this.songs = loadSongs(storage);
     this.studyWordsLoader = studyWordsLoader;
     this.studyWordIndex = new Map();
+    this.studyWordRows = [];
     this.studyWordsState = 'idle';
     this.studyWordsPromise = null;
     this.openVocabularyId = null;
+    this.practice = null;
     this.search = '';
     this.activeCategory = 'all';
     this.editId = null;
@@ -342,6 +345,7 @@ export class SongsPage {
       .then(() => this.studyWordsLoader())
       .then(rows => {
         if (!Array.isArray(rows)) throw new Error('Invalid Study vocabulary response');
+        this.studyWordRows = rows;
         this.studyWordIndex = indexStudyWords(rows);
         this.studyWordsState = 'ready';
       })
@@ -403,12 +407,43 @@ export class SongsPage {
       }
       if (action === 'vocabulary') {
         this.openVocabularyId = this.openVocabularyId === button.dataset.id ? null : button.dataset.id;
+        if (this.practice?.songId !== this.openVocabularyId) this.practice = null;
         this.renderList();
         if (this.openVocabularyId && this.studyWordsState === 'idle') void this.loadStudyVocabulary();
         return;
       }
       if (action === 'retry-vocabulary') {
         void this.loadStudyVocabulary();
+        return;
+      }
+      if (action === 'start-practice' || action === 'practice-restart') {
+        this.startPractice(button.dataset.id);
+        this.renderList();
+        return;
+      }
+      if (action === 'practice-answer') {
+        this.answerPractice(Number(button.dataset.choice));
+        this.renderList();
+        return;
+      }
+      if (action === 'practice-reveal') {
+        this.revealPractice();
+        this.renderList();
+        return;
+      }
+      if (action === 'practice-grade') {
+        this.gradePractice(button.dataset.result === 'remembered');
+        this.renderList();
+        return;
+      }
+      if (action === 'practice-next') {
+        this.nextPractice();
+        this.renderList();
+        return;
+      }
+      if (action === 'practice-exit') {
+        this.practice = null;
+        this.renderList();
         return;
       }
       if (action === 'add') this.editId = 'new';
@@ -422,6 +457,7 @@ export class SongsPage {
           this.save();
           this.editId = null;
           if (this.openVocabularyId === song.id) this.openVocabularyId = null;
+          if (this.practice?.songId === song.id) this.practice = null;
         }
       }
       this.renderEditor();
@@ -457,6 +493,100 @@ export class SongsPage {
       </button>`).join('');
   }
 
+  startPractice(songId) {
+    if (this.studyWordsState !== 'ready' || songId !== this.openVocabularyId) return;
+    const song = this.songs.find(item => item.id === songId);
+    if (!song) return;
+    const questions = makeSongPracticeQuestions(
+      normalizeWords(song.learningWords), this.studyWordIndex, this.studyWordRows);
+    if (!questions.length) return;
+    this.practice = { songId, questions, index: 0, answered: null, revealed: false, correct: 0 };
+  }
+
+  answerPractice(choice) {
+    const practice = this.practice;
+    const question = practice?.questions[practice.index];
+    if (!question || question.type !== 'choice' || practice.answered ||
+        !Number.isInteger(choice) || choice < 0 || choice >= question.options.length) return;
+    const correct = choice === question.correctIndex;
+    practice.answered = { choice, correct };
+    if (correct) practice.correct++;
+  }
+
+  revealPractice() {
+    const practice = this.practice;
+    if (practice?.questions[practice.index]?.type === 'recall' && !practice.answered) {
+      practice.revealed = true;
+    }
+  }
+
+  gradePractice(remembered) {
+    const practice = this.practice;
+    if (practice?.questions[practice.index]?.type !== 'recall' ||
+        !practice.revealed || practice.answered) return;
+    practice.answered = { correct: Boolean(remembered) };
+    if (remembered) practice.correct++;
+  }
+
+  nextPractice() {
+    const practice = this.practice;
+    if (!practice?.answered || practice.index >= practice.questions.length) return;
+    practice.index++;
+    practice.answered = null;
+    practice.revealed = false;
+  }
+
+  renderPractice(song) {
+    const practice = this.practice;
+    if (!practice || practice.songId !== song.id) return '';
+    const total = practice.questions.length;
+    const header = `<div class="song-practice-header"><strong>🎯 Song word practice</strong>
+      <button type="button" class="song-practice-close" data-song-action="practice-exit">✕ Exit</button></div>`;
+    if (practice.index >= total) {
+      return `<div class="song-practice" role="region" aria-label="Song vocabulary practice">
+        ${header}
+        <div class="song-practice-result">🏆 ${practice.correct} / ${total}</div>
+        <p class="song-vocab-note">Session complete! This score is for practice only; Study ratings and review dates are unchanged.</p>
+        <button type="button" class="song-practice-primary" data-song-action="practice-restart"
+          data-id="${escapeSongHTML(song.id)}">↻ Practice again</button>
+      </div>`;
+    }
+
+    const question = practice.questions[practice.index];
+    const answered = practice.answered;
+    const isRecall = question.type === 'recall';
+    const content = isRecall
+      ? `<p class="song-practice-prompt">Remember the meaning, then reveal it.</p>
+        ${practice.revealed ? `<div class="song-practice-reveal">Meaning: <strong>${escapeSongHTML(question.meaning)}</strong></div>` :
+        `<button type="button" class="song-practice-primary" data-song-action="practice-reveal">👀 Reveal meaning</button>`}
+        ${practice.revealed && !answered ? `<div class="song-practice-grades">
+          <button type="button" data-song-action="practice-grade" data-result="remembered">✓ I remembered</button>
+          <button type="button" data-song-action="practice-grade" data-result="again">↻ Need practice</button>
+        </div>` : ''}`
+      : `<p class="song-practice-prompt">What does this word mean?</p>
+        <div class="song-practice-answers">${question.options.map((option, i) =>
+          `<button type="button" data-song-action="practice-answer" data-choice="${i}"
+            class="song-practice-option ${answered ? (i === question.correctIndex ? 'correct' :
+            i === answered.choice ? 'incorrect' : '') : ''}"
+            ${answered ? 'disabled' : ''}>${escapeSongHTML(option)}</button>`).join('')}</div>`;
+    const feedback = answered ? `<p class="song-practice-feedback ${answered.correct ? 'correct' : 'incorrect'}" role="status">
+      ${answered.correct ? '✓ Correct!' : 'Not quite.'} ${!isRecall || !answered.correct ?
+        `The meaning is <strong>${escapeSongHTML(question.meaning)}</strong>.` : ''}</p>
+      <button type="button" class="song-practice-primary" data-song-action="practice-next">
+        ${practice.index + 1 === total ? 'See results →' : 'Next word →'}</button>` : '';
+
+    return `<div class="song-practice" role="region" aria-label="Song vocabulary practice">
+      ${header}
+      <div class="song-practice-progress"><span>Word ${practice.index + 1} of ${total}</span>
+        <span>${practice.correct} remembered</span></div>
+      <div class="song-practice-track"><div style="width:${Math.round(practice.index / total * 100)}%"></div></div>
+      <div class="song-practice-word">${escapeSongHTML(question.word)}</div>
+      <div class="song-practice-pronunciation">${escapeSongHTML(toDev(question.word))} · approximate reading</div>
+      ${content}${feedback}
+      <p class="song-vocab-note">Practice only · no changes to Study or SRS.</p>
+    </div>`;
+  }
+
   renderVocabulary(song, words) {
     const paliNote = song.category === 'spiritual' ?
       `<p class="song-vocab-note">🙏 This may be a Pali chant. These prompts are Burmese learning themes; check the video subtitles for translations.</p>` : '';
@@ -474,7 +604,16 @@ export class SongsPage {
       </div>`;
     }
 
+    // Hide the meaning list during a quiz so the answers are not visible above it.
+    if (this.practice?.songId === song.id) {
+      return `<div class="song-vocab-panel" role="region" aria-label="Practice vocabulary for ${escapeSongHTML(song.title)}">
+        ${this.renderPractice(song)}
+        <p class="song-vocab-note">These are topic prompts, not verified song lyrics.</p>${paliNote}
+      </div>`;
+    }
+
     const matched = words.filter(word => matchStudyWord(this.studyWordIndex, word)).length;
+    const practiceable = getSongPracticeWords(words, this.studyWordIndex).length;
     const items = words.map(word => {
       const record = matchStudyWord(this.studyWordIndex, word);
       const meaning = typeof record?.english_meaning === 'string' ? record.english_meaning.trim() : '';
@@ -491,6 +630,9 @@ export class SongsPage {
     return `<div class="song-vocab-panel" role="region" aria-label="Vocabulary for ${escapeSongHTML(song.title)}">
       <div class="song-vocab-summary"><strong>📖 Vocabulary explorer</strong><span>${matched}/${words.length} in your Study list</span></div>
       <div class="song-vocab-items">${items}</div>
+      ${practiceable ? `<button type="button" class="song-practice-primary song-practice-start"
+        data-song-action="start-practice" data-id="${escapeSongHTML(song.id)}">🎯 Practice ${practiceable} word${practiceable === 1 ? '' : 's'}</button>` :
+        '<p class="song-vocab-note">Add or match words with English meanings in Study to unlock practice.</p>'}
       <p class="song-vocab-note">These are topic prompts, not a transcription of the recording. Nothing here changes your Study progress.</p>${paliNote}
     </div>`;
   }
@@ -603,6 +745,7 @@ export class SongsPage {
     }
     this.save();
     this.editId = null;
+    this.practice = null;
     this.render(this.container);
   }
 }
