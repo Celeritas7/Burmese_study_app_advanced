@@ -13,7 +13,7 @@ function memoryStorage() {
 
 test('the original song and verified category starters are available by default', () => {
   const songs = loadSongs(memoryStorage());
-  assert.equal(songs.length, 7);
+  assert.equal(songs.length, 24);
   assert.equal(songs[0].artist, 'အဆိုတော် အာဇာနည်');
   assert.equal(songs[0].title, 'ယဉ်ယဉ်လေးရူး');
   assert.equal(songs[0].category, 'pop');
@@ -40,10 +40,10 @@ test('song links and new songs persist without duplicating the starter', () => {
     category: 'nature', learningWords: ['မိုး', 'ပန်း'], videoUrl: '', channelUrl: '' });
   assert.equal(page.save(), true);
   const loaded = loadSongs(storage);
-  assert.equal(loaded.length, 8);
+  assert.equal(loaded.length, STARTER_SONGS.length + 1);
   assert.equal(loaded[0].videoUrl, 'https://www.youtube.com/watch?v=abcdef12345');
-  assert.equal(loaded[7].title, 'Test title');
-  assert.deepEqual(loaded[7].learningWords, ['မိုး', 'ပန်း']);
+  assert.equal(loaded.at(-1).title, 'Test title');
+  assert.deepEqual(loaded.at(-1).learningWords, ['မိုး', 'ပန်း']);
   assert.equal(STARTER_SONGS[0].videoUrl, '');
 });
 
@@ -56,23 +56,38 @@ test('old saved songs and user-edited URLs survive addition of new curated songs
       videoUrl: '', channelUrl: '' }
   ]));
   const loaded = loadSongs(storage);
-  assert.equal(loaded.length, 8);
+  assert.equal(loaded.length, STARTER_SONGS.length + 1);
   assert.equal(loaded[0].videoUrl, 'https://youtu.be/abcdef12');
   assert.equal(loaded[0].category, 'pop');
-  assert.equal(loaded[7].category, 'other');
-  assert.deepEqual(loaded[7].learningWords, []);
+  assert.equal(loaded.at(-1).category, 'other');
+  assert.deepEqual(loaded.at(-1).learningWords, []);
 });
 
 test('category filters and word search find the right songs', () => {
   const songs = loadSongs(memoryStorage());
-  assert.equal(filterSongs(songs, 'kids').length, 1);
+  assert.equal(filterSongs(songs, 'kids').length, 3);
   assert.equal(filterSongs(songs, 'love')[0].title, 'မနှုတ်ဆက်ချင်ဘူး');
-  assert.equal(filterSongs(songs, 'all', 'နှုတ်ဆက်').length, 1);
-  assert.equal(filterSongs(songs, 'nature').length, 1);
-  assert.equal(filterSongs(songs, 'festival').length, 1);
-  assert.equal(filterSongs(songs, 'spiritual').length, 2);
-  assert.equal(filterSongs(songs, 'spiritual', 'မေတ္တာ').length, 2);
-  assert.equal(filterSongs(songs, 'daily').length, 0);
+  assert.equal(filterSongs(songs, 'love', 'နှုတ်ဆက်').length, 1);
+  assert.equal(filterSongs(songs, 'all', 'နှုတ်ဆက်').length, 2);
+  assert.equal(filterSongs(songs, 'nature').length, 3);
+  assert.equal(filterSongs(songs, 'festival').length, 3);
+  assert.equal(filterSongs(songs, 'spiritual').length, 3);
+  assert.equal(filterSongs(songs, 'spiritual', 'မေတ္တာ').length, 3);
+  assert.equal(filterSongs(songs, 'daily').length, 3);
+  assert.equal(filterSongs(songs, 'folk').length, 3);
+  assert.equal(filterSongs(songs, 'pop').length, 3);
+  assert.equal(filterSongs(songs, 'other').length, 0);
+});
+
+test('curated tracks have unique IDs, accepted links and useful topic prompts', () => {
+  assert.equal(new Set(STARTER_SONGS.map(song => song.id)).size, STARTER_SONGS.length);
+  for (const song of STARTER_SONGS) {
+    assert(SONG_CATEGORIES.some(category => category.id === song.category));
+    assert(song.title.trim().length > 0 && song.artist.trim().length > 0);
+    assert(song.learningWords.length >= 1 && song.learningWords.length <= 12);
+    assert(song.videoUrl === '' || validatedYouTubeUrl(song.videoUrl, 'video') === song.videoUrl);
+    assert(song.channelUrl === '' || validatedYouTubeUrl(song.channelUrl, 'channel') === song.channelUrl);
+  }
 });
 
 test('external links are limited to real HTTPS YouTube videos and channels', () => {
