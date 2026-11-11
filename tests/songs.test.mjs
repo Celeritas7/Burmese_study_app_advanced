@@ -4,6 +4,8 @@ import { SONG_CATEGORIES, STARTER_SONGS, escapeSongHTML, filterSongs, loadSongs,
   validatedYouTubeUrl, youtubeSearchUrl } from '../js/songs.js';
 import { indexStudyWords, matchStudyWord, normalizeSongWord } from '../js/song-vocabulary.js';
 import { getSongPracticeWords, makeSongPracticeQuestions, shuffleSongItems } from '../js/song-practice.js';
+import { SONG_REVIEW_STORAGE_KEY, addMissedSongWords, advanceSongReview,
+  combineSongReviewQueue, readSongReviewQueue, removeSongReview } from '../js/song-review-queue.js';
 
 function memoryStorage() {
   const values = new Map();
@@ -250,4 +252,97 @@ test('recall mode requires reveal before grading and escapes dictionary text', a
   assert.equal(page.practice.correct, 0);
   page.nextPractice();
   assert.match(page.renderPractice(song), /0 \/ 1/);
+});
+
+test('missed song words enter a separate local review queue only after opt-in', async () => {
+  const rows = [
+    { id: 101, burmese_word: 'ယဉ်ယဉ်', english_meaning: 'gently' },
+    { id: 102, burmese_word: 'ရူး', english_meaning: 'crazy' },
+    { id: 103, burmese_word: 'မိုး', english_meaning: 'rain' }
+  ];
+  const storage = memoryStorage();
+  const page = new SongsPage({}, storage, async () => rows);
+  await page.loadStudyVocabulary();
+  const song = page.songs[0];
+  page.openVocabularyId = song.id;
+  page.startPractice(song.id);
+  assert.equal(readSongReviewQueue(storage).length, 0);
+  while (page.practice.index < page.practice.questions.length) {
+    const question = page.practice.questions[page.practice.index];
+    const wrong = question.options.findIndex((_, i) => i !== question.correctIndex);
+    page.answerPractice(wrong);
+    page.nextPractice();
+  }
+  assert.match(page.renderPractice(song), /Add missed words to Review/);
+  assert.equal(storage.getItem(SONG_REVIEW_STORAGE_KEY), null);
+  page.queueMissedPractice();
+  assert.equal(page.practice.reviewAdded, true);
+  assert.deepEqual(readSongReviewQueue(storage).map(row => row.wordId).sort(), ['101', '102']);
+  assert.match(page.renderPractice(song), /Open Review tab/);
+  page.queueMissedPractice(); // Button cannot re-queue the same session.
+  assert.equal(readSongReviewQueue(storage).length, 2);
+  assert.equal(storage.getItem('burmese_song_library_v1'), null);
+});
+
+test('local song-review queue deduplicates words and preserves review history on a new miss', () => {
+  const storage = memoryStorage();
+  const now = Date.parse('2026-11-11T12:00:00Z');
+  assert.deepEqual(addMissedSongWords(storage, [{ wordId: 5 }, { wordId: 6 }, { wordId: 5 }], 'song-a', now),
+    { saved: true, queued: 3 });
+  assert.equal(readSongReviewQueue(storage).length, 2);
+  const next = new Date(now + 4 * 3600000).toISOString();
+  assert.equal(advanceSongReview(storage, 5, 3, next), true);
+  assert.equal(readSongReviewQueue(storage)[0].masteryLevel, 3);
+  assert.equal(readSongReviewQueue(storage)[0].attempts, 1);
+  addMissedSongWords(storage, [{ wordId: 5 }], 'song-b', now + 5000);
+  const updated = readSongReviewQueue(storage)[0];
+  assert.equal(updated.masteryLevel, 3);
+  assert.equal(updated.attempts, 1);
+  assert.equal(updated.songId, 'song-b');
+  assert.equal(updated.dueAt, new Date(now + 5000).toISOString());
+  assert.equal(removeSongReview(storage, 5), true);
+  assert.equal(removeSongReview(storage, 5), false);
+  assert.deepEqual(readSongReviewQueue(storage).map(row => row.wordId), ['6']);
+});
+
+test('song review combines with normal SRS cards without duplicate words or overwriting regular due data', () => {
+  const now = Date.parse('2026-11-11T12:00:00Z');
+  const wordMap = {
+    5: { id: 5, burmese_word: 'မေတ္တာ', english_meaning: 'loving-kindness' },
+    6: { id: 6, burmese_word: 'ရူး', english_meaning: 'crazy' }
+  };
+  const core = [{ wordId: 5, word: 'မေတ္တာ', meaning: 'loving-kindness',
+    dueAt: now + 86400000, due: '1d', isDue: false, level: 5 }];
+  const rows = [{ wordId: '5', dueAt: new Date(now).toISOString(), masteryLevel: 2 },
+    { wordId: '6', dueAt: new Date(now + 3600000).toISOString(), masteryLevel: 1 }];
+  const combined = combineSongReviewQueue(core, rows, wordMap, now);
+  assert.equal(combined.length, 2);
+  assert.equal(combined[0].wordId, 5);
+  assert.equal(combined[0].isDue, true);
+  assert.equal(combined[0].srsDue, false);
+  assert.equal(combined[0].songDue, true);
+  assert.equal(combined[0].songLevel, 2);
+  assert.equal(combined[0].level, 2); // The active card uses its local song level.
+  assert.equal(combined[0].srsLevel, 5); // Original SRS level is retained separately.
+  assert.equal(combined[1].isDue, false);
+  assert.equal(combined[1].due, '1h');
+  assert.equal(combined[1].level, 1);
+  assert.equal(core[0].isDue, false); // No mutation to existing queue cards.
+  const dueCore = [{ wordId: 5, word: 'မေတ္တာ', meaning: 'loving-kindness',
+    dueAt: now - 60000, due: 'Now', isDue: true, level: 5 }];
+  const bothDue = combineSongReviewQueue(dueCore, rows, wordMap, now);
+  assert.equal(bothDue[0].srsDue, true);
+  assert.equal(bothDue[0].songDue, true);
+  assert.equal(bothDue[0].level, 5); // Normal SRS takes precedence when both are due.
+  assert.equal(bothDue.length, 2);
+});
+
+test('corrupt or blocked local storage does not lose or alter unrelated song records', () => {
+  const storage = memoryStorage();
+  storage.setItem(SONG_REVIEW_STORAGE_KEY, 'bad json');
+  assert.deepEqual(readSongReviewQueue(storage), []);
+  const blocked = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  assert.equal(addMissedSongWords(blocked, [{ wordId: 10 }], 'test').saved, false);
+  assert.deepEqual(readSongReviewQueue(blocked), []);
+  assert.equal(advanceSongReview(blocked, 10, 2, new Date().toISOString()), false);
 });

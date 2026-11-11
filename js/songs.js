@@ -4,6 +4,7 @@
 import { toDev } from './burmese.js';
 import { indexStudyWords, matchStudyWord } from './song-vocabulary.js';
 import { getSongPracticeWords, makeSongPracticeQuestions } from './song-practice.js';
+import { addMissedSongWords } from './song-review-queue.js';
 
 // Load the existing Study data only when a song's vocabulary is opened.
 const getStudyWords = async () => (await import('./supabase.js')).db.getWords();
@@ -441,6 +442,15 @@ export class SongsPage {
         this.renderList();
         return;
       }
+      if (action === 'queue-missed-practice') {
+        this.queueMissedPractice();
+        this.renderList();
+        return;
+      }
+      if (action === 'open-review-from-song') {
+        this.app.switchTab('srs');
+        return;
+      }
       if (action === 'practice-exit') {
         this.practice = null;
         this.renderList();
@@ -500,7 +510,8 @@ export class SongsPage {
     const questions = makeSongPracticeQuestions(
       normalizeWords(song.learningWords), this.studyWordIndex, this.studyWordRows);
     if (!questions.length) return;
-    this.practice = { songId, questions, index: 0, answered: null, revealed: false, correct: 0 };
+    this.practice = { songId, questions, index: 0, answered: null, revealed: false,
+      correct: 0, results: [], reviewAdded: false, reviewMessage: '' };
   }
 
   answerPractice(choice) {
@@ -510,6 +521,7 @@ export class SongsPage {
         !Number.isInteger(choice) || choice < 0 || choice >= question.options.length) return;
     const correct = choice === question.correctIndex;
     practice.answered = { choice, correct };
+    practice.results.push({ word: question.word, correct });
     if (correct) practice.correct++;
   }
 
@@ -525,7 +537,29 @@ export class SongsPage {
     if (practice?.questions[practice.index]?.type !== 'recall' ||
         !practice.revealed || practice.answered) return;
     practice.answered = { correct: Boolean(remembered) };
+    practice.results.push({ word: practice.questions[practice.index].word, correct: Boolean(remembered) });
     if (remembered) practice.correct++;
+  }
+
+  queueMissedPractice() {
+    const practice = this.practice;
+    if (!practice || practice.index < practice.questions.length || practice.reviewAdded) return;
+    const missed = practice.results.filter(result => !result.correct).map(result => {
+      const record = matchStudyWord(this.studyWordIndex, result.word);
+      return record?.id === undefined || record.id === null ? null :
+        { wordId: record.id };
+    }).filter(Boolean);
+    if (!missed.length) {
+      practice.reviewMessage = 'No saved Study IDs for these missed words.';
+      return;
+    }
+    const result = addMissedSongWords(this.storage, missed, practice.songId);
+    if (result.saved) {
+      practice.reviewAdded = true;
+      practice.reviewMessage = `✓ ${result.queued} word${result.queued === 1 ? '' : 's'} added to Review on this device.`;
+    } else {
+      practice.reviewMessage = 'Could not save your review queue on this device. Try again.';
+    }
   }
 
   nextPractice() {
@@ -543,10 +577,21 @@ export class SongsPage {
     const header = `<div class="song-practice-header"><strong>🎯 Song word practice</strong>
       <button type="button" class="song-practice-close" data-song-action="practice-exit">✕ Exit</button></div>`;
     if (practice.index >= total) {
+      const missed = practice.results.filter(result => !result.correct);
       return `<div class="song-practice" role="region" aria-label="Song vocabulary practice">
         ${header}
         <div class="song-practice-result">🏆 ${practice.correct} / ${total}</div>
-        <p class="song-vocab-note">Session complete! This score is for practice only; Study ratings and review dates are unchanged.</p>
+        <p class="song-vocab-note">Session complete! Study ratings and Supabase review dates remain unchanged.</p>
+        ${missed.length ? `<div class="song-practice-missed">
+          <strong>Words to revisit (${missed.length})</strong>
+          <div>${missed.map(result => `<span class="song-word-chip">${escapeSongHTML(result.word)}</span>`).join('')}</div>
+        </div>
+        ${!practice.reviewAdded ? `<button type="button" class="song-practice-primary"
+          data-song-action="queue-missed-practice">🎵 Add missed words to Review</button>` : ''}` :
+        '<p class="song-vocab-note">All remembered — no additional song reviews needed.</p>'}
+        ${practice.reviewMessage ? `<p class="song-practice-review-status" role="status">${escapeSongHTML(practice.reviewMessage)}</p>` : ''}
+        ${practice.reviewAdded ? '<button type="button" class="song-practice-secondary" data-song-action="open-review-from-song">🔄 Open Review tab →</button>' : ''}
+        <p class="song-vocab-note">Song reviews stay on this device and appear inside the Review tab; no shared Study records are changed.</p>
         <button type="button" class="song-practice-primary" data-song-action="practice-restart"
           data-id="${escapeSongHTML(song.id)}">↻ Practice again</button>
       </div>`;
