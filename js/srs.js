@@ -3,6 +3,8 @@ import { db } from './supabase.js';
 import { toDev, toPronunciation } from 'https://celeritas7.github.io/language-utils/burmese.js?v=8';
 import { getSettings } from './settings.js';
 import { sayBtn, autoPlay } from './app-audio.js?v=1';   // Phase 12
+import { advanceSongReview, combineSongReviewQueue, readSongReviewQueue,
+  removeSongReview } from './song-review-queue.js';
 
 const SRS_RESPONSES = [
   { label: 'Again', icon: '✗', color: '#FF6B8A', mastery: -2 },
@@ -14,8 +16,9 @@ const SRS_RESPONSES = [
 const INTERVALS_HOURS = [0, 1, 4, 8, 24, 72, 168, 336]; // mastery 0→7
 
 export class SRSTab {
-  constructor(app) {
+  constructor(app, storage = localStorage) {
     this.app = app;
+    this.storage = storage;
     this.queue = [];
     this.wordMap = {};
     this.stateMap = {};
@@ -25,6 +28,7 @@ export class SRSTab {
     this.currentIdx = 0;
     this.revealLevel = 0;
     this.sessionResults = [];
+    this.responsePending = false;
   }
 
   async loadQueue() {
@@ -41,7 +45,7 @@ export class SRSTab {
       for (const s of states) this.stateMap[s.word_id] = s;
 
       const now = Date.now();
-      this.queue = states
+      const regularQueue = states
         .filter(s => this.wordMap[s.word_id])
         .map(s => {
           const w = this.wordMap[s.word_id];
@@ -65,6 +69,9 @@ export class SRSTab {
         })
         .sort((a, b) => a.dueAt - b.dueAt);
 
+      this.queue = combineSongReviewQueue(
+        regularQueue, readSongReviewQueue(this.storage), this.wordMap, now);
+
       this.loaded = true;
     } catch (err) {
       console.error('SRS load error:', err);
@@ -73,7 +80,8 @@ export class SRSTab {
   }
 
   async render(container) {
-    if (!this.loaded) await this.loadQueue();
+    // Song review items may be added from the Songs sub-page without recreating this tab.
+    if (!this.loaded || this.phase === 'queue') await this.loadQueue();
     switch (this.phase) {
       case 'review': return this.renderReview(container);
       case 'results': return this.renderResults(container);
@@ -85,6 +93,7 @@ export class SRSTab {
   renderQueue(container) {
     const dueNow = this.queue.filter(w => w.isDue);
     const mastered = this.queue.filter(w => w.level >= 5);
+    const fromSongs = this.queue.filter(w => w.songQueued).length;
 
     container.innerHTML = `
       <div class="pad">
@@ -92,6 +101,7 @@ export class SRSTab {
         <div style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">
           ${dueNow.length} due now · ${this.queue.length} total
         </div>
+        ${fromSongs ? `<div class="srs-song-note">🎵 ${fromSongs} song word${fromSongs === 1 ? '' : 's'} in this review queue. Song scheduling stays on this device.</div>` : ''}
 
         <div class="srs-stats">
           <div class="srs-stat">
@@ -126,6 +136,9 @@ export class SRSTab {
             <div class="flex-1">
               <div class="srs-word">${w.word}</div>
               <div class="srs-meaning">${w.meaning}</div>
+              ${w.songQueued ? `<div class="srs-song-source">🎵 From Songs
+                <button type="button" data-remove-song-review="${w.wordId}">Stop song reminders</button>
+              </div>` : ''}
             </div>
             <div style="text-align:right;">
               <div class="srs-due" style="color:${w.isDue ? 'var(--pink)' : 'var(--text-muted)'};">${w.due}</div>
@@ -145,6 +158,13 @@ export class SRSTab {
     container.querySelector('#start-review')?.addEventListener('click', () => {
       this.startReview(container);
     });
+    container.querySelectorAll('[data-remove-song-review]').forEach(button => {
+      button.addEventListener('click', () => {
+        const wordId = button.dataset.removeSongReview;
+        if (!confirm('Stop song-based reminders for this word? Its regular Study reviews will remain.')) return;
+        if (removeSongReview(this.storage, wordId)) this.render(container);
+      });
+    });
   }
 
   // ─── START REVIEW ───
@@ -155,6 +175,7 @@ export class SRSTab {
     this.currentIdx = 0;
     this.revealLevel = 0;
     this.sessionResults = [];
+    this.responsePending = false;
     this.phase = 'review';
     this.render(container);
   }
@@ -187,7 +208,7 @@ export class SRSTab {
             ✕ Exit
           </button>
           <div style="font-size:13px;color:var(--text-muted);font-weight:600;">
-            ${this.currentIdx + 1} / ${total}
+            ${this.currentIdx + 1} / ${total} ${card.songDue ? '· 🎵 Song review' : ''}
           </div>
           <div class="srs-levels" style="margin:0;">
             ${[1,2,3,4,5].map(j => `<div class="srs-level-dot ${j <= card.level ? 'filled' : ''}"></div>`).join('')}
@@ -251,6 +272,8 @@ export class SRSTab {
 
     container.querySelectorAll('.srs-resp').forEach(btn => {
       btn.addEventListener('click', async () => {
+        if (this.responsePending) return;
+        this.responsePending = true;
         const respIdx = parseInt(btn.dataset.resp);
         const resp = SRS_RESPONSES[respIdx];
         const oldLevel = card.level;
@@ -259,6 +282,17 @@ export class SRSTab {
         const nextReview = new Date(Date.now() + nextInterval * 3600000).toISOString();
         const isCorrect = respIdx >= 2;
 
+        let newSongLevel = null;
+        if (card.songDue) {
+          newSongLevel = Math.min(7, Math.max(0, (card.songLevel || 0) + resp.mastery));
+          const songReviewAt = new Date(Date.now() + (INTERVALS_HOURS[newSongLevel] || 0) * 3600000).toISOString();
+          if (!advanceSongReview(this.storage, card.wordId, newSongLevel, songReviewAt)) {
+            this.responsePending = false;
+            alert('Could not save the song review on this device. Check storage permissions and try again.');
+            return;
+          }
+        }
+
         this.sessionResults.push({
           wordId: card.wordId,
           word: w.burmese_word,
@@ -266,12 +300,16 @@ export class SRSTab {
           response: resp.label,
           oldLevel,
           newLevel,
-          correct: isCorrect
+          correct: isCorrect,
+          songDue: !!card.songDue,
+          srsDue: !!card.srsDue,
+          newSongLevel
         });
 
         try {
           const state = this.stateMap[card.wordId];
-          if (state) {
+          // A song-only review must not adjust shared Supabase mastery or review dates.
+          if (state && card.srsDue !== false) {
             await db.update('burmese_app_user_state', state.id, {
               mastery_level: newLevel,
               correct_count: (state.correct_count || 0) + (isCorrect ? 1 : 0),
@@ -281,11 +319,14 @@ export class SRSTab {
               last_practiced_at: new Date().toISOString()
             });
           }
-          await db.logProgress({ type: 'srs_review', wordId: card.wordId, result: resp.label });
+          if (card.srsDue !== false) {
+            await db.logProgress({ type: 'srs_review', wordId: card.wordId, result: resp.label });
+          }
         } catch { /* offline */ }
 
         this.currentIdx++;
         this.revealLevel = 0;
+        this.responsePending = false;
         this.render(container);
       });
     });
@@ -422,11 +463,15 @@ export class SRSTab {
         word: r.word,
         meaning: r.meaning,
         level: r.newLevel || 0,
-        isDue: true
+        isDue: true,
+        songDue: r.songDue,
+        srsDue: r.srsDue,
+        songLevel: r.newSongLevel
       }));
       this.currentIdx = 0;
       this.revealLevel = 0;
       this.sessionResults = [];
+      this.responsePending = false;
       this.phase = 'review';
       this.render(container);
     });

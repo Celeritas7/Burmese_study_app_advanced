@@ -681,8 +681,22 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .song-practice-feedback.correct { color: var(--green); }
 .song-practice-feedback.incorrect { color: var(--yellow); }
 .song-practice-result { text-align: center; font-size: 27px; font-weight: 800; color: var(--green); margin: 18px 0; }
+.song-practice-missed { margin: 12px 0 0; padding: 10px; border-radius: 11px; background: var(--bg); }
+.song-practice-missed > strong { display: block; font-size: 11px; margin-bottom: 8px; }
+.song-practice-missed > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.song-practice-review-status { margin: 10px 0; color: var(--green); font-size: 11px; font-weight: 700; }
+.song-practice-secondary { display: block; width: 100%; min-height: 40px; margin-top: 8px;
+  border: 1px solid var(--border-light); border-radius: 10px; background: var(--bg);
+  color: var(--text); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.srs-song-note { border-radius: 12px; padding: 10px 12px; margin-bottom: 15px;
+  background: rgba(88,204,2,0.08); border: 1px solid rgba(88,204,2,0.22);
+  color: var(--text); font-size: 12px; line-height: 1.5; }
+.srs-song-source { color: var(--green); font-size: 10px; margin-top: 5px; }
+.srs-song-source button { font: inherit; font-size: 10px; color: var(--text-muted); cursor: pointer;
+  background: transparent; border: none; text-decoration: underline; margin-left: 4px; padding: 2px 0; }
 .song-practice-primary:focus-visible, .song-practice-option:focus-visible,
-.song-practice-grades button:focus-visible, .song-practice-close:focus-visible {
+.song-practice-grades button:focus-visible, .song-practice-close:focus-visible,
+.song-practice-secondary:focus-visible, .srs-song-source button:focus-visible {
   outline: 2px solid var(--green); outline-offset: 2px; }
 .song-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .song-link { display: flex; align-items: center; justify-content: center; min-height: 42px;
