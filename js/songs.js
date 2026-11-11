@@ -1,6 +1,11 @@
 // ═══ BURMESE MUSIC LIBRARY ═══
 // Curated starter entries live in the app; personal additions and links stay on this device.
 // learningWords are topic prompts, not verified verbatim song lyrics.
+import { toDev } from './burmese.js';
+import { indexStudyWords, matchStudyWord } from './song-vocabulary.js';
+
+// Load the existing Study data only when a song's vocabulary is opened.
+const getStudyWords = async () => (await import('./supabase.js')).db.getWords();
 const STORAGE_KEY = 'burmese_song_library_v1';
 
 export const SONG_CATEGORIES = [
@@ -309,14 +314,43 @@ export function loadSongs(storage = localStorage) {
 }
 
 export class SongsPage {
-  constructor(app, storage = localStorage) {
+  constructor(app, storage = localStorage, studyWordsLoader = getStudyWords) {
     this.app = app;
     this.storage = storage;
     this.songs = loadSongs(storage);
+    this.studyWordsLoader = studyWordsLoader;
+    this.studyWordIndex = new Map();
+    this.studyWordsState = 'idle';
+    this.studyWordsPromise = null;
+    this.openVocabularyId = null;
     this.search = '';
     this.activeCategory = 'all';
     this.editId = null;
     this.message = '';
+  }
+
+  refreshVocabularyPanel() {
+    if (this.container?.querySelector('#songs-list')) this.renderList();
+  }
+
+  async loadStudyVocabulary() {
+    if (this.studyWordsState === 'ready') return;
+    if (this.studyWordsPromise) return this.studyWordsPromise;
+    this.studyWordsState = 'loading';
+    this.refreshVocabularyPanel();
+    this.studyWordsPromise = Promise.resolve()
+      .then(() => this.studyWordsLoader())
+      .then(rows => {
+        if (!Array.isArray(rows)) throw new Error('Invalid Study vocabulary response');
+        this.studyWordIndex = indexStudyWords(rows);
+        this.studyWordsState = 'ready';
+      })
+      .catch(() => { this.studyWordsState = 'error'; })
+      .finally(() => {
+        this.studyWordsPromise = null;
+        this.refreshVocabularyPanel();
+      });
+    return this.studyWordsPromise;
   }
 
   save() {
@@ -341,7 +375,7 @@ export class SongsPage {
             <div class="app-subtitle">Listen, discover & learn Burmese</div>
           </div>
         </div>
-        <div class="songs-intro">Pick a theme, listen to a song, and practise a few repeated Burmese words. Add your own songs and YouTube links as you discover them.</div>
+        <div class="songs-intro">Pick a theme, listen to a song, and explore Burmese vocabulary from your existing Study list. Topic prompts are not verified song lyrics. Add songs and YouTube links as you discover them.</div>
         <div class="songs-category-title">Choose a learning theme</div>
         <div class="songs-categories" id="songs-categories" aria-label="Song categories"></div>
         <div class="songs-tools">
@@ -367,6 +401,16 @@ export class SongsPage {
         this.renderList();
         return;
       }
+      if (action === 'vocabulary') {
+        this.openVocabularyId = this.openVocabularyId === button.dataset.id ? null : button.dataset.id;
+        this.renderList();
+        if (this.openVocabularyId && this.studyWordsState === 'idle') void this.loadStudyVocabulary();
+        return;
+      }
+      if (action === 'retry-vocabulary') {
+        void this.loadStudyVocabulary();
+        return;
+      }
       if (action === 'add') this.editId = 'new';
       if (action === 'edit') this.editId = button.dataset.id;
       if (action === 'cancel') this.editId = null;
@@ -377,6 +421,7 @@ export class SongsPage {
           this.songs = this.songs.filter(item => item.id !== song.id);
           this.save();
           this.editId = null;
+          if (this.openVocabularyId === song.id) this.openVocabularyId = null;
         }
       }
       this.renderEditor();
@@ -412,6 +457,44 @@ export class SongsPage {
       </button>`).join('');
   }
 
+  renderVocabulary(song, words) {
+    const paliNote = song.category === 'spiritual' ?
+      `<p class="song-vocab-note">🙏 This may be a Pali chant. These prompts are Burmese learning themes; check the video subtitles for translations.</p>` : '';
+    if (!words.length) return `<div class="song-vocab-panel" role="region" aria-label="Vocabulary for ${escapeSongHTML(song.title)}">
+      <p class="song-vocab-note">No vocabulary prompts saved yet. Use “Edit category, words & links” to add some.</p>
+      </div>`;
+
+    if (this.studyWordsState === 'idle' || this.studyWordsState === 'loading') {
+      return `<div class="song-vocab-panel" role="status">Looking up ${words.length} topic words in your Study vocabulary…</div>`;
+    }
+    if (this.studyWordsState === 'error') {
+      return `<div class="song-vocab-panel" role="region" aria-label="Vocabulary for ${escapeSongHTML(song.title)}">
+        <p class="song-vocab-note">Could not reach your Study vocabulary. Your song prompts are still saved; try again when connected.</p>
+        <button class="song-vocab-retry" data-song-action="retry-vocabulary" type="button">↻ Retry lookup</button>${paliNote}
+      </div>`;
+    }
+
+    const matched = words.filter(word => matchStudyWord(this.studyWordIndex, word)).length;
+    const items = words.map(word => {
+      const record = matchStudyWord(this.studyWordIndex, word);
+      const meaning = typeof record?.english_meaning === 'string' ? record.english_meaning.trim() : '';
+      return `<div class="song-vocab-item">
+        <div class="song-vocab-item-main">
+          <span class="song-vocab-word">${escapeSongHTML(word)}</span>
+          <span class="song-vocab-tag ${record ? 'found' : ''}">${record ? 'In Study' : 'Not in Study'}</span>
+        </div>
+        <div class="song-vocab-reading">${escapeSongHTML(toDev(word))} <span>Devanagari hint · approximate</span></div>
+        <div class="song-vocab-meaning">${record ? escapeSongHTML(meaning || 'No English meaning recorded') :
+          'No dictionary match yet — meaning not guessed'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="song-vocab-panel" role="region" aria-label="Vocabulary for ${escapeSongHTML(song.title)}">
+      <div class="song-vocab-summary"><strong>📖 Vocabulary explorer</strong><span>${matched}/${words.length} in your Study list</span></div>
+      <div class="song-vocab-items">${items}</div>
+      <p class="song-vocab-note">These are topic prompts, not a transcription of the recording. Nothing here changes your Study progress.</p>${paliNote}
+    </div>`;
+  }
+
   renderList() {
     const list = this.container.querySelector('#songs-list');
     const query = this.search.toLocaleLowerCase().trim();
@@ -437,6 +520,12 @@ export class SongsPage {
           <div>${words.length ? words.map(word => `<span class="song-word-chip">${escapeSongHTML(word)}</span>`).join('') :
             `<span class="song-word-suggestion">${escapeSongHTML(category.focus)}</span>`}</div>
         </div>
+        <button type="button" class="song-vocab-toggle" data-song-action="vocabulary" data-id="${escapeSongHTML(song.id)}"
+          aria-expanded="${this.openVocabularyId === song.id}">
+          <span>📖 ${this.openVocabularyId === song.id ? 'Hide vocabulary' : 'Explore vocabulary'}</span>
+          <span class="song-vocab-count">${words.length} word${words.length === 1 ? '' : 's'} ${this.openVocabularyId === song.id ? '▲' : '▼'}</span>
+        </button>
+        ${this.openVocabularyId === song.id ? this.renderVocabulary(song, words) : ''}
         <div class="song-actions">
           <a href="${escapeSongHTML(video || search)}" target="_blank" rel="noopener noreferrer" class="song-link song-link-main">${video ? '▶ Watch on YouTube' : '⌕ Find song on YouTube'}</a>
           <a href="${escapeSongHTML(channel || channelSearch)}" target="_blank" rel="noopener noreferrer" class="song-link">${channel ? '♫ Artist channel' : '⌕ Find artist channel'}</a>
