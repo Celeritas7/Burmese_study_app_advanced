@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SONG_CATEGORIES, STARTER_SONGS, escapeSongHTML, filterSongs, loadSongs, SongsPage,
   validatedYouTubeUrl, youtubeSearchUrl } from '../js/songs.js';
+import { indexStudyWords, matchStudyWord, normalizeSongWord } from '../js/song-vocabulary.js';
 
 function memoryStorage() {
   const values = new Map();
@@ -105,4 +106,57 @@ test('search phrases are URL encoded and saved text is escaped', () => {
   const url = youtubeSearchUrl('အဆိုတော် အာဇာနည် ယဉ်ယဉ်လေးရူး');
   assert.equal(new URL(url).searchParams.get('search_query'), 'အဆိုတော် အာဇာနည် ယဉ်ယဉ်လေးရူး');
   assert.equal(escapeSongHTML('<img onerror="x">'), '&lt;img onerror=&quot;x&quot;&gt;');
+});
+
+test('Study word lookup uses exact normalized Burmese text and prefers a recorded meaning', () => {
+  const rows = [
+    { burmese_word: ' မေတ္တာ ', english_meaning: ' ' },
+    { burmese_word: 'မေတ္တာ', english_meaning: 'loving-kindness' },
+    { burmese_word: 'ချစ်', english_meaning: 'love' },
+    { burmese_word: 'မေတ္တာပို့', english_meaning: 'send loving-kindness' }
+  ];
+  const index = indexStudyWords(rows);
+  assert.equal(normalizeSongWord('  မေတ္တာ  '), 'မေတ္တာ');
+  assert.equal(index.size, 3);
+  assert.equal(matchStudyWord(index, ' မေတ္တာ ').english_meaning, 'loving-kindness');
+  assert.equal(matchStudyWord(index, 'မေတ္တာပို့').english_meaning, 'send loving-kindness');
+  assert.equal(matchStudyWord(index, 'မေတ္တာ ပို့'), null);
+  assert.equal(matchStudyWord(index, 'ချစ်တယ်'), null);
+});
+
+test('vocabulary explorer loads Study rows once without modifying records or song storage', async () => {
+  const storage = memoryStorage();
+  const originalRows = [{ burmese_word: 'မေတ္တာ', english_meaning: 'loving-kindness' }];
+  const rowsBefore = JSON.stringify(originalRows);
+  let requests = 0;
+  const page = new SongsPage({}, storage, async () => {
+    requests++;
+    return originalRows;
+  });
+  await Promise.all([page.loadStudyVocabulary(), page.loadStudyVocabulary()]);
+  await page.loadStudyVocabulary();
+  assert.equal(requests, 1);
+  assert.equal(page.studyWordsState, 'ready');
+  assert.equal(JSON.stringify(originalRows), rowsBefore);
+  assert.equal(storage.getItem('burmese_song_library_v1'), null);
+  assert.match(page.renderVocabulary(page.songs[5], ['မေတ္တာ']), /loving-kindness/);
+  assert.match(page.renderVocabulary(page.songs[5], ['မေတ္တာ']), /Pali chant/);
+  assert.match(page.renderVocabulary(page.songs[5], ['မေတ္တာ']), /Devanagari hint/);
+  assert.match(page.renderVocabulary(page.songs[5], ['မေတ္တာ']), /Nothing here changes your Study progress/);
+  assert.match(page.renderVocabulary(page.songs[0], ['unknown']), /meaning not guessed/);
+});
+
+test('vocabulary lookup can be retried after a connection failure', async () => {
+  let requests = 0;
+  const page = new SongsPage({}, memoryStorage(), async () => {
+    if (++requests === 1) throw new Error('Network unavailable');
+    return [{ burmese_word: 'ရူး', english_meaning: 'crazy' }];
+  });
+  await page.loadStudyVocabulary();
+  assert.equal(page.studyWordsState, 'error');
+  assert.match(page.renderVocabulary(page.songs[0], ['ရူး']), /Retry lookup/);
+  await page.loadStudyVocabulary();
+  assert.equal(page.studyWordsState, 'ready');
+  assert.equal(requests, 2);
+  assert.match(page.renderVocabulary(page.songs[0], ['ရူး']), /crazy/);
 });
