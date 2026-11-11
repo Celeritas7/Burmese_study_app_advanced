@@ -1,5 +1,6 @@
 // ═══ BURMESE MUSIC LIBRARY ═══
 // Curated starter entries live in the app; personal additions and links stay on this device.
+// learningWords are topic prompts, not verified verbatim song lyrics.
 const STORAGE_KEY = 'burmese_song_library_v1';
 
 export const SONG_CATEGORIES = [
@@ -79,6 +80,160 @@ export const STARTER_SONGS = [
     category: 'spiritual',
     learningWords: ['မေတ္တာ', 'သုတ်'],
     videoUrl: 'https://www.youtube.com/watch?v=M3U4OamBis8',
+    channelUrl: ''
+  },
+  // Phase 3: additional verified YouTube recordings, grouped by learning theme.
+  {
+    id: 'children-eyes-can-see',
+    artist: 'Cho My My Cartoon · ကလေးသီချင်း',
+    title: 'မျက်စိလေးကမြင်တယ်',
+    category: 'kids',
+    learningWords: ['မျက်စိ', 'မြင်'],
+    videoUrl: 'https://www.youtube.com/watch?v=xmvlXlKlqos',
+    channelUrl: ''
+  },
+  {
+    id: 'children-crab-family',
+    artist: 'Cho My My Cartoon · ကလေးသီချင်း',
+    title: 'ဂဏန်းမိသားစု တေးကဗျာ',
+    category: 'kids',
+    learningWords: ['ဂဏန်း', 'မိသားစု', 'လမ်းလျှောက်'],
+    videoUrl: 'https://www.youtube.com/watch?v=LcG1M77VFvI',
+    channelUrl: ''
+  },
+  {
+    id: 'daily-mingalaba-greeting',
+    artist: 'Cho My My Cartoon · Grade 1 song',
+    title: 'မင်္ဂလာပါ (ပထမတန်းတေးကဗျာ)',
+    category: 'daily',
+    learningWords: ['မင်္ဂလာပါ', 'နှုတ်ဆက်'],
+    videoUrl: 'https://www.youtube.com/watch?v=TPcuL3G8xG0',
+    channelUrl: ''
+  },
+  {
+    id: 'daily-a-childs-day',
+    artist: 'Cho My My Cartoon · KG song',
+    title: 'လူကလေး၏တစ်နေ့တာ',
+    category: 'daily',
+    learningWords: ['စောစောထ', 'သွားတိုက်', 'မျက်နှာသစ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=kRZ1EfbcGB8',
+    channelUrl: ''
+  },
+  {
+    id: 'daily-ma-naw-family-collection',
+    artist: 'မနော · May Kyay Mone Official (song collection)',
+    title: 'မနောရဲ့ အကောင်းဆုံးတေးသီချင်းများ (မိသားစုနှင့် ဘဝ)',
+    category: 'daily',
+    learningWords: ['အမေ', 'အဖေ', 'စာသင်ခန်း'],
+    videoUrl: 'https://www.youtube.com/watch?v=HquZ5vCatS0',
+    channelUrl: ''
+  },
+  {
+    id: 'nature-little-rabbit-ears',
+    artist: 'Cho My My Cartoon · ကလေးသီချင်း',
+    title: 'ယုန်ကလေးက နားရွက်ထောင်',
+    category: 'nature',
+    learningWords: ['ယုန်', 'နားရွက်'],
+    videoUrl: 'https://www.youtube.com/watch?v=BXhYLyGeCss',
+    channelUrl: ''
+  },
+  {
+    id: 'nature-gecko-tree',
+    artist: 'Cho My My Cartoon · ကလေးသီချင်း',
+    title: 'သစ်ပင်ပေါ်ကတောက်တဲ့ (Gecko on the Tree)',
+    category: 'nature',
+    learningWords: ['သစ်ပင်', 'တောက်တဲ့'],
+    videoUrl: 'https://www.youtube.com/watch?v=eK9a9x174uA',
+    channelUrl: ''
+  },
+  {
+    id: 'love-jfire-a-htar-kya',
+    artist: 'J-Fire feat. Khaing Myae Thitsar · Official MV',
+    title: 'အထာကျတဲ့အချစ်',
+    category: 'love',
+    learningWords: ['အချစ်', 'ချစ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=Th-XjqOB4IA',
+    channelUrl: ''
+  },
+  {
+    id: 'love-bg18-a-chit',
+    artist: 'BG18 · Official lyric video',
+    title: 'အချစ်',
+    category: 'love',
+    learningWords: ['အချစ်', 'ချစ်ခြင်း'],
+    videoUrl: 'https://www.youtube.com/watch?v=8r4h3KMufL4',
+    channelUrl: 'https://www.youtube.com/@bg_labels'
+  },
+  {
+    id: 'spiritual-morning-metta',
+    artist: 'BB Channel · Pali chant with Burmese/English subtitles',
+    title: 'နံနက်ခင်းမေတ္တာပို့ ဓမ္မတေး',
+    category: 'spiritual',
+    learningWords: ['မေတ္တာ', 'မိဘ', 'ဆရာသမား'],
+    videoUrl: 'https://www.youtube.com/watch?v=S6U6DlGPNgg',
+    channelUrl: ''
+  },
+  {
+    id: 'folk-rural-myanmar-collection',
+    artist: 'KB Soe Moe Producer · rural song collection',
+    title: 'မြန်မာသံစဉ် ကျေးလက်တေးသီချင်းများ',
+    category: 'folk',
+    learningWords: ['ကျေးလက်', 'သံစဉ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=Avgjyq-pNaQ',
+    channelUrl: ''
+  },
+  {
+    id: 'folk-ma-lay-lat-khat-than',
+    artist: 'Crew-X MM · traditional dance to Gita Yadana song',
+    title: 'မလေးလက်ခတ်သံ (Burmese Folk Dance)',
+    category: 'folk',
+    learningWords: ['ရိုးရာ', 'အက'],
+    videoUrl: 'https://www.youtube.com/watch?v=zhXy2AQVq5k',
+    channelUrl: ''
+  },
+  {
+    id: 'folk-traditional-heartbreak-collection',
+    artist: 'Rayrai Production · traditional-style collection',
+    title: 'မြန်မာသံစဉ် အသည်းကွဲတေးသီချင်းများ',
+    category: 'folk',
+    learningWords: ['အသည်းကွဲ', 'တေးသီချင်း'],
+    videoUrl: 'https://www.youtube.com/watch?v=Yd8NpQqjeXo',
+    channelUrl: ''
+  },
+  {
+    id: 'festival-thingyan-songs-collection',
+    artist: 'Various artists · Thingyan song collection',
+    title: 'သင်္ကြန်သီချင်းများ | Myanmar Thingyan Songs',
+    category: 'festival',
+    learningWords: ['သင်္ကြန်', 'ရေ', 'ပွဲတော်'],
+    videoUrl: 'https://www.youtube.com/watch?v=F_zRihTQheE',
+    channelUrl: ''
+  },
+  {
+    id: 'festival-yadanar-myaing-thingyan',
+    artist: 'Various artists · Thingyan song collection',
+    title: 'ရတနာမြိုင်သင်္ကြန်သီချင်းများ',
+    category: 'festival',
+    learningWords: ['သင်္ကြန်', 'ရတနာ', 'နှစ်သစ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=xid8fASmtYw',
+    channelUrl: ''
+  },
+  {
+    id: 'pop-ni-ni-khin-zaw-atta',
+    artist: 'Ni Ni Khin Zaw · Official MV',
+    title: 'အတ္တကြီးစွာချစ်သည်',
+    category: 'pop',
+    learningWords: ['အတ္တ', 'ချစ်'],
+    videoUrl: 'https://www.youtube.com/watch?v=knxc1Wm8y0Q',
+    channelUrl: ''
+  },
+  {
+    id: 'pop-bunny-phyoe-my-energy',
+    artist: 'Bunny Phyoe · Official MV',
+    title: 'My Energy',
+    category: 'pop',
+    learningWords: ['အား', 'စွမ်းအား'],
+    videoUrl: 'https://www.youtube.com/watch?v=fEOwYlS4u5o',
     channelUrl: ''
   }
 ];
