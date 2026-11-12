@@ -694,6 +694,21 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .srs-song-source { color: var(--green); font-size: 10px; margin-top: 5px; }
 .srs-song-source button { font: inherit; font-size: 10px; color: var(--text-muted); cursor: pointer;
   background: transparent; border: none; text-decoration: underline; margin-left: 4px; padding: 2px 0; }
+.song-sync-card { margin: 0 0 18px; padding: 13px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border-light); }
+.song-sync-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px;
+  color: var(--text); font-size: 13px; font-weight: 800; }
+.song-sync-status { color: var(--green); font-size: 11px; font-weight: 700; }
+.song-sync-detail { margin: 8px 0 10px; line-height: 1.5; color: var(--text-muted);
+  font-size: 11px; overflow-wrap: anywhere; }
+.song-sync-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.song-sync-card button { min-height: 40px; padding: 9px 13px; border-radius: 10px;
+  border: 1px solid var(--border-light); background: var(--elevated); color: var(--text);
+  font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.song-sync-card button:disabled { opacity: .45; cursor: wait; }
+.song-sync-card .song-sync-login { background: var(--green); color: var(--bg); border-color: var(--green); }
+.song-sync-card button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.song-sync-error { margin-top: 8px; font-size: 11px; color: var(--yellow); overflow-wrap: anywhere; }
 .song-practice-primary:focus-visible, .song-practice-option:focus-visible,
 .song-practice-grades button:focus-visible, .song-practice-close:focus-visible,
 .song-practice-secondary:focus-visible, .srs-song-source button:focus-visible {

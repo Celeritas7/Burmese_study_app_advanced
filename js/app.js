@@ -13,12 +13,14 @@ import { HomeTab } from './home.js';
 import { CourseTab } from './course.js';
 import { SpeakTab } from './speak.js?v=7';
 import { SongsPage } from './songs.js';
+import { SongReviewCloudSync } from './song-review-sync.js';
 
 class BurmeseStudyApp {
   constructor() {
     this.activeTab = 'home';   // was 'study'
     this.tabs = {};
     this.contentEl = null;
+    this.songReviewSync = new SongReviewCloudSync();
   }
 
   async init() {
@@ -59,6 +61,12 @@ class BurmeseStudyApp {
       .then(rows => this.tabs.speak.hydrate(rows)).catch(() => {});
     await this.tabs.study.init();
     this.renderTab();
+    // Optional Google Auth must never hold up Study, Songs or offline practice.
+    this.songReviewSync.initialize().catch(() => {});
+    window.addEventListener('online', () => {
+      const sync = this.songReviewSync;
+      (sync.client ? sync.sync() : sync.initialize()).catch(() => {});
+    });
   }
 
   switchTab(tabId) {

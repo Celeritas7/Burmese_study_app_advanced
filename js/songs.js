@@ -556,7 +556,8 @@ export class SongsPage {
     const result = addMissedSongWords(this.storage, missed, practice.songId);
     if (result.saved) {
       practice.reviewAdded = true;
-      practice.reviewMessage = `✓ ${result.queued} word${result.queued === 1 ? '' : 's'} added to Review on this device.`;
+      practice.reviewMessage = `✓ ${result.queued} word${result.queued === 1 ? '' : 's'} added to Review. Saved offline${this.app.songReviewSync?.getState().signedIn ? ' · sync when online' : ''}.`;
+      this.app.songReviewSync?.afterLocalChange();
     } else {
       practice.reviewMessage = 'Could not save your review queue on this device. Try again.';
     }
