@@ -5,6 +5,7 @@ import { getSettings } from './settings.js';
 import { sayBtn, autoPlay } from './app-audio.js?v=1';   // Phase 12
 import { advanceSongReview, combineSongReviewQueue, readSongReviewQueue,
   removeSongReview } from './song-review-queue.js';
+import { renderReviewSyncMarkup } from './account-ui.js';
 
 const SRS_RESPONSES = [
   { label: 'Again', icon: '✗', color: '#FF6B8A', mastery: -2 },
@@ -14,8 +15,6 @@ const SRS_RESPONSES = [
 ];
 
 const INTERVALS_HOURS = [0, 1, 4, 8, 24, 72, 168, 336]; // mastery 0→7
-const escapeSyncText = value => String(value || '').replace(/[&<>"']/g, char =>
-  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 export class SRSTab {
   constructor(app, storage = localStorage) {
@@ -115,9 +114,9 @@ export class SRSTab {
         <div style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">
           ${dueNow.length} due now · ${this.queue.length} total
         </div>
-        ${fromSongs ? `<div class="srs-song-note">🎵 ${fromSongs} song word${fromSongs === 1 ? '' : 's'} in this review queue. Reviews work offline; Google sign-in can sync them across devices.</div>` : ''}
+        ${fromSongs ? `<div class="srs-song-note">🎵 ${fromSongs} song word${fromSongs === 1 ? '' : 's'} in this review queue. Reviews work offline; song sync is managed in Settings.</div>` : ''}
 
-        <div id="song-review-sync" class="song-sync-card"></div>
+        <div id="song-review-sync" class="srs-sync-compact"></div>
 
         <div class="srs-stats">
           <div class="srs-stat">
@@ -188,41 +187,14 @@ export class SRSTab {
     });
   }
 
-  // Optional account controls live only in Review; no login is required to study.
+  // Review shows status only; all sign-in, sign-out and sync actions live in Settings.
   renderSyncPanel(container) {
     const target = container.querySelector('#song-review-sync');
     if (!target) return;
     const sync = this.app.songReviewSync;
     if (!sync) { target.hidden = true; return; }
-    const state = sync.getState();
-    const statusText = state.status === 'syncing' ? 'Syncing reviews…'
-      : state.status === 'synced' ? '✓ Song reviews synced'
-        : state.status === 'connecting' ? 'Checking your account…'
-          : state.status === 'error' ? '⚠ Sync needs attention'
-            : 'Reviews currently stay on this device';
-    target.innerHTML = `
-      <div class="song-sync-header">☁️ Song review sync <span class="song-sync-status">${statusText}</span></div>
-      ${state.signedIn ? `
-        <div class="song-sync-detail">Signed in as ${escapeSyncText(state.email || 'Google account')}. Your song reviews are private to this account.</div>
-        <div class="song-sync-actions"><button type="button" data-song-sync="now" ${state.status === 'syncing' ? 'disabled' : ''}>↻ Sync now</button>
-          <button type="button" data-song-sync="out">Sign out</button></div>
-      ` : `
-        <div class="song-sync-detail">Optional: sign in with Google to review the same song words on your phone and iPad. Offline reviews still work.</div>
-        <button type="button" class="song-sync-login" data-song-sync="google">Continue with Google</button>
-      `}
-      ${state.message ? `<div class="song-sync-error">${escapeSyncText(state.message)}</div>` : ''}
-    `;
-    target.querySelector('[data-song-sync="google"]')?.addEventListener('click', async () => {
-      try { await sync.signInGoogle(); }
-      catch (err) { alert(`Google sign-in could not start: ${err.message}`); }
-    });
-    target.querySelector('[data-song-sync="now"]')?.addEventListener('click', () => {
-      sync.sync().catch(() => {}); // Errors appear in the sync panel; local reviews are safe.
-    });
-    target.querySelector('[data-song-sync="out"]')?.addEventListener('click', async () => {
-      try { await sync.signOut(); }
-      catch (err) { alert(`Sign-out failed: ${err.message}`); }
-    });
+    target.innerHTML = renderReviewSyncMarkup(sync.getState());
+    target.querySelector('[data-review-account]')?.addEventListener('click', () => this.app.showSettings());
   }
 
   // ─── START REVIEW ───

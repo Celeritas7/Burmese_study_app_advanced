@@ -1,6 +1,7 @@
 // ═══ SETTINGS PAGE ═══
 import { db } from './supabase.js';
 import { createDeviceBackup } from './data-backup.js';
+import { renderAccountMarkup } from './account-ui.js';
 
 const STORAGE_KEY = 'burmese_app_settings';
 
@@ -32,6 +33,10 @@ export function saveSetting(key, value) {
 export class SettingsPage {
   constructor(app) {
     this.app = app;
+    this.accountContainer = null;
+    this.accountPending = false;
+    this.accountError = '';
+    this.app.songReviewSync?.subscribe(() => this.refreshAccountPanel());
   }
 
   async render(container) {
@@ -48,6 +53,10 @@ export class SettingsPage {
             <div style="font-size:12px;color:var(--text-muted);">Preferences & data</div>
           </div>
         </div>
+
+        <!-- Account: sign-in and sync controls belong in Settings, not the Review queue. -->
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Account</div>
+        <section class="settings-account-card" id="settings-account-panel" aria-label="Account and song review sync"></section>
 
         <!-- Voice (Phase 8) -->
         <div style="font-size:10px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Voice</div>
@@ -227,6 +236,9 @@ export class SettingsPage {
       </div>
     `;
 
+    this.accountContainer = container;
+    this.refreshAccountPanel();
+
     // Check SW status
     this.checkServiceWorker(container);
 
@@ -314,6 +326,41 @@ export class SettingsPage {
         }
       }
     });
+  }
+
+  refreshAccountPanel() {
+    const panel = this.accountContainer?.querySelector('#settings-account-panel');
+    if (!panel) return; // Settings is no longer the visible page.
+    const sync = this.app.songReviewSync;
+    if (!sync) {
+      panel.textContent = 'Account sync is unavailable. You can still study offline.';
+      return;
+    }
+    panel.innerHTML = renderAccountMarkup(sync.getState(), {
+      pending: this.accountPending, error: this.accountError
+    });
+    panel.querySelectorAll('[data-account-action]').forEach(button => {
+      button.addEventListener('click', () => this.performAccountAction(button.dataset.accountAction));
+    });
+  }
+
+  async performAccountAction(action) {
+    if (this.accountPending) return;
+    const sync = this.app.songReviewSync;
+    if (!sync) return;
+    this.accountPending = true;
+    this.accountError = '';
+    this.refreshAccountPanel();
+    try {
+      if (action === 'google') await sync.signInGoogle();
+      else if (action === 'sync' && sync.getState().signedIn) await sync.sync();
+      else if (action === 'out' && sync.getState().signedIn) await sync.signOut();
+    } catch (error) {
+      this.accountError = `Account action failed: ${error.message}`;
+    } finally {
+      this.accountPending = false;
+      this.refreshAccountPanel();
+    }
   }
 
   checkServiceWorker(container) {
