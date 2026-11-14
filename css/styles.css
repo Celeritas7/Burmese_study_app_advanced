@@ -733,6 +733,54 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .settings-account-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .settings-account-error { margin-top: 9px; color: var(--yellow); font-size: 11px;
   line-height: 1.5; overflow-wrap: anywhere; }
+.settings-page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.settings-page-heading { min-width: 0; flex: 1; }
+.settings-page-heading h1 { font-size: 20px; line-height: 1.3; color: var(--text); margin: 0; }
+.settings-page-heading p { color: var(--text-muted); font-size: 11px; line-height: 1.5; margin: 3px 0 0; }
+.settings-account-label { margin: 0 0 8px; font-size: 11px; font-weight: 800;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-muted); }
+.settings-fold-list { display: grid; gap: 10px; }
+.settings-fold { background: var(--surface); border: 2px solid var(--border);
+  border-radius: 16px; overflow: hidden; }
+.settings-fold[open] { border-color: var(--border-light); }
+.settings-fold-summary { display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  min-height: 68px; cursor: pointer; list-style: none; }
+.settings-fold-summary::-webkit-details-marker { display: none; }
+.settings-fold-summary::marker { content: ''; }
+.settings-fold-summary:focus-visible { outline: 2px solid var(--blue); outline-offset: -3px;
+  border-radius: 12px; }
+.settings-fold-icon { display: grid; place-items: center; flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 11px; background: var(--elevated); font-size: 19px; }
+.settings-fold-title { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.settings-fold-title strong { font-size: 14px; font-weight: 800; color: var(--text); }
+.settings-fold-title small { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.settings-fold-chevron { margin-left: auto; color: var(--text-muted); font-size: 22px;
+  line-height: 1; transition: transform .2s ease; }
+.settings-fold[open] .settings-fold-chevron { transform: rotate(180deg); }
+.settings-fold-content { padding: 0 10px 10px; }
+.settings-group-card { background: var(--elevated); border: 1px solid var(--border-light);
+  border-radius: 12px; overflow: hidden; }
+.settings-row { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; min-height: 60px; padding: 13px 12px; }
+.settings-row + .settings-row { border-top: 1px solid var(--border-light); }
+.settings-row-text { flex: 1; min-width: 0; line-height: 1.5; }
+.settings-choice-group { display: flex; justify-content: flex-end; flex-shrink: 0;
+  flex-wrap: wrap; gap: 4px; }
+.settings-page .set-opt, .settings-page #btn-export,
+.settings-page #btn-cache, .settings-page #btn-audio-dl { min-height: 38px; }
+.settings-page .set-opt:focus-visible, .settings-page .set-toggle:focus-visible,
+.settings-page #set-back:focus-visible, .settings-page #btn-export:focus-visible,
+.settings-page #btn-cache:focus-visible, .settings-page #btn-audio-dl:focus-visible {
+  outline: 2px solid var(--blue); outline-offset: 2px; }
+.settings-app-info { display: flex; justify-content: center; flex-wrap: wrap;
+  gap: 5px 10px; color: var(--text-dim); font-size: 11px; padding: 18px 10px;
+  text-align: center; }
+@media (max-width: 380px) {
+  .settings-row-choices { flex-direction: column; align-items: stretch; }
+  .settings-row-choices .settings-choice-group { justify-content: flex-start; }
+  .settings-action-row { flex-wrap: wrap; }
+  .settings-action-row button { margin-left: auto; min-height: 38px; }
+}
 .song-practice-primary:focus-visible, .song-practice-option:focus-visible,
 .song-practice-grades button:focus-visible, .song-practice-close:focus-visible,
 .song-practice-secondary:focus-visible, .srs-song-source button:focus-visible {

@@ -36,6 +36,8 @@ export class SettingsPage {
     this.accountContainer = null;
     this.accountPending = false;
     this.accountError = '';
+    // Keep the user's open sections through preference re-renders in this session.
+    this.expandedSections = new Set(['learning']);
     this.app.songReviewSync?.subscribe(() => this.refreshAccountPanel());
   }
 
@@ -43,32 +45,39 @@ export class SettingsPage {
     const s = getSettings();
 
     container.innerHTML = `
-      <div class="pad-sm">
+      <div class="pad-sm settings-page">
         <!-- Header -->
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div class="settings-page-header">
           <button id="set-back" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
-            color:var(--text-muted);cursor:pointer;font-size:12px;padding:6px 12px;font-weight:700;font-family:var(--font);">← Back</button>
-          <div style="flex:1;">
-            <div style="font-size:20px;font-weight:800;">⚙️ Settings</div>
-            <div style="font-size:12px;color:var(--text-muted);">Preferences & data</div>
+            color:var(--text-muted);cursor:pointer;font-size:12px;padding:8px 12px;font-weight:700;font-family:var(--font);">← Back</button>
+          <div class="settings-page-heading">
+            <h1>⚙️ Settings</h1>
+            <p>Account, learning & device data</p>
           </div>
         </div>
 
         <!-- Account: sign-in and sync controls belong in Settings, not the Review queue. -->
-        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Account</div>
+        <h2 class="settings-account-label">Account</h2>
         <section class="settings-account-card" id="settings-account-panel" aria-label="Account and song review sync"></section>
 
+        <div class="settings-fold-list">
         <!-- Voice (Phase 8) -->
-        <div style="font-size:10px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Voice</div>
-        <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;">
-            <div style="min-width:0;">
+        <details class="settings-fold" data-settings-section="learning" ${this.expandedSections.has('learning') ? 'open' : ''}>
+          <summary class="settings-fold-summary">
+            <span class="settings-fold-icon" aria-hidden="true">🔊</span>
+            <span class="settings-fold-title"><strong>Learning & audio</strong><small>Voice and playback options</small></span>
+            <span class="settings-fold-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="settings-fold-content">
+          <div class="settings-group-card">
+          <div class="settings-row settings-row-choices">
+            <div class="settings-row-text">
               <div style="font-size:14px;font-weight:600;color:var(--text);">Your voice</div>
               <div style="font-size:11px;color:var(--text-muted);">Who you hear on 🔊 and your word for “I”</div>
             </div>
-            <div style="display:flex;gap:4px;flex-shrink:0;">
+            <div class="settings-choice-group">
               ${[['m', '♂ ကျွန်တော်'], ['f', '♀ ကျွန်မ']].map(([v, label]) => `
-                <button class="set-opt" data-key="voice" data-val="${v}" style="
+                <button class="set-opt" data-key="voice" data-val="${v}" aria-pressed="${s.voice === v}" style="
                   padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
                   background:${s.voice === v ? 'var(--blue)' : 'var(--bg)'};
                   border:2px solid ${s.voice === v ? 'var(--blue)' : 'var(--border)'};
@@ -77,12 +86,12 @@ export class SettingsPage {
               `).join('')}
             </div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);">
-            <div style="min-width:0;">
+          <div class="settings-row">
+            <div class="settings-row-text">
               <div style="font-size:14px;font-weight:600;color:var(--text);">Play sound on reveal</div>
               <div style="font-size:11px;color:var(--text-muted);">Study & Review say the word when you reveal the card</div>
             </div>
-            <button class="set-toggle" data-key="autoPlay" style="
+            <button class="set-toggle" data-key="autoPlay" role="switch" aria-label="Play sound on reveal" aria-checked="${s.autoPlay}" style="
               width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;
               background:${s.autoPlay ? 'var(--green)' : 'var(--border)'};
             ">
@@ -90,21 +99,29 @@ export class SettingsPage {
                 transition:all 0.2s;${s.autoPlay ? 'left:23px;' : 'left:3px;'}"></div>
             </button>
           </div>
-        </div>
+          </div>
+          </div>
+        </details>
 
         <!-- Display Settings -->
-        <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Display</div>
-        <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
+        <details class="settings-fold" data-settings-section="display" ${this.expandedSections.has('display') ? 'open' : ''}>
+          <summary class="settings-fold-summary">
+            <span class="settings-fold-icon" aria-hidden="true">🔤</span>
+            <span class="settings-fold-title"><strong>Display</strong><small>Text size and pronunciation guides</small></span>
+            <span class="settings-fold-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="settings-fold-content">
+          <div class="settings-group-card">
 
           <!-- Font Size -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div>
+          <div class="settings-row settings-row-choices">
+            <div class="settings-row-text">
               <div style="font-size:14px;font-weight:600;color:var(--text);">Burmese Font Size</div>
               <div style="font-size:11px;color:var(--text-muted);">Adjust word card text size</div>
             </div>
-            <div style="display:flex;gap:4px;">
+            <div class="settings-choice-group">
               ${['small', 'normal', 'large'].map(v => `
-                <button class="set-opt" data-key="fontSize" data-val="${v}" style="
+                <button class="set-opt" data-key="fontSize" data-val="${v}" aria-pressed="${s.fontSize === v}" style="
                   padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);
                   background:${s.fontSize === v ? 'var(--blue)' : 'var(--bg)'};
                   border:2px solid ${s.fontSize === v ? 'var(--blue)' : 'var(--border)'};
@@ -115,13 +132,13 @@ export class SettingsPage {
           </div>
 
           <!-- Show Devanagari -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div>
+          <div class="settings-row">
+            <div class="settings-row-text">
               <div style="font-size:14px;font-weight:600;color:var(--text);">Show Devanagari</div>
               <div style="font-size:11px;color:var(--text-muted);">Display transliteration</div>
             </div>
-            <button class="set-toggle" data-key="showDevanagari" style="
-              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;
+            <button class="set-toggle" data-key="showDevanagari" role="switch" aria-label="Show Devanagari" aria-checked="${s.showDevanagari}" style="
+              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;
               background:${s.showDevanagari ? 'var(--green)' : 'var(--border)'};
             ">
               <div style="width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;
@@ -130,13 +147,13 @@ export class SettingsPage {
           </div>
 
           <!-- Show playful pack (Phase 11) -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div>
+          <div class="settings-row">
+            <div class="settings-row-text">
               <div style="font-size:14px;font-weight:600;color:var(--text);">Show playful pack 😏</div>
               <div style="font-size:11px;color:var(--text-muted);">Teasing & flirting lines for friends. Off hides it from Speak.</div>
             </div>
-            <button class="set-toggle" data-key="showPlayful" style="
-              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;
+            <button class="set-toggle" data-key="showPlayful" role="switch" aria-label="Show playful pack" aria-checked="${s.showPlayful}" style="
+              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;
               background:${s.showPlayful ? 'var(--green)' : 'var(--border)'};
             ">
               <div style="width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;
@@ -145,28 +162,36 @@ export class SettingsPage {
           </div>
 
           <!-- Show Romanization -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
-            <div>
+          <div class="settings-row">
+            <div class="settings-row-text">
               <div style="font-size:14px;font-weight:600;color:var(--text);">Show Romanization</div>
               <div style="font-size:11px;color:var(--text-muted);">Show English pronunciation</div>
             </div>
-            <button class="set-toggle" data-key="showRomanization" style="
-              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;
+            <button class="set-toggle" data-key="showRomanization" role="switch" aria-label="Show Romanization" aria-checked="${s.showRomanization}" style="
+              width:48px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;
               background:${s.showRomanization ? 'var(--green)' : 'var(--border)'};
             ">
               <div style="width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;
                 transition:all 0.2s;${s.showRomanization ? 'left:23px;' : 'left:3px;'}"></div>
             </button>
           </div>
-        </div>
+          </div>
+          </div>
+        </details>
 
         <!-- Data Management -->
-        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Data</div>
-        <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
+        <details class="settings-fold" data-settings-section="data" ${this.expandedSections.has('data') ? 'open' : ''}>
+          <summary class="settings-fold-summary">
+            <span class="settings-fold-icon" aria-hidden="true">💾</span>
+            <span class="settings-fold-title"><strong>Data & safety</strong><small>Device backup and protected actions</small></span>
+            <span class="settings-fold-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="settings-fold-content">
+          <div class="settings-group-card">
 
           <!-- Export: local-only until regular Study/SRS rows are account owned. -->
           <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">
+            <div class="settings-action-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">
               <div style="min-width:0;">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">Back up device data</div>
                 <div style="font-size:11px;color:var(--text-muted);">Download settings, Speak and Course progress, dialogue voices, saved songs, and this device's song reviews as JSON.</div>
@@ -180,7 +205,7 @@ export class SettingsPage {
 
           <!-- Import: disable shared-table writes until account-safe restoration exists. -->
           <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div class="settings-action-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div style="min-width:0;">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">Restore backup</div>
                 <div id="import-help" style="font-size:11px;color:var(--text-muted);">Temporarily unavailable: the old importer could write to shared Study/SRS data. Your existing data is untouched.</div>
@@ -192,7 +217,7 @@ export class SettingsPage {
 
           <!-- Reset: never delete shared tables without an account ownership check. -->
           <div style="padding:12px 16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div class="settings-action-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div style="min-width:0;">
                 <div style="font-size:14px;font-weight:600;color:var(--pink);">Reset All Progress</div>
                 <div id="reset-help" style="font-size:11px;color:var(--text-muted);">Temporarily unavailable until progress can be deleted for your account only.</div>
@@ -201,43 +226,57 @@ export class SettingsPage {
                 background:var(--border);border:2px solid var(--border);color:var(--text-muted);font-family:var(--font);flex-shrink:0;opacity:.65;">Paused</button>
             </div>
           </div>
-        </div>
+          </div>
+          </div>
+        </details>
 
         <!-- Offline -->
-        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Offline</div>
-        <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
-          <div style="padding:12px 16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div>
+        <details class="settings-fold" data-settings-section="offline" ${this.expandedSections.has('offline') ? 'open' : ''}>
+          <summary class="settings-fold-summary">
+            <span class="settings-fold-icon" aria-hidden="true">📥</span>
+            <span class="settings-fold-title"><strong>Offline</strong><small>Cache app and recorded audio</small></span>
+            <span class="settings-fold-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="settings-fold-content">
+          <div class="settings-group-card">
+          <div class="settings-row">
+              <div class="settings-row-text">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">Cache for Offline</div>
                 <div style="font-size:11px;color:var(--text-muted);" id="sw-status">Checking...</div>
               </div>
-              <button id="btn-cache" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
+              <button id="btn-cache" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
                 background:var(--purple);border:none;color:#fff;font-family:var(--font);">Cache Now</button>
-            </div>
           </div>
-          <div style="padding:12px 16px;border-top:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-              <div style="min-width:0;">
+          <div class="settings-row">
+              <div class="settings-row-text">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">Audio for offline</div>
                 <div style="font-size:11px;color:var(--text-muted);" id="audio-status">Clips are saved the first time you play them</div>
               </div>
               <button id="btn-audio-dl" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
                 background:var(--purple);border:none;color:#fff;font-family:var(--font);">Download all</button>
-            </div>
           </div>
+          </div>
+          </div>
+        </details>
         </div>
 
         <!-- App Info -->
-        <div style="text-align:center;padding:16px;color:var(--text-dim);font-size:11px;">
-          Burmese Study App · v1.0<br>
-          Supabase: ${db.connected ? '✓ Connected' : '✕ Not connected'}
+        <div class="settings-app-info">Burmese Study App · v1.0
+          <span>Supabase: ${db.connected ? '✓ Connected' : '✕ Not connected'}</span>
         </div>
       </div>
     `;
 
     this.accountContainer = container;
     this.refreshAccountPanel();
+
+    container.querySelectorAll('[data-settings-section]').forEach(section => {
+      section.addEventListener('toggle', () => {
+        if (!section.isConnected) return; // Ignore delayed events from replaced preference rows.
+        if (section.open) this.expandedSections.add(section.dataset.settingsSection);
+        else this.expandedSections.delete(section.dataset.settingsSection);
+      });
+    });
 
     // Check SW status
     this.checkServiceWorker(container);

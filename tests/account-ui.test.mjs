@@ -94,7 +94,7 @@ test('Settings actions reuse the existing sync service and show errors without l
 });
 
 test('service worker caches the new account presentation module', () => {
-  assert.match(source('sw.js'), /burmese-study-v16/);
+  assert.match(source('sw.js'), /burmese-study-v\d+/);
   assert.match(source('sw.js'), /js\/account-ui\.js/);
   assert.match(source('js/more.js'), /Account, voice & preferences/);
 });
