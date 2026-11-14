@@ -1,7 +1,7 @@
 // ═══ SERVICE WORKER ═══
 // Lives at the app ROOT (next to index.html) so its scope covers the whole app.
 // All paths are relative, so it works under GitHub Pages' /<repo>/ sub-path.
-const CACHE_NAME = 'burmese-study-v16';  // Phase UI-2 account controls in Settings
+const CACHE_NAME = 'burmese-study-v17';  // Phase UI-3 Settings layout sections
 const AUDIO_CACHE = 'burmese-audio-v1';   // separate: survives app-code cache bumps
 const ASSETS = [
   './', 'index.html', 'css/styles.css',
