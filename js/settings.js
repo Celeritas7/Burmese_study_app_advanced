@@ -1,5 +1,6 @@
 // ═══ SETTINGS PAGE ═══
 import { db } from './supabase.js';
+import { createDeviceBackup } from './data-backup.js';
 
 const STORAGE_KEY = 'burmese_app_settings';
 
@@ -31,8 +32,6 @@ export function saveSetting(key, value) {
 export class SettingsPage {
   constructor(app) {
     this.app = app;
-    this.exportStatus = '';
-    this.importStatus = '';
   }
 
   async render(container) {
@@ -156,44 +155,41 @@ export class SettingsPage {
         <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Data</div>
         <div style="background:var(--surface);border-radius:16px;border:2px solid var(--border);padding:4px 0;margin-bottom:16px;">
 
-          <!-- Export -->
+          <!-- Export: local-only until regular Study/SRS rows are account owned. -->
           <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--text);">Export Progress</div>
-                <div style="font-size:11px;color:var(--text-muted);">Download your learning data as JSON</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">
+              <div style="min-width:0;">
+                <div style="font-size:14px;font-weight:600;color:var(--text);">Back up device data</div>
+                <div style="font-size:11px;color:var(--text-muted);">Download settings, Speak and Course progress, dialogue voices, saved songs, and this device's song reviews as JSON.</div>
               </div>
               <button id="btn-export" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
-                background:var(--green);border:none;color:var(--bg);font-family:var(--font);">Export</button>
+                background:var(--green);border:none;color:var(--bg);font-family:var(--font);flex-shrink:0;">Download</button>
             </div>
+            <div style="font-size:11px;color:var(--yellow);line-height:1.5;margin-bottom:6px;">Partial backup only. Does not include regular Study/SRS progress, server events, cloud-only reviews, or offline media. Store the JSON privately. Restore is not yet available.</div>
             <div id="export-status" style="font-size:11px;color:var(--text-muted);"></div>
           </div>
 
-          <!-- Import -->
+          <!-- Import: disable shared-table writes until account-safe restoration exists. -->
           <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--text);">Import Progress</div>
-                <div style="font-size:11px;color:var(--text-muted);">Restore from a JSON backup</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div style="min-width:0;">
+                <div style="font-size:14px;font-weight:600;color:var(--text);">Restore backup</div>
+                <div id="import-help" style="font-size:11px;color:var(--text-muted);">Temporarily unavailable: the old importer could write to shared Study/SRS data. Your existing data is untouched.</div>
               </div>
-              <label style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
-                background:var(--blue);border:none;color:var(--bg);font-family:var(--font);">
-                Import
-                <input type="file" id="file-import" accept=".json" style="display:none;">
-              </label>
+              <button type="button" disabled aria-describedby="import-help" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;
+                background:var(--border);border:none;color:var(--text-muted);font-family:var(--font);flex-shrink:0;opacity:.65;">Paused</button>
             </div>
-            <div id="import-status" style="font-size:11px;color:var(--text-muted);"></div>
           </div>
 
-          <!-- Reset -->
+          <!-- Reset: never delete shared tables without an account ownership check. -->
           <div style="padding:12px 16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div style="min-width:0;">
                 <div style="font-size:14px;font-weight:600;color:var(--pink);">Reset All Progress</div>
-                <div style="font-size:11px;color:var(--text-muted);">Clear ratings, SRS state, and events</div>
+                <div id="reset-help" style="font-size:11px;color:var(--text-muted);">Temporarily unavailable until progress can be deleted for your account only.</div>
               </div>
-              <button id="btn-reset" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
-                background:rgba(255,107,138,0.1);border:2px solid rgba(255,107,138,0.25);color:var(--pink);font-family:var(--font);">Reset</button>
+              <button type="button" disabled aria-describedby="reset-help" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;
+                background:var(--border);border:2px solid var(--border);color:var(--text-muted);font-family:var(--font);flex-shrink:0;opacity:.65;">Paused</button>
             </div>
           </div>
         </div>
@@ -280,111 +276,26 @@ export class SettingsPage {
       });
     });
 
-    // Export
+    // Export device-local data only. Legacy Study/SRS tables have no user-scoped backup path.
     container.querySelector('#btn-export').addEventListener('click', async () => {
       const status = container.querySelector('#export-status');
       status.style.color = 'var(--yellow)';
-      status.textContent = 'Exporting...';
+      status.textContent = 'Preparing device backup...';
       try {
-        const [userState, events] = await Promise.all([
-          db.getUserState(),
-          db.query('burmese_app_progress_events', { order: 'created_at.desc', limit: 5000 })
-        ]);
-
-        const data = {
-          exportDate: new Date().toISOString(),
-          app: 'burmese_study',
-          version: 1,
-          settings: getSettings(),
-          userState,
-          progressEvents: events
-        };
-
+        const data = createDeviceBackup(localStorage);
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `burmese_progress_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `burmese_device_backup_${data.exportDate.split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
 
         status.style.color = 'var(--green)';
-        status.textContent = `✓ Exported ${userState.length} states + ${events.length} events`;
+        status.textContent = '✓ Device backup downloaded (partial; restore unavailable).';
       } catch (e) {
         status.style.color = 'var(--pink)';
         status.textContent = `✕ Error: ${e.message}`;
-      }
-    });
-
-    // Import
-    container.querySelector('#file-import').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const status = container.querySelector('#import-status');
-      status.style.color = 'var(--yellow)';
-      status.textContent = 'Reading file...';
-
-      try {
-        const text = await file.text();
-        const data = JSON.parse(text);
-
-        if (!data.app || data.app !== 'burmese_study') {
-          throw new Error('Not a valid Burmese Study export file');
-        }
-
-        let imported = 0;
-
-        // Import settings
-        if (data.settings) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.settings));
-        }
-
-        // Import user states
-        if (data.userState && data.userState.length > 0) {
-          for (const s of data.userState) {
-            try {
-              await db.insert('burmese_app_user_state', {
-                word_id: s.word_id,
-                word_type: s.word_type || 'word',
-                correct_count: s.correct_count || 0,
-                incorrect_count: s.incorrect_count || 0,
-                streak: s.streak || 0,
-                mastery_level: s.mastery_level || 0,
-                next_review_at: s.next_review_at,
-                last_practiced_at: s.last_practiced_at
-              });
-              imported++;
-            } catch { /* skip duplicates */ }
-          }
-        }
-
-        status.style.color = 'var(--green)';
-        status.textContent = `✓ Imported ${imported} states + settings restored`;
-        setTimeout(() => this.render(container), 1500);
-      } catch (e) {
-        status.style.color = 'var(--pink)';
-        status.textContent = `✕ Error: ${e.message}`;
-      }
-    });
-
-    // Reset
-    container.querySelector('#btn-reset').addEventListener('click', async () => {
-      const confirmed = confirm('This will delete ALL your ratings, SRS progress, and study events. Are you sure?');
-      if (!confirmed) return;
-
-      try {
-        // Delete all user_state and progress_events
-        const res1 = await fetch(`${db.url}/rest/v1/burmese_app_user_state?id=gt.0`, {
-          method: 'DELETE', headers: db.headers
-        });
-        const res2 = await fetch(`${db.url}/rest/v1/burmese_app_progress_events?id=gt.0`, {
-          method: 'DELETE', headers: db.headers
-        });
-
-        alert('Progress reset complete.');
-        this.render(container);
-      } catch (e) {
-        alert(`Reset error: ${e.message}`);
       }
     });
 
