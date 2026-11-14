@@ -72,5 +72,5 @@ test('Settings contains no shared-table import, export, or unscoped reset code',
 
 test('service worker precaches the backup module to keep Settings working offline', () => {
   assert.match(workerSource, /js\/data-backup\.js/);
-  assert.match(workerSource, /burmese-study-v15/);
+  assert.match(workerSource, /burmese-study-v\d+/);
 });

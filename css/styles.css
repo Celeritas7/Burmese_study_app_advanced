@@ -694,21 +694,45 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .srs-song-source { color: var(--green); font-size: 10px; margin-top: 5px; }
 .srs-song-source button { font: inherit; font-size: 10px; color: var(--text-muted); cursor: pointer;
   background: transparent; border: none; text-decoration: underline; margin-left: 4px; padding: 2px 0; }
-.song-sync-card { margin: 0 0 18px; padding: 13px; border-radius: 14px;
-  background: var(--surface); border: 1px solid var(--border-light); }
-.song-sync-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px;
-  color: var(--text); font-size: 13px; font-weight: 800; }
-.song-sync-status { color: var(--green); font-size: 11px; font-weight: 700; }
-.song-sync-detail { margin: 8px 0 10px; line-height: 1.5; color: var(--text-muted);
-  font-size: 11px; overflow-wrap: anywhere; }
-.song-sync-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.song-sync-card button { min-height: 40px; padding: 9px 13px; border-radius: 10px;
-  border: 1px solid var(--border-light); background: var(--elevated); color: var(--text);
-  font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
-.song-sync-card button:disabled { opacity: .45; cursor: wait; }
-.song-sync-card .song-sync-login { background: var(--green); color: var(--bg); border-color: var(--green); }
-.song-sync-card button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
-.song-sync-error { margin-top: 8px; font-size: 11px; color: var(--yellow); overflow-wrap: anywhere; }
+.srs-sync-compact { display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px; margin: 0 0 18px; padding: 8px 10px;
+  border-radius: 10px; background: var(--surface); border: 1px solid var(--border-light); }
+.srs-sync-compact-label { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.srs-sync-compact-label [data-tone="success"] { color: var(--green); }
+.srs-sync-compact-label [data-tone="warning"] { color: var(--yellow); }
+.srs-sync-compact button { border: none; background: transparent; color: var(--blue);
+  min-height: 32px; padding: 5px 3px; cursor: pointer; font: inherit;
+  font-size: 11px; font-weight: 800; }
+.srs-sync-compact button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+.settings-account-card { margin-bottom: 16px; padding: 14px;
+  background: var(--surface); border: 2px solid var(--border); border-radius: 16px; }
+.settings-account-top { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+.settings-account-avatar { display: grid; place-items: center; flex-shrink: 0;
+  width: 37px; height: 37px; border-radius: 50%; border: 1px solid var(--border-light);
+  color: var(--green); font-size: 18px; font-weight: 800; background: var(--elevated); }
+.settings-account-identity { min-width: 0; flex: 1; }
+.settings-account-name { font-size: 14px; font-weight: 800; color: var(--text); }
+.settings-account-email { font-size: 11px; color: var(--text-muted);
+  overflow-wrap: anywhere; line-height: 1.5; margin-top: 2px; }
+.settings-account-sync { display: flex; align-items: center; gap: 7px;
+  border-radius: 9px; padding: 8px 10px; margin-bottom: 10px;
+  color: var(--text-muted); font-size: 12px; font-weight: 700; background: var(--elevated); }
+.settings-account-sync[data-tone="success"] { color: var(--green); }
+.settings-account-sync[data-tone="warning"] { color: var(--yellow); }
+.settings-account-explain { font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+.settings-account-explain strong { color: var(--text); }
+.settings-account-explain.secondary { margin-top: 8px; }
+.settings-account-last { color: var(--text-muted); font-size: 11px; margin-top: 10px; }
+.settings-account-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.settings-account-button { flex: 0 1 auto; padding: 9px 14px; min-height: 42px;
+  color: var(--text); border-radius: 10px; border: 1px solid var(--border-light);
+  background: var(--elevated); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.settings-account-button.primary { background: var(--green); color: var(--bg); border-color: var(--green); }
+.settings-account-button:disabled { opacity: .55; cursor: wait; }
+.settings-account-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.settings-account-error { margin-top: 9px; color: var(--yellow); font-size: 11px;
+  line-height: 1.5; overflow-wrap: anywhere; }
 .song-practice-primary:focus-visible, .song-practice-option:focus-visible,
 .song-practice-grades button:focus-visible, .song-practice-close:focus-visible,
 .song-practice-secondary:focus-visible, .srs-song-source button:focus-visible {
