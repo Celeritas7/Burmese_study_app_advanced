@@ -19,9 +19,10 @@ Read-only source audit and a separate live Chrome test session on 2026-11-15:
 | SRS | Rated word entered queue; later review survived reload | Pending |
 | Multiple-choice quiz | Correct answer scored | Pending |
 | Typing and matching | Both loaded; one matching pair scored | Pending |
-| Recorded audio | Cache mismatch found in the deployed source; fix pending review | Pending |
+| Recorded audio | Cache fix merged via PR #16; physical device check remains | Pending |
 | Interrupted downloads | Automated unit test passes for previous-pack retention | Pending |
-| Cloudflare version upgrade | Offline-2 fix and regression tests prepared | Pending deployment approval |
+| Cloudflare version upgrade | PR #16 merged; device update behavior not yet verified | Pending |
+| Word issue flags | New local outbox fix in review: not yet on deployed app | Pending |
 
 The table is **not** a claim that airplane mode or Safari works yet.
 
@@ -58,6 +59,29 @@ The table is **not** a claim that airplane mode or Safari works yet.
    state, then separately open the **online** Burmese app and verify its older
    records were **not** overwritten. Sharing progress between apps is not yet
    supported.
+
+### Word issue flags (after the flag-outbox PR is approved and deployed)
+
+1. Still in **Airplane mode**, open Study, start a downloaded vocabulary pack,
+   reveal a word and tap **🚩 Flag**. Select **Wrong meaning**, add a brief
+   comment, then tap **Save Flag Offline**. The confirmation must say **saved
+   locally and pending delivery**, never "sent".
+2. Try a second word with a different issue type. Close and reopen the
+   installed app without internet. Go to **Settings → Offline → Word issue
+   flags** and confirm **2 pending flags**.
+3. Tap **Download flag reports**. Verify the JSON includes both word snapshots,
+   issue types and comments. Try **Copy reports** and paste into a note; if the
+   OS denies clipboard access, verify the download fallback works.
+4. Reconnect and reopen. The reports must still say **pending**. No automatic
+   upload or progress synchronization has been implemented, and exported
+   reports are not deleted automatically.
+5. Repeat on the iPad. Each device keeps its own outbox. Do not clear website
+   storage or uninstall until you have exported the pending reports.
+
+**Server delivery remains blocked:** There is no verified word-flag receiving
+endpoint or owner-scoped policy in this app. A separate, reviewed backend
+contract will be necessary before a real **Send pending flags** action can be
+enabled. This is not part of Offline-3 Study/SRS progress synchronization.
 
 ## Interrupted-download acceptance
 

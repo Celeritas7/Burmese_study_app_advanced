@@ -7,6 +7,7 @@ import { getSettings } from './settings.js';
 import { sayBtn, autoPlay } from './app-audio.js?v=1';   // Phase 12
 import { buildGroups } from './hubexplorer.js';
 import { isOfflineEdition } from './edition.js';
+import { queueOfflineFlag } from './offline-flags.js';
 
 const WORD_TREE_CSS = `<style>
 .wt-forest{max-height:60vh;overflow-y:auto;margin:0 -4px;scrollbar-width:thin;scrollbar-color:var(--border-light,#2A3A42) transparent;}
@@ -928,7 +929,7 @@ export class StudyTab {
         <span style="font-size:12px; color:var(--blue); margin-left:6px;">${dev}</span>
         <div style="font-size:12px; color:var(--green); margin-top:3px;">${word.english_meaning || ''}</div>
       </div>
-      <div class="input-label mb-8">Issue type</div>
+      <div class="input-label mb-8">Issue type${isOfflineEdition ? ' (required)' : ''}</div>
       <div class="issue-grid">
         <button class="issue-btn" data-issue="deva">
           <div class="issue-icon" style="color:var(--yellow);">द</div>
@@ -952,8 +953,12 @@ export class StudyTab {
         </button>
       </div>
       <div class="input-label mb-4">Comment (what's wrong?)</div>
-      <textarea class="input-field mb-12" placeholder="e.g. Devanagari should be..." id="flag-comment"></textarea>
-      <button class="btn-primary" style="background:var(--pink);">🚩 Submit Flag</button>
+      <textarea class="input-field mb-12" ${isOfflineEdition ? 'maxlength="1000"' : ''} placeholder="e.g. Devanagari should be..." id="flag-comment"></textarea>
+      ${isOfflineEdition ? '<div class="offline-info" style="margin-bottom:12px;">This flag will be <strong>saved on this device</strong>, not submitted to a server. Find pending flags in Settings → Offline → Word issue flags.</div>' : ''}
+      ${isOfflineEdition ? '<div id="flag-status" role="status" aria-live="polite" style="font-size:12px;margin-bottom:8px;"></div>' : ''}
+      ${isOfflineEdition
+        ? '<button type="button" class="btn-primary" data-submit-flag style="background:var(--pink);">🚩 Save Flag Offline</button>'
+        : '<button class="btn-primary" style="background:var(--pink);">🚩 Submit Flag</button>'}
     `, { borderColor: 'var(--pink)' });
 
     // Issue type selection
@@ -963,6 +968,33 @@ export class StudyTab {
           box.querySelectorAll('[data-issue]').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
         });
+      });
+      const submit = isOfflineEdition ? box.querySelector('[data-submit-flag]') : null;
+      const status = isOfflineEdition ? box.querySelector('#flag-status') : null;
+      submit?.addEventListener('click', async () => {
+        if (submit.disabled) return;
+        const issueType = box.querySelector('[data-issue].active')?.dataset.issue;
+        if (!issueType) {
+          status.textContent = 'Please select what is wrong with this word.';
+          status.style.color = 'var(--pink)';
+          return;
+        }
+        submit.disabled = true;
+        status.textContent = 'Saving on this device…';
+        try {
+          await queueOfflineFlag({
+            wordId: word.id, wordText: word.burmese_word, source: word.source,
+            devanagari: dev, meaning: word.english_meaning,
+            issueType, comment: box.querySelector('#flag-comment').value
+          });
+          status.style.color = 'var(--green)';
+          status.textContent = '✓ Saved on this device. Pending delivery; not sent to the server.';
+          submit.textContent = '✓ Saved Offline';
+        } catch (error) {
+          status.style.color = 'var(--pink)';
+          status.textContent = `Flag not saved: ${error.message}`;
+          submit.disabled = false;
+        }
       });
     }
   }
