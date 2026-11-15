@@ -3,6 +3,8 @@ import { db } from './supabase.js';
 import { createDeviceBackup } from './data-backup.js';
 import { renderAccountMarkup } from './account-ui.js';
 import { checkAppOffline, downloadAppOffline } from './offline.js';
+import { isOfflineEdition } from './edition.js';
+import { VOCABULARY_SOURCES, listVocabularyPacks } from './offline-vocabulary.js';
 
 const STORAGE_KEY = 'burmese_app_settings';
 
@@ -39,7 +41,7 @@ export class SettingsPage {
     this.accountError = '';
     this.offlineDownloading = false;
     // Keep the user's open sections through preference re-renders in this session.
-    this.expandedSections = new Set(['learning']);
+    this.expandedSections = new Set(isOfflineEdition ? ['offline'] : ['learning']);
     this.app.songReviewSync?.subscribe(() => this.refreshAccountPanel());
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -65,7 +67,7 @@ export class SettingsPage {
         </div>
 
         <!-- Account: sign-in and sync controls belong in Settings, not the Review queue. -->
-        <h2 class="settings-account-label">Account</h2>
+        <h2 class="settings-account-label">${isOfflineEdition ? 'Offline edition' : 'Account'}</h2>
         <section class="settings-account-card" id="settings-account-panel" aria-label="Account and song review sync"></section>
 
         <div class="settings-fold-list">
@@ -207,7 +209,7 @@ export class SettingsPage {
               <button id="btn-export" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
                 background:var(--green);border:none;color:var(--bg);font-family:var(--font);flex-shrink:0;">Download</button>
             </div>
-            <div style="font-size:11px;color:var(--yellow);line-height:1.5;margin-bottom:6px;">Partial backup only. Does not include regular Study/SRS progress, server events, cloud-only reviews, or offline media. Store the JSON privately. Restore is not yet available.</div>
+            <div style="font-size:11px;color:var(--yellow);line-height:1.5;margin-bottom:6px;">Partial backup only. Does not include ${isOfflineEdition ? 'downloaded vocabulary or device-only Study/SRS ratings,' : 'regular Study/SRS progress,'} server events, cloud-only reviews, or offline media. Store the JSON privately. Restore is not yet available.</div>
             <div id="export-status" style="font-size:11px;color:var(--text-muted);"></div>
           </div>
 
@@ -242,11 +244,23 @@ export class SettingsPage {
         <details class="settings-fold" data-settings-section="offline" ${this.expandedSections.has('offline') ? 'open' : ''}>
           <summary class="settings-fold-summary">
             <span class="settings-fold-icon" aria-hidden="true">📥</span>
-            <span class="settings-fold-title"><strong>Offline</strong><small>Save app files and recorded audio</small></span>
+            <span class="settings-fold-title"><strong>Offline</strong><small>${isOfflineEdition ? 'Download vocabulary, app files and audio' : 'Save app files and recorded audio'}</small></span>
             <span class="settings-fold-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="settings-fold-content">
           <div class="settings-group-card">
+          ${isOfflineEdition ? `
+          <div class="offline-info" style="margin:12px 14px;">Download Burmese vocabulary while online. Study, quizzes and new SRS ratings then work on this device without internet. <strong>Progress is device-only and is NOT synchronized with your online account yet.</strong> Existing online learning history is not imported.</div>
+          <div class="offline-pack-list" role="group" aria-label="Vocabulary download packs">
+            ${VOCABULARY_SOURCES.map(source => `
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <div style="font-size:14px;font-weight:600;color:var(--text);">${source.name}</div>
+                  <div class="offline-pack-status" data-pack-status="${source.id}" role="status" aria-live="polite">Checking saved words…</div>
+                </div>
+                <button type="button" class="offline-pack-button" data-download-pack="${source.id}">Download</button>
+              </div>`).join('')}
+          </div>` : ''}
           <div class="settings-row">
               <div class="settings-row-text">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">App files for offline</div>
@@ -255,7 +269,9 @@ export class SettingsPage {
               <button id="btn-cache" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
                 background:var(--purple);border:none;color:#fff;font-family:var(--font);">Download files</button>
           </div>
-          <div class="offline-info" id="sw-detail">App files are separate from lessons and learning records stored on the server. Downloading the app does not download your complete Study/SRS vocabulary or progress.</div>
+          <div class="offline-info" id="sw-detail">${isOfflineEdition
+            ? 'App files and vocabulary are two separate downloads. Keep both ready before switching to airplane mode.'
+            : 'App files are separate from lessons and learning records stored on the server. Downloading the app does not download your complete Study/SRS vocabulary or progress.'}</div>
           <progress id="sw-progress" max="100" value="0" hidden aria-label="App file download progress"></progress>
           <div class="settings-row">
               <div class="settings-row-text">
@@ -272,8 +288,8 @@ export class SettingsPage {
         </div>
 
         <!-- App Info -->
-        <div class="settings-app-info">Burmese Study App · v1.0
-          <span>Supabase: ${db.connected ? '✓ Connected' : '✕ Not connected'}</span>
+        <div class="settings-app-info">Burmese Study ${isOfflineEdition ? 'Offline Edition' : 'App'} · v1.0
+          <span>${isOfflineEdition ? 'Device-only vocabulary and progress' : `Supabase: ${db.connected ? '✓ Connected' : '✕ Not connected'}`}</span>
         </div>
       </div>
     `;
@@ -291,6 +307,7 @@ export class SettingsPage {
 
     // Check SW status
     this.checkServiceWorker(container);
+    if (isOfflineEdition) this.bindVocabularyPacks(container);
 
     // Audio for offline (Phase 12): N of M saved + retryable Download all.
     import('./app-audio.js?v=1').then(A => {
@@ -384,7 +401,7 @@ export class SettingsPage {
         });
         if (result.ready) {
           swStatus.style.color = 'var(--green)';
-          swStatus.textContent = `✓ App files ready offline (${result.saved} / ${result.total}). Lessons may still require internet.`;
+          swStatus.textContent = `✓ App files ready offline (${result.saved} / ${result.total}). ${isOfflineEdition ? 'Download vocabulary packs separately before disconnecting.' : 'Lessons may still require internet.'}`;
           btn.textContent = 'Check again';
         } else {
           swStatus.style.color = 'var(--pink)';
@@ -403,7 +420,9 @@ export class SettingsPage {
     if (!panel) return; // Settings is no longer the visible page.
     const sync = this.app.songReviewSync;
     if (!sync) {
-      panel.textContent = 'Account sync is unavailable. You can still study offline.';
+      panel.textContent = isOfflineEdition
+        ? 'This edition is separate from the online app. Study/SRS ratings stay on this device until a verified account-safe synchronization phase is implemented.'
+        : 'Account sync is unavailable. You can still study offline.';
       return;
     }
     panel.innerHTML = renderAccountMarkup(sync.getState(), {
@@ -411,6 +430,46 @@ export class SettingsPage {
     });
     panel.querySelectorAll('[data-account-action]').forEach(button => {
       button.addEventListener('click', () => this.performAccountAction(button.dataset.accountAction));
+    });
+  }
+
+  async bindVocabularyPacks(container) {
+    const refresh = async () => {
+      try {
+        const saved = await listVocabularyPacks();
+        for (const source of VOCABULARY_SOURCES) {
+          const label = container.querySelector(`[data-pack-status="${source.id}"]`);
+          if (!label) continue;
+          const pack = saved.find(p => p.source === source.id);
+          label.textContent = pack
+            ? `${pack.count.toLocaleString()} words saved · ${new Date(pack.downloadedAt).toLocaleDateString()}`
+            : 'Not downloaded';
+        }
+      } catch (error) {
+        container.querySelectorAll('[data-pack-status]').forEach(label =>
+          { label.textContent = `Offline storage unavailable: ${error.message}`; });
+      }
+    };
+    await refresh();
+    container.querySelectorAll('[data-download-pack]').forEach(button => {
+      button.addEventListener('click', async () => {
+        const source = button.dataset.downloadPack;
+        const label = container.querySelector(`[data-pack-status="${source}"]`);
+        button.disabled = true;
+        button.textContent = 'Downloading…';
+        label.textContent = 'Connecting…';
+        try {
+          const count = await db.downloadPublicWordPack(source, ({ count: done }) => {
+            label.textContent = `${done.toLocaleString()} words received…`;
+          });
+          await this.app.tabs.study.init();
+          label.textContent = `✓ ${count.toLocaleString()} words saved on this device`;
+          button.textContent = 'Update';
+        } catch (error) {
+          label.textContent = `Download failed: ${error.message}`;
+          button.textContent = 'Retry';
+        } finally { button.disabled = false; }
+      });
     });
   }
 

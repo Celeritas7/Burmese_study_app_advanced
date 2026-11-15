@@ -6,6 +6,7 @@ import { Quiz } from './quiz.js';
 import { getSettings } from './settings.js';
 import { sayBtn, autoPlay } from './app-audio.js?v=1';   // Phase 12
 import { buildGroups } from './hubexplorer.js';
+import { isOfflineEdition } from './edition.js';
 
 const WORD_TREE_CSS = `<style>
 .wt-forest{max-height:60vh;overflow-y:auto;margin:0 -4px;scrollbar-width:thin;scrollbar-color:var(--border-light,#2A3A42) transparent;}
@@ -178,7 +179,8 @@ export class StudyTab {
 
         ${SOURCES.map(s => {
           const inCourse = this.courseUnit != null && s.id === 'colloquial';
-          const count = inCourse ? (this._unitCount ?? '...') : (this.wordCounts[s.id] || (s.disabled ? 0 : '...'));
+          const count = inCourse ? (this._unitCount ?? '...') :
+            (isOfflineEdition ? (this.wordCounts[s.id] || 0) : (this.wordCounts[s.id] || (s.disabled ? 0 : '...')));
           const active = this.selectedSource === s.id;
           return `
             <button class="source-card ${active ? 'active' : ''}" data-source="${s.id}"
@@ -192,6 +194,7 @@ export class StudyTab {
             </button>`;
         }).join('')}
 
+        ${isOfflineEdition ? `<p class="offline-study-note">Only downloaded words appear here. Ratings are saved on this device, not to your online account. Visit More → Settings → Offline to download or update packs.</p>` : ''}
         <button class="btn-primary" id="start-btn" style="background:var(--green);margin-top:8px;">▶ Start Session</button>
         <button class="btn-primary" id="quiz-btn" style="background:var(--purple);margin-top:8px;">🧠 Quiz Mode →</button>
       </div>`;
@@ -287,7 +290,7 @@ export class StudyTab {
       words = words.sort(() => Math.random() - 0.5).slice(0, this.wordsPerSession);
 
       if (words.length === 0) {
-        container.innerHTML = '<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--text-muted);">No words found. Try a different source.</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>';
+        container.innerHTML = `<div class="pad text-center" style="padding-top:30vh;"><div style="font-size:18px;color:var(--text-muted);">${isOfflineEdition ? 'No downloaded words for this source. Open Settings → Offline to download a pack.' : 'No words found. Try a different source.'}</div><button class="btn-primary" id="back-btn" style="max-width:200px;margin:16px auto;">← Back</button></div>`;
         container.querySelector('#back-btn').addEventListener('click', () => {
           this.phase = 'setup';
           this.render(container);

@@ -1,4 +1,7 @@
 // ═══ SUPABASE CLIENT ═══
+import { isOfflineEdition } from './edition.js';
+import { downloadVocabularyPack, getDownloadedWords, getLocalUserState,
+  logLocalProgress, saveLocalUserRating, updateLocalUserState } from './offline-vocabulary.js';
 const SUPABASE_URL = 'https://ulgrfumbwjovbjzjiems.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsZ3JmdW1id2pvdmJqemppZW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNzIyNjcsImV4cCI6MjA4Mjk0ODI2N30.ix5Vh4Y3GXNbQbzVtTD_WSko0L3cr5q_eCnTuDEMh7M';
 const STORAGE_KEY = 'burmese_supabase_key';
@@ -25,6 +28,21 @@ class SupabaseClient {
   }
 
   async query(table, { select = '*', filters = [], order, limit, single = false } = {}) {
+    if (isOfflineEdition) {
+      // The separate edition never reads legacy shared-user tables. Word
+      // packs are explicit downloads, and practice history stays device-only.
+      if (table === 'burmese_app_words') {
+        const source = filters.find(f => f.startsWith('source=eq.'))?.slice(10);
+        const categoryId = filters.find(f => f.startsWith('category_id=eq.'))?.slice(15);
+        const words = await getDownloadedWords({ source, categoryId, limit });
+        return single ? words[0] || null : words;
+      }
+      if (table === 'burmese_app_user_state') {
+        const states = await getLocalUserState();
+        return single ? states[0] || null : states;
+      }
+      throw new Error(`${table} is not included in downloaded offline vocabulary packs.`);
+    }
     let url = `${this.url}/rest/v1/${table}?select=${encodeURIComponent(select)}`;
     for (const f of filters) {
       url += `&${f}`;
@@ -39,6 +57,10 @@ class SupabaseClient {
   }
 
   async insert(table, row) {
+    if (isOfflineEdition) {
+      if (table === 'burmese_app_progress_events') return logLocalProgress(row);
+      throw new Error('Offline edition cannot write to shared Supabase tables.');
+    }
     const res = await fetch(`${this.url}/rest/v1/${table}`, {
       method: 'POST',
       headers: this.headers,
@@ -49,6 +71,11 @@ class SupabaseClient {
   }
 
   async update(table, id, updates) {
+    if (isOfflineEdition) {
+      if (table === 'burmese_app_user_state' && String(id).startsWith('device:'))
+        return [await updateLocalUserState(Number(String(id).slice(7)), updates)];
+      throw new Error('Offline edition cannot update shared Supabase tables.');
+    }
     const res = await fetch(`${this.url}/rest/v1/${table}?id=eq.${id}`, {
       method: 'PATCH',
       headers: this.headers,
@@ -59,6 +86,7 @@ class SupabaseClient {
   }
 
   async testConnection() {
+    if (isOfflineEdition) { this.connected = false; return false; }
     try {
       await this.query('burmese_app_consonants', { limit: 1 });
       this.connected = true;
@@ -72,6 +100,7 @@ class SupabaseClient {
   // ─── APP-SPECIFIC QUERIES ───
 
   async getWords({ source, categoryId, limit: lim } = {}) {
+    if (isOfflineEdition) return getDownloadedWords({ source, categoryId, limit: lim });
     const filters = [];
     if (source) filters.push(`source=eq.${source}`);
     if (categoryId) filters.push(`category_id=eq.${categoryId}`);
@@ -113,6 +142,7 @@ class SupabaseClient {
 
   // Get sentences linked to a word via junction table
   async getSentencesForWord(wordId) {
+    if (isOfflineEdition) return [];
     return this.query('burmese_app_word_sentences', {
       select: 'sentence_id,rating,burmese_app_sentences(id,burmese_text,english_text,category)',
       filters: [`word_id=eq.${wordId}`]
@@ -134,6 +164,7 @@ class SupabaseClient {
 
   // Batch: get sentence counts for multiple word IDs
   async getSentenceCountsForWords(wordIds) {
+    if (isOfflineEdition) return {};
     if (!wordIds || wordIds.length === 0) return {};
     const links = await this.query('burmese_app_word_sentences', {
       select: 'word_id,sentence_id',
@@ -171,6 +202,7 @@ class SupabaseClient {
   }
 
   async getUserState() {
+    if (isOfflineEdition) return getLocalUserState();
     return this.query('burmese_app_user_state', { order: 'next_review_at' });
   }
 
@@ -185,6 +217,7 @@ class SupabaseClient {
   }
 
   async upsertUserState(wordId, rating) {
+    if (isOfflineEdition) return [await saveLocalUserRating(wordId, rating)];
     const existing = await this.query('burmese_app_user_state', {
       filters: [`word_id=eq.${wordId}`],
       single: true
@@ -233,6 +266,20 @@ class SupabaseClient {
       counts[src] = (counts[src] || 0) + 1;
     }
     return counts;
+  }
+
+  // Download only public vocabulary records into the separate device origin.
+  // Legacy account progress, private song queues and any other table are excluded.
+  async downloadPublicWordPack(source, onProgress) {
+    if (!isOfflineEdition) throw new Error('Vocabulary packs belong to the separate offline edition.');
+    return downloadVocabularyPack(source, async (src, offset, limit) => {
+      const url = `${this.url}/rest/v1/burmese_app_words?select=*&source=eq.${encodeURIComponent(src)}` +
+        `&order=id.asc&limit=${limit}&offset=${offset}`;
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+      const response = await fetch(url, { headers, cache: 'no-store' });
+      if (!response.ok) throw new Error(`Vocabulary download failed (HTTP ${response.status}). Previous pack retained.`);
+      return response.json();
+    }, onProgress);
   }
 }
 

@@ -1,0 +1,15 @@
+{
+  "id": "/burmese-study-offline",
+  "name": "Burmese Study Offline",
+  "short_name": "Burmese Offline",
+  "description": "A separate, device-first edition of Burmese Study",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#131F24",
+  "theme_color": "#131F24",
+  "lang": "en",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
