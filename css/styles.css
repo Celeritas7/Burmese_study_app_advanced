@@ -51,6 +51,13 @@ body {
   position: relative;
 }
 
+/* UI-5: give learning material more reading room on iPads, while keeping other
+   pages at their familiar phone-centered width. */
+@media (min-width: 700px) {
+  #app.learning-wide { max-width: 760px; }
+  #app.writing-layout { max-width: 900px; }
+}
+
 /* ═══ LAYOUT ═══ */
 .tab-content {
   flex: 1;
@@ -216,7 +223,7 @@ body {
   align-items: center;
   margin-bottom: 6px;
 }
-.fc-title { font-size: 13px; color: var(--text); font-weight: 600; }
+.fc-title { flex: 1; min-width: 0; font-size: 13px; color: var(--text); font-weight: 600; overflow-wrap: anywhere; }
 .fc-title span { color: var(--text-muted); font-size: 11px; }
 .fc-close {
   color: var(--text-muted);
@@ -224,7 +231,9 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 9px;
+  min-width: 42px;
+  min-height: 42px;
 }
 .fc-counter { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
 
@@ -254,7 +263,21 @@ body {
   font-weight: 800;
   color: var(--card-text);
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
+
+.study-mode-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 14px; }
+.study-mode-list .mode-btn { min-height: 42px; }
+.study-rating-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px; max-width: 360px; margin: 0 auto 14px; justify-items: center; }
+.study-rating-grid button { width: 100%; max-width: 60px; min-height: 62px;
+  display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; }
+.study-rating-label { font-size: 10px; font-weight: 800; line-height: 1.1; }
+@media (min-width: 390px) {
+  .study-rating-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); max-width: 380px; }
+}
+.study-rating-grid button:focus-visible, .study-mode-list button:focus-visible,
+.fc-close:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 /* ═══ REVEAL BOX ═══ */
 .reveal-box {
@@ -268,6 +291,7 @@ body {
   transition: all 0.2s;
 }
 .reveal-box.revealed { cursor: default; }
+.reveal-box:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .reveal-placeholder {
   text-align: center;
   padding: 24px 0;
@@ -470,6 +494,19 @@ body {
   background: var(--surface);
   border: 2px solid var(--border);
 }
+.srs-item .flex-1 { min-width: 0; }
+.srs-item .srs-word, .srs-item .srs-meaning { overflow-wrap: anywhere; }
+.srs-exit { min-height: 42px; flex-shrink: 0; }
+.srs-response-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px; max-width: 600px; margin: 0 auto 14px; }
+.srs-response-grid .srs-resp { min-height: 68px; min-width: 0; }
+.srs-response-grid .srs-resp:focus-visible, .srs-exit:focus-visible {
+  outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 360px) {
+  .srs-item { gap: 8px; padding: 11px 10px; }
+  .srs-stats { gap: 5px; }
+  .srs-stat { padding: 12px 5px; }
+}
 .srs-dot { width: 10px; height: 10px; border-radius: 5px; }
 .srs-word { font-size: 16px; font-weight: 700; }
 .srs-meaning { font-size: 12px; color: var(--text-muted); }
@@ -581,6 +618,16 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .home-stats { display: flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 12px; background: var(--surface); border: 2px solid var(--border); color: var(--text); font-size: 12px; font-weight: 800; cursor: pointer; font-family: var(--font); }
 .home-icon { background: none; border: none; cursor: pointer; font-size: 17px; color: var(--text-muted); }
 .home-music { padding: 6px; border-radius: 10px; background: rgba(255,107,138,0.1); }
+.home-header .home-icon { display: grid; place-items: center; flex-shrink: 0; min-width: 40px; min-height: 40px; }
+.home-header .home-stats { min-height: 40px; }
+.home-header .home-brand { min-width: 0; }
+.home-header button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 380px) {
+  .home-header { gap: 6px; padding: 12px 10px 8px; }
+  .home-brand { font-size: 15px; line-height: 1.15; }
+  .home-stats { min-width: 40px; padding: 7px; justify-content: center; }
+  .home-stats-label { display: none; }
+}
 
 /* ═══ BURMESE SONG LIBRARY ═══ */
 .songs-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -593,7 +640,7 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .songs-categories { display: flex; overflow-x: auto; gap: 8px; padding: 0 0 14px;
   scrollbar-width: thin; scrollbar-color: var(--border-light) transparent; }
 .songs-category { display: flex; align-items: center; gap: 7px; flex-shrink: 0;
-  border: 1px solid var(--border-light); border-radius: 12px; padding: 9px 10px;
+  min-height: 44px; border: 1px solid var(--border-light); border-radius: 12px; padding: 9px 10px;
   background: var(--surface); color: var(--text); cursor: pointer; font: inherit;
   font-size: 11px; font-weight: 700; }
 .songs-category.active { border-color: var(--pink); background: rgba(255,107,138,0.16); }
@@ -602,16 +649,16 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .songs-count { font-size: 11px; color: #A1B6C0; margin-top: 12px; }
 .songs-tools { display: flex; gap: 8px; align-items: stretch; }
 .songs-search { min-width: 0; flex: 1; background: var(--surface); border: 2px solid var(--border);
-  border-radius: 12px; padding: 12px; color: var(--text); font: inherit; font-size: 12px; }
+  border-radius: 12px; padding: 12px; color: var(--text); font: inherit; font-size: 16px; }
 .songs-search:focus, .song-form input:focus, .song-form select:focus { outline: none; border-color: var(--pink); }
 .songs-add { border: none; border-radius: 12px; background: var(--pink); color: var(--bg);
-  padding: 0 14px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+  padding: 0 14px; min-height: 44px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .songs-status { min-height: 18px; margin: 6px 0 12px; color: var(--green); font-size: 11px; }
 .songs-list { display: flex; flex-direction: column; gap: 12px; }
 .song-group-heading { display: flex; align-items: center; gap: 7px; margin-top: 8px;
   font-size: 14px; font-weight: 800; }
 .song-group-heading span { color: #A1B6C0; font-size: 11px; }
-.song-card { border: 2px solid var(--border); background: var(--surface); border-radius: 18px; padding: 16px; }
+.song-card { border: 2px solid var(--border); background: var(--surface); border-radius: 18px; padding: 16px; overflow-wrap: anywhere; }
 .song-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .song-art { flex: 0 0 50px; width: 50px; height: 50px; border-radius: 15px;
   background: rgba(255,107,138,0.15); border: 2px solid rgba(255,107,138,0.25);
@@ -800,7 +847,13 @@ textarea.input-field { min-height: 60px; resize: vertical; }
   padding: 8px; font-size: 11px; font-weight: 800; color: var(--text); text-decoration: none; text-align: center; }
 .song-link-main { background: var(--pink); border-color: var(--pink); color: var(--bg); }
 .song-edit-link { background: transparent; border: none; color: var(--blue); font: inherit;
-  font-size: 11px; font-weight: 700; padding: 14px 0 0; cursor: pointer; }
+  font-size: 12px; font-weight: 700; min-height: 44px; padding: 12px 0; cursor: pointer; }
+@media (max-width: 380px) {
+  .song-actions { grid-template-columns: 1fr; }
+  .songs-tools { flex-wrap: wrap; }
+  .songs-search { flex-basis: 100%; }
+  .songs-add { flex: 1; }
+}
 .songs-empty { text-align: center; padding: 26px 12px; font-size: 13px; color: var(--text-muted); }
 .songs-editor:empty { display: none; }
 .song-form { background: var(--surface); border: 2px solid var(--pink); border-radius: 18px;
@@ -815,6 +868,8 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .song-form-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .song-form-buttons button { font: inherit; font-size: 12px; font-weight: 800; border: none;
   border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+.song-form input, .song-form select { font-size: 16px; }
+.song-form-buttons button { min-height: 44px; }
 .song-save { background: var(--green); color: var(--bg); }
 .song-cancel { background: var(--border-light); color: var(--text); }
 .song-remove { background: rgba(255,75,75,0.12); color: var(--red); margin-left: auto; }

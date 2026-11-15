@@ -365,9 +365,10 @@ export class StudyTab {
         <div class="fc-counter">${this.currentIdx + 1} / ${total}</div>
 
         <!-- Mode toggles -->
-        <div style="display:flex; gap:5px; justify-content:center; margin-bottom:12px;">
+        <div class="study-mode-list">
           ${MODES.map(m => `
             <button class="mode-btn ${this.mode === m.id ? 'active' : ''}" data-mode="${m.id}"
+              aria-label="${m.label}" aria-pressed="${this.mode === m.id}"
               style="padding:5px 13px; border-radius:10px; font-size:11px; font-weight:700;">
               <span class="mode-icon" style="font-size:11px;">${m.icon}</span>
               ${this.mode === m.id ? `<span class="mode-text" style="margin:0 0 0 3px; font-size:10px;">${m.label}</span>` : ''}
@@ -383,7 +384,8 @@ export class StudyTab {
         </div>
 
         <!-- Reveal box -->
-        <div class="reveal-box ${this.revealLevel > 0 ? 'revealed' : ''}" id="reveal-box">
+        <div class="reveal-box ${this.revealLevel > 0 ? 'revealed' : ''}" id="reveal-box"
+          role="button" tabindex="0" aria-label="Reveal word hint or meaning">
           ${this.renderReveal(w, dev)}
         </div>
 
@@ -397,24 +399,23 @@ export class StudyTab {
 
         <!-- Rating -->
         <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:8px;">Change Rating</div>
-        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px;">
+        <div class="study-rating-grid" role="group" aria-label="Rate this word">
           ${RATING_ORDER.map((i) => {
             const r = RATINGS[i];
             const isActive = rating === i;
             const isNope = i === 5;
-            const size = '42px';
             const bg = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.15)' : `${r.color}15`);
             const border = isActive ? r.color : (isNope ? 'rgba(255,75,75,0.4)' : 'var(--border)');
             const iconColor = isActive ? '#fff' : r.color;
             const radius = isNope ? '12px' : '22px';
             return `
-              <button data-rating="${i}" style="
-                width:${size};height:${size};border-radius:${radius};
+              <button data-rating="${i}" aria-label="${r.label}" aria-pressed="${isActive}" style="
+                border-radius:${radius};
                 display:flex;align-items:center;justify-content:center;
                 font-size:${isNope ? '18px' : '17px'};cursor:pointer;
                 background:${bg};border:2px solid ${border};
                 color:${iconColor};transition:all 0.15s;font-family:var(--font);
-              ">${r.icon}</button>
+              "><span aria-hidden="true">${r.icon}</span><span class="study-rating-label">${r.label}</span></button>
             `;
           }).join('')}
         </div>
@@ -507,6 +508,9 @@ export class StudyTab {
         if (this.mode === 'burmese' ? this.revealLevel === 1 : this.revealLevel >= maxLevel)
           autoPlay(word.burmese_word, container.querySelector('.word-card [data-au]') || box.querySelector('[data-au]'));
       }
+    });
+    container.querySelector('#reveal-box').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); }
     });
 
     // Ratings

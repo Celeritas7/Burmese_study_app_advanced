@@ -4,11 +4,11 @@
 // Each entry is one day's focus. The home screen picks one by date, so it
 // changes every day and recolors to that focus's accent.
 const FOCI = [
-  { source: 'kg_book',    glyph: 'မ',     title: 'Greetings & basics', sub: 'KG Book · Lesson 3',    meta: '8 new words',  color: '#FF6B8A', done: 'Vocabulary' },
-  { source: 'words',      glyph: 'စာ',    title: 'Core vocabulary',    sub: 'Main Words · Set 12',   meta: '10 new words', color: '#58CC02', done: 'Greetings' },
-  { source: 'recipes',    glyph: 'ဟင်း',  title: 'Kitchen & food',     sub: 'Recipes · Chapter 4',   meta: '6 new words',  color: '#CE82FF', done: 'Core vocab' },
-  { source: 'colloquial', glyph: 'စကား', title: 'Everyday speech',    sub: 'Colloquial · Unit 7',   meta: '9 new words',  color: '#FFC800', done: 'Kitchen' },
-  { source: 'kg_book',    glyph: 'ဗျည်း', title: 'Consonant drill',    sub: 'KG Book · Writing pad', meta: '5 letters',    color: '#1CB0F6', done: 'Everyday' },
+  { source: 'kg_book',    glyph: 'မ',     title: 'Greetings & basics', sub: 'KG Book · starter words',     color: '#FF6B8A' },
+  { source: 'words',      glyph: 'စာ',    title: 'Core vocabulary',    sub: 'Main Words · word practice',  color: '#58CC02' },
+  { source: 'recipes',    glyph: 'ဟင်း',  title: 'Kitchen & food',     sub: 'Recipes · food vocabulary',  color: '#CE82FF' },
+  { source: 'colloquial', glyph: 'စကား', title: 'Everyday speech',    sub: 'Colloquial · conversation', color: '#FFC800' },
+  { source: 'kg_book',    glyph: 'ဗျည်း', title: 'Letter-focused words', sub: 'KG Book · word practice', color: '#1CB0F6' },
 ];
 
 export class HomeTab {
@@ -26,8 +26,8 @@ export class HomeTab {
           <div class="home-logo">မ</div>
           <div class="home-brand">Burmese Study</div>
           <button class="home-icon home-music" id="home-music" aria-label="Burmese songs" title="Burmese songs">🎵</button>
-          <button class="home-stats" id="home-stats">📊 Stats</button>
-          <button class="home-icon" id="home-settings">⚙️</button>
+          <button class="home-stats" id="home-stats" aria-label="Statistics"><span aria-hidden="true">📊</span><span class="home-stats-label">Stats</span></button>
+          <button class="home-icon" id="home-settings" aria-label="Settings">⚙️</button>
         </div>
 
         <div class="home-wm" aria-hidden="true">
@@ -37,12 +37,12 @@ export class HomeTab {
         </div>
 
         <div class="home-hero">
-          <div class="home-done">✓ ${f.done} completed today</div>
+          <div class="home-done">✦ Suggested practice · changes daily</div>
           <div class="home-glyph">${f.glyph}</div>
-          <div class="home-focus-label">Today's Focus</div>
+          <div class="home-focus-label">Today's suggestion</div>
           <div class="home-title">${f.title}</div>
           <div class="home-sub">${f.sub}</div>
-          <div class="home-meta">${f.meta}</div>
+          <div class="home-meta">A place to start whenever you're ready.</div>
           <button class="home-start" id="home-start">
             <span class="home-play">▶</span>
             <span class="home-start-label">Start practice</span>

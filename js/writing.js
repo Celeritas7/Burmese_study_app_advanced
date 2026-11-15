@@ -14,7 +14,7 @@ export class WritingPractice {
     this.showAnswers = false;
     this.canvases = {};
     this.marks = {}; // idx → 'correct' | 'wrong' | null
-    this.originalViewport = '';
+    this.originalViewport = null;
     this.styleEl = null;
   }
 
@@ -42,19 +42,21 @@ export class WritingPractice {
   enableZoom() {
     const meta = document.querySelector('meta[name="viewport"]');
     if (meta) {
-      this.originalViewport = meta.getAttribute('content');
+      if (this.originalViewport === null) this.originalViewport = meta.getAttribute('content') || '';
       meta.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes');
     }
   }
 
   disableZoom() {
     const meta = document.querySelector('meta[name="viewport"]');
-    if (meta && this.originalViewport) meta.setAttribute('content', this.originalViewport);
+    if (meta && this.originalViewport !== null) meta.setAttribute('content', this.originalViewport);
+    this.originalViewport = null;
   }
 
   cleanup() {
     this.disableZoom();
     if (this.styleEl) { this.styleEl.remove(); this.styleEl = null; }
+    document.getElementById('app')?.classList.remove('writing-layout');
   }
 
   async render(container) {
@@ -63,6 +65,7 @@ export class WritingPractice {
       await this.loadData();
     }
     this.enableZoom();
+    document.getElementById('app')?.classList.add('writing-layout');
 
     // Inject styles — use sticky header inside scroll container
     if (this.styleEl) this.styleEl.remove();
@@ -71,19 +74,26 @@ export class WritingPractice {
     this.styleEl.textContent = `
       .tab-bar { display:none !important; }
       .tab-content { padding-bottom:0 !important; }
-      #wr-header { position:sticky; top:0; z-index:100; background:#131F24; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #1E2D33; }
-      .wr-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:2px; padding:4px; max-width:800px; margin:0 auto; }
+      #wr-header { position:sticky; top:0; z-index:100; background:#131F24; padding:9px 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-bottom:2px solid #1E2D33; }
+      .wr-header-brand { display:flex; align-items:center; gap:8px; min-width:0; }
+      .wr-header-actions { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+      .wr-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:8px; max-width:900px; margin:0 auto; }
+      @media (min-width:430px) { .wr-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+      @media (min-width:600px) { .wr-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+      @media (min-width:720px) { .wr-grid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; padding:12px; } }
+      @media (max-width:540px) { .wr-header-actions { width:100%; justify-content:space-between; } .wr-header-actions .wr-hdr-btn { flex:1; } }
       .wr-sq { position:relative; width:100%; padding-bottom:100%; border-radius:6px; overflow:hidden; background:#FAFAF8; border:2px solid #ddd; }
       .wr-sq-inner { position:absolute; inset:0; display:flex; flex-direction:column; }
       .wr-canvas-area { flex:1; position:relative; overflow:hidden; }
       .wr-label { height:0; overflow:hidden; transition:height 0.2s ease; background:rgba(0,0,0,0.05); border-top:1px solid rgba(0,0,0,0.08); display:flex; align-items:center; justify-content:center; gap:4px; padding:0 2px; }
-      .wr-label.shown { height:26px; }
+      .wr-label.shown { height:34px; }
       .wr-ghost { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:rgba(0,0,0,0.07); pointer-events:none; font-family:'Noto Sans Myanmar',sans-serif; }
       .wr-ghost.hidden { display:none; }
       .wr-cv { position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
       .wr-cv.view-mode { touch-action:auto; pointer-events:none; cursor:default; }
       .wr-cv.write-mode { touch-action:none; pointer-events:auto; cursor:crosshair; }
-      .wr-hdr-btn { padding:5px 10px; border-radius:8px; font-size:10px; font-weight:700; cursor:pointer; border:2px solid; font-family:inherit; }
+      .wr-hdr-btn { min-height:44px; padding:8px 11px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; border:2px solid; font-family:inherit; }
+      .wr-hdr-btn:focus-visible,.wr-x:focus-visible,.wr-mark:focus-visible,.wr-reveal:focus-visible { outline:3px solid #1CB0F6; outline-offset:2px; }
     `;
     document.head.appendChild(this.styleEl);
 
@@ -92,19 +102,19 @@ export class WritingPractice {
     container.innerHTML = `
       <!-- Sticky header inside scroll container -->
       <div id="wr-header">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button id="wr-back" class="wr-hdr-btn" style="background:#1A2C33;border-color:#2A3A42;color:#5A7A88;">←</button>
+        <div class="wr-header-brand">
+          <button id="wr-back" class="wr-hdr-btn" aria-label="Back to previous page" style="background:#1A2C33;border-color:#2A3A42;color:#EAEEF3;">← Back</button>
           <span style="font-size:13px;font-weight:800;color:#EAEEF3;">📝 Practice</span>
         </div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <button id="wr-mode-btn" class="wr-hdr-btn" style="background:${this.writeMode?'#FF9600':'#1A2C33'};border-color:${this.writeMode?'#FF9600':'#2A3A42'};color:${this.writeMode?'#fff':'#5A7A88'};">${this.writeMode?'✏️ Write':'👁 View'}</button>
-          <button id="wr-guide-btn" class="wr-hdr-btn" style="background:${this.showGuide?'#58CC02':'#1A2C33'};border-color:${this.showGuide?'#58CC02':'#2A3A42'};color:${this.showGuide?'#fff':'#5A7A88'};">Abc</button>
-          <button id="wr-ans-btn" class="wr-hdr-btn" style="background:${this.showAnswers?'#58CC02':'#1A2C33'};border-color:${this.showAnswers?'#58CC02':'#2A3A42'};color:${this.showAnswers?'#fff':'#5A7A88'};">A̲</button>
-          <button id="wr-clear-btn" class="wr-hdr-btn" style="background:#1A2C33;border-color:#2A3A42;color:#5A7A88;">🗑</button>
+        <div class="wr-header-actions">
+          <button id="wr-mode-btn" class="wr-hdr-btn" aria-label="Writing mode" aria-pressed="${this.writeMode}" style="background:${this.writeMode?'#FF9600':'#1A2C33'};border-color:${this.writeMode?'#FF9600':'#2A3A42'};color:${this.writeMode?'#fff':'#EAEEF3'};">${this.writeMode?'✏️ Write':'👁 View'}</button>
+          <button id="wr-guide-btn" class="wr-hdr-btn" aria-pressed="${this.showGuide}" style="background:${this.showGuide?'#58CC02':'#1A2C33'};border-color:${this.showGuide?'#58CC02':'#2A3A42'};color:${this.showGuide?'#fff':'#EAEEF3'};">Guide</button>
+          <button id="wr-ans-btn" class="wr-hdr-btn" aria-pressed="${this.showAnswers}" style="background:${this.showAnswers?'#58CC02':'#1A2C33'};border-color:${this.showAnswers?'#58CC02':'#2A3A42'};color:${this.showAnswers?'#fff':'#EAEEF3'};">Answers</button>
+          <button id="wr-clear-btn" class="wr-hdr-btn" aria-label="Clear all drawings and current marks" style="background:#1A2C33;border-color:#2A3A42;color:#EAEEF3;">Clear</button>
         </div>
       </div>
 
-      <div id="wr-hint" style="text-align:center;padding:4px 0;font-size:9px;color:#5A7A88;">
+      <div id="wr-hint" style="text-align:center;padding:8px;font-size:12px;color:#A0B5BF;">
         ${this.writeMode ? '✏️ Draw with finger · Tap 👁 to scroll/zoom' : '👁 Scroll & zoom · Tap ✏️ to write'}
       </div>
 
@@ -140,18 +150,18 @@ export class WritingPractice {
         <div class="wr-sq-inner">
           <div class="wr-canvas-area">
             <!-- Clear button -->
-            <button class="wr-x" data-cidx="${idx}" style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:3px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);color:rgba(0,0,0,0.3);font-size:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;font-family:inherit;">✕</button>
+            <button class="wr-x" data-cidx="${idx}" aria-label="Clear drawing ${idx + 1}" style="position:absolute;top:2px;left:2px;width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,0.86);border:1px solid rgba(0,0,0,0.17);color:#49545B;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;font-family:inherit;">✕</button>
 
             <!-- Correct / Wrong buttons -->
             <div style="position:absolute;top:2px;right:2px;display:flex;gap:2px;z-index:5;">
-              <button class="wr-mark" data-midx="${idx}" data-mtype="correct" style="width:18px;height:18px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:inherit;
+              <button class="wr-mark" data-midx="${idx}" data-mtype="correct" aria-label="Mark drawing ${idx + 1} correct" aria-pressed="${mark==='correct'}" style="width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:inherit;
                 background:${mark==='correct'?'#58CC02':'rgba(0,0,0,0.04)'};
                 border:2px solid ${mark==='correct'?'#58CC02':'rgba(0,0,0,0.14)'};
-                color:${mark==='correct'?'#fff':'rgba(0,0,0,0.3)'};">✓</button>
-              <button class="wr-mark" data-midx="${idx}" data-mtype="wrong" style="width:18px;height:18px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:inherit;
+                color:${mark==='correct'?'#fff':'#49545B'};">✓</button>
+              <button class="wr-mark" data-midx="${idx}" data-mtype="wrong" aria-label="Mark drawing ${idx + 1} needs practice" aria-pressed="${mark==='wrong'}" style="width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;font-family:inherit;
                 background:${mark==='wrong'?'#FF4B4B':'rgba(0,0,0,0.04)'};
                 border:2px solid ${mark==='wrong'?'#FF4B4B':'rgba(0,0,0,0.14)'};
-                color:${mark==='wrong'?'#fff':'rgba(0,0,0,0.3)'};">✗</button>
+                color:${mark==='wrong'?'#fff':'#49545B'};">✗</button>
             </div>
 
             <!-- Ghost guide -->
@@ -161,13 +171,13 @@ export class WritingPractice {
             <canvas class="wr-cv ${modeClass}" data-canvasid="${idx}"></canvas>
 
             <!-- Reveal answer button -->
-            <button class="wr-reveal" data-ridx="${idx}" style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:8px;color:rgba(0,0,0,0.25);background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);border-radius:3px;padding:1px 8px;cursor:pointer;z-index:5;font-family:inherit;">···</button>
+            <button class="wr-reveal" data-ridx="${idx}" aria-label="Reveal answer ${idx + 1}" style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);min-width:44px;min-height:26px;font-size:13px;color:#49545B;background:rgba(255,255,255,0.88);border:1px solid rgba(0,0,0,0.17);border-radius:7px;padding:2px 8px;cursor:pointer;z-index:5;font-family:inherit;">···</button>
           </div>
 
           <!-- Hidden answer label -->
           <div class="wr-label ${this.showAnswers?'shown':''}" data-lidx="${idx}">
-            <span style="font-size:11px;color:#999;font-weight:600;">${group.dev}</span>
-            ${romans ? `<span style="font-size:9px;color:#bbb;">${romans}</span>` : ''}
+            <span style="font-size:12px;color:#66757B;font-weight:700;">${group.dev}</span>
+            ${romans ? `<span style="font-size:10px;color:#66757B;">${romans}</span>` : ''}
           </div>
         </div>
       </div>
@@ -259,8 +269,9 @@ export class WritingPractice {
       const btn = container.querySelector('#wr-mode-btn');
       btn.style.background = this.writeMode ? '#FF9600' : '#1A2C33';
       btn.style.borderColor = this.writeMode ? '#FF9600' : '#2A3A42';
-      btn.style.color = this.writeMode ? '#fff' : '#5A7A88';
+      btn.style.color = this.writeMode ? '#fff' : '#EAEEF3';
       btn.innerHTML = this.writeMode ? '✏️ Write' : '👁 View';
+      btn.setAttribute('aria-pressed', String(this.writeMode));
       container.querySelectorAll('.wr-cv').forEach(cv => {
         cv.classList.toggle('view-mode', !this.writeMode);
         cv.classList.toggle('write-mode', this.writeMode);
@@ -276,7 +287,8 @@ export class WritingPractice {
       const btn = container.querySelector('#wr-guide-btn');
       btn.style.background = this.showGuide ? '#58CC02' : '#1A2C33';
       btn.style.borderColor = this.showGuide ? '#58CC02' : '#2A3A42';
-      btn.style.color = this.showGuide ? '#fff' : '#5A7A88';
+      btn.style.color = this.showGuide ? '#fff' : '#EAEEF3';
+      btn.setAttribute('aria-pressed', String(this.showGuide));
       container.querySelectorAll('.wr-ghost').forEach(el => el.classList.toggle('hidden', !this.showGuide));
     });
 
@@ -286,7 +298,8 @@ export class WritingPractice {
       const btn = container.querySelector('#wr-ans-btn');
       btn.style.background = this.showAnswers ? '#58CC02' : '#1A2C33';
       btn.style.borderColor = this.showAnswers ? '#58CC02' : '#2A3A42';
-      btn.style.color = this.showAnswers ? '#fff' : '#5A7A88';
+      btn.style.color = this.showAnswers ? '#fff' : '#EAEEF3';
+      btn.setAttribute('aria-pressed', String(this.showAnswers));
       container.querySelectorAll('.wr-label').forEach(el => el.classList.toggle('shown', this.showAnswers));
     });
 
@@ -335,7 +348,8 @@ export class WritingPractice {
           const color = t === 'correct' ? '#58CC02' : '#FF4B4B';
           b.style.background = active ? color : 'rgba(0,0,0,0.04)';
           b.style.borderColor = active ? color : 'rgba(0,0,0,0.14)';
-          b.style.color = active ? '#fff' : 'rgba(0,0,0,0.3)';
+          b.style.color = active ? '#fff' : '#49545B';
+          b.setAttribute('aria-pressed', String(active));
         });
 
         this.updateSummary(container);

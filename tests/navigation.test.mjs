@@ -66,7 +66,7 @@ test('UI-4 subpage Back buttons use navigation history, including from Home', ()
     assert.match(page, /this\.app\.goBack\(\)/, `${path} should use navigation history`);
     assert.doesNotMatch(page, /this\.app\.tabs\.more\.render\(this\.app\.contentEl\)/);
   }
-  assert.match(source('sw.js'), /burmese-study-v18/);
+  assert.match(source('sw.js'), /burmese-study-v\d+/);
   assert.match(source('sw.js'), /js\/navigation\.js/);
   assert.match(source('css/styles.css'), /env\(safe-area-inset-bottom/);
 });
