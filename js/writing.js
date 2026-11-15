@@ -250,7 +250,7 @@ export class WritingPractice {
     // Back
     container.querySelector('#wr-back').addEventListener('click', () => {
       this.cleanup();
-      this.app.tabs.more.render(this.app.contentEl);
+      this.app.goBack();
     });
 
     // Write/View toggle

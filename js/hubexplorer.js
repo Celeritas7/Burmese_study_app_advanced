@@ -249,7 +249,7 @@ export class HubExplorer {
 
   // ─── EVENTS ───
   bindEvents(container) {
-    container.querySelector('#hub-back').addEventListener('click', () => { this.app.tabs.more.render(this.app.contentEl); });
+    container.querySelector('#hub-back').addEventListener('click', () => { this.app.goBack(); });
     const si = container.querySelector('#hub-search'); let st;
     si.addEventListener('input', () => { clearTimeout(st); st = setTimeout(() => { this.searchQuery = si.value.trim(); this.expandedHub = null; const c = container.querySelector('#hub-content'); if(c){c.innerHTML=this.searchQuery?this.renderSearch():this.view==='consonants'?this.renderByConsonant():this.renderAllHubs();this.bindContentEvents(container);} }, 300); });
     container.querySelectorAll('.hub-view-btn').forEach(b => { b.addEventListener('click', () => { this.view=b.dataset.view; this.selectedConsonant=null; this.expandedHub=null; this.searchQuery=''; si.value=''; this.render(container); }); });

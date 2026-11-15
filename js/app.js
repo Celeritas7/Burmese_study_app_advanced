@@ -14,10 +14,12 @@ import { CourseTab } from './course.js';
 import { SpeakTab } from './speak.js?v=7';
 import { SongsPage } from './songs.js';
 import { SongReviewCloudSync } from './song-review-sync.js';
+import { NavigationState, PRIMARY_TABS } from './navigation.js';
 
 class BurmeseStudyApp {
   constructor() {
-    this.activeTab = 'home';   // was 'study'
+    this.navigation = new NavigationState();
+    this.activeTab = this.navigation.activeTab; // Used by existing Study/SRS/Speak refresh logic.
     this.tabs = {};
     this.contentEl = null;
     this.songReviewSync = new SongReviewCloudSync();
@@ -27,15 +29,13 @@ class BurmeseStudyApp {
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="tab-content" id="tab-content"></div>
-      <div class="tab-bar" id="tab-bar">
-        <button class="tab-btn" data-tab="speak"><span class="tab-icon">🗣</span><span class="tab-label">Speak</span></button>
-        <button class="tab-btn active" data-tab="home"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
-        <button class="tab-btn" data-tab="study"><span class="tab-icon">📖</span><span class="tab-label">Study</span></button>
-        <button class="tab-btn" data-tab="srs"><span class="tab-icon">🔄</span><span class="tab-label">SRS</span></button>
-        <button class="tab-btn" data-tab="course"><span class="tab-icon">🗺</span><span class="tab-label">Course</span></button>
-        <button class="tab-btn" data-tab="hubExplorer"><span class="tab-icon">🏷️</span><span class="tab-label">Groups</span></button>
-        <button class="tab-btn" data-tab="more"><span class="tab-icon">⋯</span><span class="tab-label">More</span></button>
-      </div>
+      <nav class="tab-bar" id="tab-bar" aria-label="Main navigation">
+        <button type="button" class="tab-btn active" data-tab="home" aria-current="page"><span class="tab-icon" aria-hidden="true">🏠</span><span class="tab-label">Home</span></button>
+        <button type="button" class="tab-btn" data-tab="study"><span class="tab-icon" aria-hidden="true">📖</span><span class="tab-label">Study</span></button>
+        <button type="button" class="tab-btn" data-tab="srs"><span class="tab-icon" aria-hidden="true">🔄</span><span class="tab-label">SRS</span></button>
+        <button type="button" class="tab-btn" data-tab="speak"><span class="tab-icon" aria-hidden="true">🗣</span><span class="tab-label">Speak</span></button>
+        <button type="button" class="tab-btn" data-tab="more"><span class="tab-icon" aria-hidden="true">⋯</span><span class="tab-label">More</span></button>
+      </nav>
     `;
     this.contentEl = document.getElementById('tab-content');
     this.tabs.study = new StudyTab(this);
@@ -70,18 +70,49 @@ class BurmeseStudyApp {
   }
 
   switchTab(tabId) {
+    // Course is now a subpage; existing Speak grammar shortcuts continue to work.
+    if (!PRIMARY_TABS.includes(tabId)) {
+      if (tabId === 'course') this.showCourse();
+      else if (this.tabs[tabId]) this.showSubPage(tabId);
+      return;
+    }
     if (tabId === this.activeTab && tabId === 'study') this.tabs.study.phase = 'setup';
-    if (tabId === this.activeTab && tabId === 'course') this.tabs.course.view = 'home';
-    this.activeTab = tabId;
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+    this.navigation.switchTab(tabId);
+    this.activeTab = this.navigation.activeTab;
+    this.updateNavHighlight();
     this.renderTab();
   }
 
-  renderTab() { const tab = this.tabs[this.activeTab]; if (tab) tab.render(this.contentEl); }
+  updateNavHighlight() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      const active = btn.dataset.tab === this.activeTab;
+      btn.classList.toggle('active', active);
+      if (active) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
+    });
+  }
+
+  renderTab() {
+    const tab = this.tabs[this.navigation.page];
+    if (tab) tab.render(this.contentEl);
+  }
 
   showSubPage(name) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    this.tabs[name].render(this.contentEl);
+    if (!this.tabs[name]) return;
+    this.navigation.open(name);
+    this.updateNavHighlight(); // Keep the originating primary tab highlighted.
+    this.renderTab();
+  }
+
+  goBack() {
+    this.navigation.back();
+    this.updateNavHighlight();
+    this.renderTab();
+  }
+
+  showCourse() {
+    if (this.navigation.page !== 'course') this.tabs.course.view = 'home';
+    this.showSubPage('course');
   }
 
   showDialogues() { this.showSubPage('dialogues'); }

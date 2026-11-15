@@ -306,7 +306,7 @@ export class SettingsPage {
 
     // Back
     container.querySelector('#set-back').addEventListener('click', () => {
-      this.app.tabs.more.render(this.app.contentEl);
+      this.app.goBack();
     });
 
     // Option buttons (font size)

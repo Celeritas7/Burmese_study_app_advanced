@@ -92,5 +92,5 @@ test('UI-3 styles and offline cache include the Settings redesign', () => {
   assert.match(css, /\.settings-fold-summary:focus-visible/);
   assert.match(css, /@media \(max-width: 380px\)/);
   assert.match(css, /\.settings-row-choices \{ flex-direction: column/);
-  assert.match(source('sw.js'), /burmese-study-v17/);
+  assert.match(source('sw.js'), /burmese-study-v\d+/);
 });

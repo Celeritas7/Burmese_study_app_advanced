@@ -64,6 +64,7 @@ export class CourseTab {
 
     container.innerHTML = `
       <div class="pad">
+        <button type="button" id="course-home-back" class="subpage-back">← Back</button>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div style="font-size:22px;font-weight:800;">🗺 Course</div>
           <div style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;background:rgba(255,200,0,0.12);color:var(--yellow);">Colloquial Burmese</div>
@@ -107,6 +108,7 @@ export class CourseTab {
         }).join('')}
       </div>`;
 
+    container.querySelector('#course-home-back').addEventListener('click', () => this.app.goBack());
     container.querySelectorAll('.course-unit:not([disabled])').forEach(btn => {
       btn.addEventListener('click', () => {
         this.openUnit = parseInt(btn.dataset.unit);

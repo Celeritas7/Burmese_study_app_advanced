@@ -171,7 +171,7 @@ export class DialoguesTab {
     // Wire events
     container.querySelector('#dial-back').addEventListener('click', () => {
       stopAll();
-      this.app.tabs.more.render(this.app.contentEl);
+      this.app.goBack();
     });
 
     container.querySelectorAll('.dial-unit-header').forEach(btn => {
