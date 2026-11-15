@@ -503,10 +503,13 @@ export class Quiz {
     });
 
     container.querySelector('#q-next')?.addEventListener('click', () => {
+      // Matched pairs already raised the score one by one. Subtract this
+      // round's wrong attempts before discarding its state; do not replace
+      // the total with the final round's pair count.
+      this.score = Math.max(0, this.score - (this.matchState?.errors || 0));
       this.currentIdx++;
       this.matchState = null;
       if (this.currentIdx >= this.questions.length) {
-        this.score = q.pairs.length - (this.matchState?.errors || 0);
         this.phase = 'results';
       }
       this.render(container);
