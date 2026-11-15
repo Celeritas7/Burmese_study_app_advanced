@@ -399,7 +399,7 @@ export class SongsPage {
       const button = event.target.closest('[data-song-action]');
       if (!button) return;
       const action = button.dataset.songAction;
-      if (action === 'back') return this.app.tabs.more.render(this.app.contentEl);
+      if (action === 'back') return this.app.goBack();
       if (action === 'filter') {
         this.activeCategory = button.dataset.category;
         this.renderFilters();

@@ -151,7 +151,7 @@ export class SentencesPage {
 
   bindEvents(container) {
     container.querySelector('#sent-back').addEventListener('click', () => {
-      this.app.tabs.more.render(this.app.contentEl);
+      this.app.goBack();
     });
 
     // Practice mode toggle

@@ -3,15 +3,16 @@ import { db } from './supabase.js';
 import { Modal } from './modal.js';
 
 const ITEMS = [
-  { icon: '📊', label: 'Stats & Progress', desc: 'Learning analytics', color: '#1CB0F6' },
-  { icon: '💬', label: 'Dialogues', desc: 'Colloquial Burmese book', color: '#CE82FF', badge: 'NEW' },
-  { icon: '✍', label: 'Writing Practice', desc: 'Consonant & word canvas', color: '#FF9600' },
-  { icon: '🌿', label: 'Hub Explorer', desc: 'Anchor word trees', color: '#58CC02' },
-  { icon: '📝', label: 'Sentences', desc: 'Full sentence practice', color: '#1CB0F6' },
-  { icon: '🔌', label: 'Supabase', desc: db.connected ? 'Connected' : 'Not connected', color: db.connected ? '#58CC02' : '#FF4B4B' },
-  { icon: '⚙️', label: 'Settings', desc: 'Account, voice & preferences', color: '#5A7A88' },
-  { icon: '🔍', label: 'Devanagari Audit', desc: 'Review transliteration', color: '#FFC800' },
-  { icon: '🎵', label: 'Songs & Chants', desc: 'Music, Metta chants · vocabulary practice', color: '#FF6B8A', badge: 'NEW' }
+  { action: 'course', section: 'paths', icon: '🗺', label: 'Course', desc: 'Guided units and learning path', color: '#FFC800' },
+  { action: 'groups', section: 'paths', icon: '🏷️', label: 'Groups', desc: 'Explore anchor word trees', color: '#58CC02' },
+  { action: 'songs', section: 'paths', icon: '🎵', label: 'Songs & Chants', desc: 'Music, Metta chants · vocabulary practice', color: '#FF6B8A', badge: 'NEW' },
+  { action: 'dialogues', section: 'paths', icon: '💬', label: 'Dialogues', desc: 'Colloquial Burmese book', color: '#CE82FF' },
+  { action: 'writing', section: 'paths', icon: '✍', label: 'Writing Practice', desc: 'Consonant & word canvas', color: '#FF9600' },
+  { action: 'sentences', section: 'paths', icon: '📝', label: 'Sentences', desc: 'Full sentence practice', color: '#1CB0F6' },
+  { action: 'stats', section: 'tools', icon: '📊', label: 'Stats & Progress', desc: 'Learning analytics', color: '#1CB0F6' },
+  { action: 'settings', section: 'tools', icon: '⚙️', label: 'Settings', desc: 'Account, voice & preferences', color: '#5A7A88' },
+  { action: 'audit', section: 'tools', icon: '🔍', label: 'Devanagari Audit', desc: 'Review transliteration', color: '#FFC800' },
+  { action: 'supabase', section: 'tools', icon: '🔌', label: 'Supabase', desc: 'Connection settings', color: '#58CC02' }
 ];
 
 export class MoreTab {
@@ -20,56 +21,47 @@ export class MoreTab {
   }
 
   render(container) {
-    // Update connection status
-    ITEMS[5].desc = db.connected ? 'Connected ✓' : 'Not connected';
-    ITEMS[5].color = db.connected ? '#58CC02' : '#FF4B4B';
+    const renderSection = section => ITEMS.filter(item => item.section === section).map(item => {
+      const color = item.action === 'supabase' && !db.connected ? '#FF4B4B' : item.color;
+      const desc = item.action === 'supabase' ? (db.connected ? 'Connected ✓' : 'Not connected') : item.desc;
+      return `
+        <button class="more-item" data-item="${item.action}">
+          <div class="more-icon" style="background:${color}18; border-color:${color}30;">${item.icon}</div>
+          <div class="flex-1">
+            <div class="more-label">
+              ${item.label}
+              ${item.badge ? `<span class="more-badge" style="background:var(--pink); color:#fff;">${item.badge}</span>` : ''}
+            </div>
+            <div class="more-desc">${desc}</div>
+          </div>
+          <span class="more-arrow" aria-hidden="true">›</span>
+        </button>`;
+    }).join('');
 
     container.innerHTML = `
       <div class="pad">
         <div class="mb-20" style="font-size:22px; font-weight:800;">More</div>
-        ${ITEMS.map((item, i) => `
-          <button class="more-item" data-item="${i}">
-            <div class="more-icon" style="background:${item.color}18; border-color:${item.color}30;">${item.icon}</div>
-            <div class="flex-1">
-              <div class="more-label">
-                ${item.label}
-                ${item.badge ? `<span class="more-badge" style="background:var(--pink); color:#fff;">${item.badge}</span>` : ''}
-              </div>
-              <div class="more-desc">${item.desc}</div>
-            </div>
-            <span class="more-arrow">›</span>
-          </button>
-        `).join('')}
+        <h2 class="more-section-label">Learn & explore</h2>
+        ${renderSection('paths')}
+        <h2 class="more-section-label">Tools & account</h2>
+        ${renderSection('tools')}
       </div>
     `;
 
     // Item click handlers
     container.querySelectorAll('[data-item]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.item);
-        if (idx === 0) {
-          // Stats & Progress
-          this.app.showStats();
-        } else if (idx === 1) {
-          // Dialogues
-          this.app.showDialogues();
-        } else if (idx === 2) {
-          // Writing Practice
-          this.app.showWriting();
-        } else if (idx === 3) {
-          // Hub Explorer
-          this.app.showHubExplorer();
-        } else if (idx === 4) {
-          // Sentences
-          this.app.showSentences();
-        } else if (idx === 5) {
-          this.showSupabaseModal();
-        } else if (idx === 6) {
-          this.app.showSettings();
-        } else if (idx === 7) {
-          window.open('audit.html', '_blank');
-        } else if (idx === 8) {
-          this.app.showSongs();
+        switch (btn.dataset.item) {
+          case 'course': this.app.showCourse(); break;
+          case 'groups': this.app.showHubExplorer(); break;
+          case 'songs': this.app.showSongs(); break;
+          case 'dialogues': this.app.showDialogues(); break;
+          case 'writing': this.app.showWriting(); break;
+          case 'sentences': this.app.showSentences(); break;
+          case 'stats': this.app.showStats(); break;
+          case 'settings': this.app.showSettings(); break;
+          case 'audit': window.open('audit.html', '_blank'); break;
+          case 'supabase': this.showSupabaseModal(); break;
         }
       });
     });

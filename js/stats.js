@@ -250,8 +250,8 @@ export class StatsPage {
 
   bindCommon(container) {
     container.querySelector('#stats-back').addEventListener('click', () => {
-      if (this.backTo === 'speak') { this.backTo = null; this.app.switchTab('speak'); }
-      else this.app.tabs.more.render(this.app.contentEl);
+      this.backTo = null;
+      this.app.goBack();
     });
     container.querySelectorAll('.stats-seg').forEach(b => b.addEventListener('click', () => {
       if (this.view === b.dataset.view) return;
