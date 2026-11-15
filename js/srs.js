@@ -233,7 +233,7 @@ export class SRSTab {
       <div class="pad-sm">
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <button id="srs-exit" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
+          <button id="srs-exit" class="srs-exit" style="background:var(--surface);border:2px solid var(--border);border-radius:10px;
             color:var(--text-muted);cursor:pointer;font-size:12px;padding:5px 12px;font-weight:700;font-family:var(--font);">
             ✕ Exit
           </button>
@@ -257,14 +257,15 @@ export class SRSTab {
         </div>
 
         <!-- Reveal box -->
-        <div class="reveal-box ${this.revealLevel > 0 ? 'revealed' : ''}" id="reveal-box">
+        <div class="reveal-box ${this.revealLevel > 0 ? 'revealed' : ''}" id="reveal-box"
+          role="button" tabindex="0" aria-label="Reveal review hint or meaning">
           ${this.renderReveal(w, dev, hasHint, maxLevel)}
         </div>
 
         <!-- SRS response buttons (after full reveal) -->
         ${fullyRevealed ? `
           <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:8px;">How well did you know this?</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+          <div class="srs-response-grid">
             ${SRS_RESPONSES.map((r, i) => `
               <button class="srs-resp" data-resp="${i}" style="
                 padding:12px 6px;border-radius:12px;text-align:center;cursor:pointer;font-family:var(--font);
@@ -298,6 +299,9 @@ export class SRSTab {
         // Phase 12: Settings → Play sound on reveal (after the re-render so the button it animates is the live one)
         if (this.revealLevel === 1) autoPlay(w.burmese_word, container.querySelector('.word-card [data-au]'));
       }
+    });
+    container.querySelector('#reveal-box').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); }
     });
 
     container.querySelectorAll('.srs-resp').forEach(btn => {

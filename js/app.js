@@ -93,6 +93,12 @@ class BurmeseStudyApp {
   }
 
   renderTab() {
+    // A comfortable reading width on tablets, without widening unrelated pages.
+    const appEl = document.getElementById('app');
+    if (this.navigation.page !== 'writing' && appEl?.classList.contains('writing-layout'))
+      this.tabs.writing?.cleanup(); // Restore viewport and tab bar if Writing was left indirectly.
+    appEl?.classList.toggle('learning-wide',
+      ['study', 'srs', 'songs'].includes(this.navigation.page));
     const tab = this.tabs[this.navigation.page];
     if (tab) tab.render(this.contentEl);
   }
