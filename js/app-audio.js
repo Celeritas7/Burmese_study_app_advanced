@@ -10,9 +10,26 @@ export const AUDIO_BASE = 'https://ulgrfumbwjovbjzjiems.supabase.co/storage/v1/o
 export const AUDIO_CACHE = 'burmese-audio-v1';   // same cache sw.js uses
 
 const APP = new Set(), SPEAK = new Set();
-const load = (url, set) => fetch(url, { cache: 'no-cache' }).then(r => r.json()).then(a => a.forEach(f => set.add(f))).catch(() => {});
-export const clipsReady = Promise.all([load('audio/app/clips.json', APP), load('audio/speak/clips.json', SPEAK)])
+let appCatalogLoaded = false, speakCatalogLoaded = false;
+const load = async (url, set, kind) => {
+  try {
+    const response = await fetch(url, { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Audio catalog HTTP ${response.status}`);
+    const list = await response.json();
+    if (!Array.isArray(list)) throw new Error('Invalid audio catalog');
+    list.forEach(file => set.add(file));
+    if (kind === 'app') appCatalogLoaded = true;
+    else speakCatalogLoaded = true;
+  } catch { /* Offline catalog can be retried from Settings. */ }
+};
+export const clipsReady = Promise.all([load('audio/app/clips.json', APP, 'app'), load('audio/speak/clips.json', SPEAK, 'speak')])
   .then(() => refreshAudio(document));
+// If initial loading failed during a network interruption, Settings can retry
+// fetching the catalogs. No downloaded or user-owned content is deleted.
+export async function refreshClipCatalog() {
+  await Promise.all([load('audio/app/clips.json', APP, 'app'), load('audio/speak/clips.json', SPEAK, 'speak')]);
+  return APP.size + SPEAK.size;
+}
 
 const norm = t => String(t || '').trim();
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -116,6 +133,9 @@ export function autoPlay(text, btn) { try { if (getSettings().autoPlay) play(tex
 // ── Offline: Settings → Download all audio ──
 export async function allClipUrls() {
   await clipsReady;
+  if (!appCatalogLoaded || !speakCatalogLoaded) await refreshClipCatalog();
+  if (!appCatalogLoaded || !speakCatalogLoaded)
+    throw new Error('Audio catalog is incomplete. Connect and retry.');
   return [...[...SPEAK], ...[...APP].map(k => AUDIO_BASE + k)].map(u => new URL(u, location.href).href);
 }
 export async function savedCount() {

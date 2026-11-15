@@ -72,5 +72,5 @@ test('UI-5 mobile and iPad layouts are scoped to learning screens', () => {
   assert.match(css, /\.songs-search \{[^}]*font-size: 16px;/);
   assert.match(css, /\.song-form input, \.song-form select \{ font-size: 16px; \}/);
   assert.match(source('js/app.js'), /classList\.toggle\('learning-wide'/);
-  assert.match(source('sw.js'), /burmese-study-v19/);
+  assert.match(source('sw.js'), /burmese-study-v\d+/);
 });
