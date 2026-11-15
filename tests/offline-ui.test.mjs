@@ -167,7 +167,7 @@ test('UI-6 upgrade cleanup deletes only old Burmese app-shell caches', async () 
   let done;
   listeners.activate({ waitUntil(task) { done = task; } });
   await done;
-  assert.deepEqual(deleted.sort(), ['burmese-study-v18', 'burmese-study-v19']);
+  assert.deepEqual(deleted.sort(), ['burmese-study-v18', 'burmese-study-v19', 'burmese-study-v20']);
 });
 
 test('UI-6 refuses an incomplete shell update, preserving the previously cached version', async () => {
@@ -188,7 +188,7 @@ test('UI-6 refuses an incomplete shell update, preserving the previously cached 
 
 test('UI-6 cached versioned JS imports work offline, but Supabase REST is never cached', async () => {
   const { listeners, caches, sandbox } = createWorker();
-  const cache = await caches.open('burmese-study-v20');
+  const cache = await caches.open('burmese-study-v21');
   const response = { ok: true, source: 'cached-js' };
   await cache.put(`${SCOPE}js/app.js`, response);
   sandbox.fetch = async () => { throw new Error('offline'); };
@@ -202,5 +202,5 @@ test('UI-6 cached versioned JS imports work offline, but Supabase REST is never 
     respondWith() { handled = true; }, waitUntil() {} });
   assert.equal(handled, false);
   assert.match(source('js/settings.js'), /Lessons may still (?:need|require) internet/);
-  assert.match(source('sw.js'), /burmese-study-v20/);
+  assert.match(source('sw.js'), /burmese-study-v21/);
 });

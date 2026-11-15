@@ -51,6 +51,20 @@ body {
   position: relative;
 }
 
+/* Edition-only controls; the online app has no edition banner. */
+.offline-edition-banner { display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 13px;background:rgba(88,204,2,.12);border-bottom:1px solid rgba(88,204,2,.4); }
+.offline-edition-banner div { min-width:0;display:flex;flex-direction:column;gap:2px; }
+.offline-edition-banner strong { font-size:12px;color:var(--green); }
+.offline-edition-banner span { font-size:10px;color:var(--text-muted); }
+.offline-edition-banner button, .offline-pack-button { flex-shrink:0;min-height:42px;
+  border:1px solid var(--green);border-radius:10px;background:rgba(88,204,2,.14);
+  color:var(--green);font-size:11px;font-weight:800;padding:7px 11px;font-family:var(--font);cursor:pointer; }
+.offline-pack-button:disabled { opacity:.6;cursor:wait; }
+.offline-pack-status { font-size:11px;color:var(--text-muted);overflow-wrap:anywhere; }
+.offline-study-note { font-size:11px;color:var(--text-muted);line-height:1.6;
+  padding:11px 14px;background:var(--surface);border-radius:10px; }
+
 /* UI-5: give learning material more reading room on iPads, while keeping other
    pages at their familiar phone-centered width. */
 @media (min-width: 700px) {

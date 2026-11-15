@@ -1,11 +1,11 @@
 // Burmese Study app shell. This worker lives alongside index.html, including
 // when the site is deployed under GitHub Pages' /<repository>/ path.
-const CACHE_NAME = 'burmese-study-v20';
+const CACHE_NAME = 'burmese-study-v21';
 const APP_CACHE_PREFIX = 'burmese-study-v';
 const AUDIO_CACHE = 'burmese-audio-v1'; // Keep downloaded audio on app updates.
 
-// Required shell files. Both remote language-utils versions are required by
-// existing imports, so readiness cannot rely on registration alone.
+// Required shell files. Online edition caches legacy remote pronunciation
+// imports; the separate offline build rewrites these to one pinned local module.
 const APP_ASSETS = [
   './', 'index.html', 'css/styles.css', 'icons/apple-touch-icon.png', 'icons/icon-192.png',
   'js/app.js', 'js/navigation.js', 'js/study.js', 'js/quiz.js', 'js/srs.js',
@@ -15,7 +15,7 @@ const APP_ASSETS = [
   'js/data/course.js', 'js/home.js', 'js/songs.js', 'js/song-vocabulary.js',
   'js/song-practice.js', 'js/song-review-queue.js', 'js/song-review-sync.js',
   'js/burmese.js', 'js/speak.js', 'js/speak-data.js', 'js/speak-audio.js',
-  'js/app-audio.js', 'js/offline.js', 'audio/app/clips.json',
+  'js/app-audio.js', 'js/offline.js', 'js/edition.js', 'js/offline-vocabulary.js', 'audio/app/clips.json',
   'audio/speak/clips.json',
   'https://celeritas7.github.io/language-utils/burmese.js?v=8',
   'https://celeritas7.github.io/language-utils/burmese.js?v=9'

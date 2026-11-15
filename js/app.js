@@ -16,6 +16,7 @@ import { SongsPage } from './songs.js';
 import { SongReviewCloudSync } from './song-review-sync.js';
 import { NavigationState, PRIMARY_TABS } from './navigation.js';
 import { registerAppWorker } from './offline.js';
+import { isOfflineEdition } from './edition.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -23,12 +24,18 @@ class BurmeseStudyApp {
     this.activeTab = this.navigation.activeTab; // Used by existing Study/SRS/Speak refresh logic.
     this.tabs = {};
     this.contentEl = null;
-    this.songReviewSync = new SongReviewCloudSync();
+    // Account ownership for old Study/SRS rows has not been verified. The
+    // offline edition cannot silently enable account sync or import them.
+    this.songReviewSync = isOfflineEdition ? null : new SongReviewCloudSync();
   }
 
   async init() {
     const app = document.getElementById('app');
     app.innerHTML = `
+      ${isOfflineEdition ? `<div class="offline-edition-banner" role="status">
+        <div><strong>📥 Burmese Study Offline</strong><span>Study/SRS ratings stay on this device.</span></div>
+        <button type="button" id="offline-edition-packs">Download words</button>
+      </div>` : ''}
       <div class="tab-content" id="tab-content"></div>
       <nav class="tab-bar" id="tab-bar" aria-label="Main navigation">
         <button type="button" class="tab-btn active" data-tab="home" aria-current="page"><span class="tab-icon" aria-hidden="true">🏠</span><span class="tab-label">Home</span></button>
@@ -56,6 +63,7 @@ class BurmeseStudyApp {
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
     });
+    document.getElementById('offline-edition-packs')?.addEventListener('click', () => this.showSettings());
     await db.testConnection();
     // Speak progress follows you across devices: rebuild said/miss (step 1) and ladder counts (steps 2–4, correct only) from the answer log (single user, anon key, so every row is mine).
     if (db.connected) db.query('speak_log', { select: 'pack,item,step,ok,created_at', filters: ['or=(step.eq.1,and(step.in.(2,3,4),ok.is.true))'], order: 'created_at' })
@@ -63,11 +71,13 @@ class BurmeseStudyApp {
     await this.tabs.study.init();
     this.renderTab();
     // Optional Google Auth must never hold up Study, Songs or offline practice.
-    this.songReviewSync.initialize().catch(() => {});
-    window.addEventListener('online', () => {
-      const sync = this.songReviewSync;
-      (sync.client ? sync.sync() : sync.initialize()).catch(() => {});
-    });
+    if (this.songReviewSync) {
+      this.songReviewSync.initialize().catch(() => {});
+      window.addEventListener('online', () => {
+        const sync = this.songReviewSync;
+        (sync.client ? sync.sync() : sync.initialize()).catch(() => {});
+      });
+    }
   }
 
   switchTab(tabId) {
