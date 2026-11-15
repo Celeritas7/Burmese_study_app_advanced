@@ -828,6 +828,14 @@ textarea.input-field { min-height: 60px; resize: vertical; }
 .settings-page #set-back:focus-visible, .settings-page #btn-export:focus-visible,
 .settings-page #btn-cache:focus-visible, .settings-page #btn-audio-dl:focus-visible {
   outline: 2px solid var(--blue); outline-offset: 2px; }
+.offline-info { padding: 0 12px 13px; color: var(--text-muted);
+  font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+#sw-progress { display: block; width: calc(100% - 24px); height: 12px;
+  margin: 0 12px 12px; accent-color: var(--green); }
+#sw-progress[hidden] { display: none; }
+.settings-page #btn-cache, .settings-page #btn-audio-dl { min-height: 44px; }
+.settings-page #btn-cache:disabled, .settings-page #btn-audio-dl:disabled {
+  cursor: wait; opacity: .65; }
 .settings-app-info { display: flex; justify-content: center; flex-wrap: wrap;
   gap: 5px 10px; color: var(--text-dim); font-size: 11px; padding: 18px 10px;
   text-align: center; }

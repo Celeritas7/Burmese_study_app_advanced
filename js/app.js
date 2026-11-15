@@ -15,6 +15,7 @@ import { SpeakTab } from './speak.js?v=7';
 import { SongsPage } from './songs.js';
 import { SongReviewCloudSync } from './song-review-sync.js';
 import { NavigationState, PRIMARY_TABS } from './navigation.js';
+import { registerAppWorker } from './offline.js';
 
 class BurmeseStudyApp {
   constructor() {
@@ -141,5 +142,5 @@ app.init().catch(err => {
     </div>`;
 });
 
-// Offline: register the root-level service worker on every load (relative path works under GitHub Pages' /<repo>/).
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// Offline: a scope-relative worker works at / and under GitHub Pages /<repo>/.
+registerAppWorker().catch(() => {});

@@ -2,6 +2,7 @@
 import { db } from './supabase.js';
 import { createDeviceBackup } from './data-backup.js';
 import { renderAccountMarkup } from './account-ui.js';
+import { checkAppOffline, downloadAppOffline } from './offline.js';
 
 const STORAGE_KEY = 'burmese_app_settings';
 
@@ -36,9 +37,16 @@ export class SettingsPage {
     this.accountContainer = null;
     this.accountPending = false;
     this.accountError = '';
+    this.offlineDownloading = false;
     // Keep the user's open sections through preference re-renders in this session.
     this.expandedSections = new Set(['learning']);
     this.app.songReviewSync?.subscribe(() => this.refreshAccountPanel());
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        const current = this.accountContainer;
+        if (current?.isConnected && !this.offlineDownloading) this.checkServiceWorker(current);
+      });
+    }
   }
 
   async render(container) {
@@ -234,27 +242,30 @@ export class SettingsPage {
         <details class="settings-fold" data-settings-section="offline" ${this.expandedSections.has('offline') ? 'open' : ''}>
           <summary class="settings-fold-summary">
             <span class="settings-fold-icon" aria-hidden="true">📥</span>
-            <span class="settings-fold-title"><strong>Offline</strong><small>Cache app and recorded audio</small></span>
+            <span class="settings-fold-title"><strong>Offline</strong><small>Save app files and recorded audio</small></span>
             <span class="settings-fold-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="settings-fold-content">
           <div class="settings-group-card">
           <div class="settings-row">
               <div class="settings-row-text">
-                <div style="font-size:14px;font-weight:600;color:var(--text);">Cache for Offline</div>
-                <div style="font-size:11px;color:var(--text-muted);" id="sw-status">Checking...</div>
+                <div style="font-size:14px;font-weight:600;color:var(--text);">App files for offline</div>
+                <div style="font-size:11px;color:var(--text-muted);" id="sw-status" role="status" aria-live="polite">Checking downloaded files…</div>
               </div>
               <button id="btn-cache" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
-                background:var(--purple);border:none;color:#fff;font-family:var(--font);">Cache Now</button>
+                background:var(--purple);border:none;color:#fff;font-family:var(--font);">Download files</button>
           </div>
+          <div class="offline-info" id="sw-detail">App files are separate from lessons and learning records stored on the server. Downloading the app does not download your complete Study/SRS vocabulary or progress.</div>
+          <progress id="sw-progress" max="100" value="0" hidden aria-label="App file download progress"></progress>
           <div class="settings-row">
               <div class="settings-row-text">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">Audio for offline</div>
-                <div style="font-size:11px;color:var(--text-muted);" id="audio-status">Clips are saved the first time you play them</div>
+                <div style="font-size:11px;color:var(--text-muted);" id="audio-status" role="status" aria-live="polite">Checking recorded clips…</div>
               </div>
               <button id="btn-audio-dl" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
                 background:var(--purple);border:none;color:#fff;font-family:var(--font);">Download all</button>
           </div>
+          <div class="offline-info">Previously saved audio stays on this device across app updates. Unavailable recordings and online-only videos cannot be downloaded here.</div>
           </div>
           </div>
         </details>
@@ -281,26 +292,33 @@ export class SettingsPage {
     // Check SW status
     this.checkServiceWorker(container);
 
-    // Audio for offline (Phase 12): N of M saved + Download all
+    // Audio for offline (Phase 12): N of M saved + retryable Download all.
     import('./app-audio.js?v=1').then(A => {
       const st = container.querySelector('#audio-status'), btn = container.querySelector('#btn-audio-dl');
       if (!st || !btn) return;
       if (!('caches' in window)) { st.textContent = 'Not supported in this browser'; btn.disabled = true; btn.style.opacity = '.5'; return; }
       const show = async () => {
         const { saved, total } = await A.savedCount();
-        if (!total) return;
         st.style.color = 'var(--text-muted)';
+        if (!total) { st.textContent = 'Audio list unavailable. Connect and retry.'; btn.disabled = false; btn.textContent = 'Retry'; return; }
         st.textContent = `${saved.toLocaleString()} of ${total.toLocaleString()} clips saved on this device`;
         if (saved >= total) { btn.textContent = '✓ All saved'; btn.disabled = true; btn.style.opacity = '.6'; }
+        else { btn.textContent = 'Download all'; btn.disabled = false; btn.style.opacity = '1'; }
       };
-      show();
+      show().catch(error => { st.textContent = `Unable to count audio: ${error.message}`; });
       btn.addEventListener('click', async () => {
         btn.disabled = true; btn.textContent = 'Downloading…';
-        const r = await A.downloadAll((n, t) => { st.style.color = 'var(--yellow)'; st.textContent = `Downloading ${n.toLocaleString()} / ${t.toLocaleString()}…`; });
-        if (r.failed) {
-          st.style.color = 'var(--pink)'; st.textContent = `${r.failed} clips failed. Check your connection and try again.`;
+        try {
+          const r = await A.downloadAll((n, t) => { st.style.color = 'var(--yellow)'; st.textContent = `Downloading ${n.toLocaleString()} / ${t.toLocaleString()}…`; });
+          if (r.failed) {
+            const { saved, total } = await A.savedCount();
+            st.style.color = 'var(--pink)'; st.textContent = `${saved} / ${total} saved · ${r.failed} failed. Check connection and retry.`;
+            btn.disabled = false; btn.textContent = 'Retry';
+          } else await show();
+        } catch (error) {
+          st.style.color = 'var(--pink)'; st.textContent = `Audio download stopped: ${error.message}`;
           btn.disabled = false; btn.textContent = 'Retry';
-        } else { btn.textContent = 'Download all'; show(); }
+        }
       });
     }).catch(() => {});
 
@@ -350,20 +368,33 @@ export class SettingsPage {
       }
     });
 
-    // Cache button
+    // App-shell download. Registering a worker alone never means ready.
     container.querySelector('#btn-cache').addEventListener('click', async () => {
-      if ('serviceWorker' in navigator) {
-        try {
-          const reg = await navigator.serviceWorker.register('/sw.js');
-          const swStatus = container.querySelector('#sw-status');
-          swStatus.textContent = '✓ Service worker registered — caching...';
+      const btn = container.querySelector('#btn-cache');
+      const swStatus = container.querySelector('#sw-status');
+      const progress = container.querySelector('#sw-progress');
+      this.offlineDownloading = true;
+      btn.disabled = true; btn.textContent = 'Downloading…';
+      progress.hidden = false; progress.value = 0;
+      swStatus.style.color = 'var(--yellow)'; swStatus.textContent = 'Preparing app files…';
+      try {
+        const result = await downloadAppOffline(({ completed, total, failed }) => {
+          progress.max = total; progress.value = completed;
+          swStatus.textContent = `${completed} / ${total} app files checked${failed ? ` · ${failed} failed` : ''}`;
+        });
+        if (result.ready) {
           swStatus.style.color = 'var(--green)';
-        } catch (e) {
-          const swStatus = container.querySelector('#sw-status');
-          swStatus.textContent = `✕ ${e.message}`;
+          swStatus.textContent = `✓ App files ready offline (${result.saved} / ${result.total}). Lessons may still require internet.`;
+          btn.textContent = 'Check again';
+        } else {
           swStatus.style.color = 'var(--pink)';
+          swStatus.textContent = `${result.saved} / ${result.total} app files saved · ${result.missing.length} missing. Connect and retry.`;
+          btn.textContent = 'Retry';
         }
-      }
+      } catch (error) {
+        swStatus.style.color = 'var(--pink)'; swStatus.textContent = `App download stopped: ${error.message}`;
+        btn.textContent = 'Retry';
+      } finally { this.offlineDownloading = false; btn.disabled = false; progress.hidden = true; }
     });
   }
 
@@ -402,21 +433,34 @@ export class SettingsPage {
     }
   }
 
-  checkServiceWorker(container) {
+  async checkServiceWorker(container) {
     const swStatus = container.querySelector('#sw-status');
-    if (!('serviceWorker' in navigator)) {
-      swStatus.textContent = 'Not supported in this browser';
-      swStatus.style.color = 'var(--text-dim)';
-      return;
-    }
-    navigator.serviceWorker.getRegistration().then(reg => {
-      if (reg) {
-        swStatus.textContent = '✓ Cached for offline use';
+    if (!swStatus) return;
+    try {
+      const state = await checkAppOffline();
+      // Do not replace a status on a Settings page that has been navigated away.
+      if (!container.querySelector('#sw-status') || this.offlineDownloading) return;
+      const status = {
+        unsupported: ['App caching unavailable in this browser.', 'var(--pink)'],
+        'not-installed': ['App files not downloaded yet.', 'var(--text-muted)'],
+        installing: ['Worker registered · downloading or updating files…', 'var(--yellow)'],
+        unknown: ['Worker registered · offline readiness unverified. Tap Download files to retry.', 'var(--yellow)']
+      }[state.kind];
+      if (status) { swStatus.textContent = status[0]; swStatus.style.color = status[1]; }
+      else if (state.kind === 'ready') {
+        swStatus.textContent = `✓ App files ready offline (${state.saved} / ${state.total}). Lessons may still need internet.`;
         swStatus.style.color = 'var(--green)';
       } else {
-        swStatus.textContent = 'Not cached yet';
-        swStatus.style.color = 'var(--text-muted)';
+        swStatus.textContent = `${state.saved} / ${state.total} app files saved · ${state.missing.length} missing.`;
+        swStatus.style.color = 'var(--yellow)';
       }
-    });
+      const button = container.querySelector('#btn-cache');
+      if (state.kind === 'unsupported') button.disabled = true;
+      else button.textContent = state.kind === 'ready' ? 'Check again'
+        : state.kind === 'partial' || state.kind === 'unknown' ? 'Retry' : 'Download files';
+    } catch (error) {
+      swStatus.textContent = `Unable to check app files: ${error.message}`;
+      swStatus.style.color = 'var(--pink)';
+    }
   }
 }
