@@ -114,21 +114,32 @@ test('Offline-1 build has a separate PWA identity and shares unchanged learning 
   assert.equal(manifest.name, 'Burmese Study Offline');
   assert.equal(manifest.display, 'standalone');
   for (const file of ['js/study.js', 'js/quiz.js', 'js/srs.js', 'js/supabase.js',
-    'js/offline-vocabulary.js', 'js/speak.js', 'js/writing.js']) {
+    'js/offline-vocabulary.js', 'js/speak.js', 'js/writing.js', 'js/app-audio.js']) {
     const compiled = readFileSync(path.join(out, file), 'utf8');
-    assert.equal(compiled,
-      source(file).replace(/https:\/\/celeritas7\.github\.io\/language-utils\/burmese\.js\?v=[89]/g,
-        './vendor/burmese.js'), `${file} must share logic, only localize imports`);
+    const expected = source(file).replace(/https:\/\/celeritas7\.github\.io\/language-utils\/burmese\.js\?v=[89]/g,
+      './vendor/burmese.js');
+    assert.equal(compiled, expected,
+      `${file} must share original logic, only localizing remote imports`);
     assert.doesNotMatch(compiled, /https:\/\/celeritas7\.github\.io\/language-utils\//);
   }
   assert.match(readFileSync(path.join(out, 'js/vendor/burmese.js'), 'utf8'),
     /export function toPronunciation/);
   const worker = readFileSync(path.join(out, 'sw.js'), 'utf8');
-  assert.match(worker, /burmese-study-offline-v1/);
+  assert.match(worker, /const CACHE_NAME = 'burmese-study-offline-v[a-f0-9]{12}';/);
+  assert.match(worker, /const AUDIO_CACHE = 'burmese-audio-v1';/);
+  assert.match(worker, /const LEGACY_AUDIO_CACHE = 'burmese-study-offline-audio-v1';/);
+  assert.match(worker, /if \(!result\.ready \|\| result\.failed\.length\)/);
+  assert.match(worker, /An active offline build serves one coherent version/);
   assert.match(worker, /'js\/vendor\/burmese.js', 'manifest.webmanifest'/);
   assert.doesNotMatch(worker, /https:\/\/celeritas7\.github\.io\/language-utils\//);
   assert.doesNotMatch(source('sw.js'), /burmese-study-offline-v1/);
   assert.match(source('js/app.js'), /isOfflineEdition \? null : new SongReviewCloudSync/);
   assert.match(source('js/supabase.js'), /Offline edition cannot write to shared Supabase tables/);
   assert.match(source('sw.js'), /'js\/offline-vocabulary.js'/);
+  assert.match(readFileSync(path.join(out, 'js/app.js'), 'utf8'),
+    /if \(navigator\.onLine\) reg\.update\(\)\.catch/);
+  assert.match(readFileSync(path.join(out, 'js/app.js'), 'utf8'),
+    /window\.addEventListener\('online', \(\) => \{/);
+  assert.doesNotMatch(source('js/app.js'), /reg\.update\(\)/,
+    'the online application must retain its original update behavior');
 });
