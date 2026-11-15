@@ -15,7 +15,7 @@ const APP_ASSETS = [
   'js/data/course.js', 'js/home.js', 'js/songs.js', 'js/song-vocabulary.js',
   'js/song-practice.js', 'js/song-review-queue.js', 'js/song-review-sync.js',
   'js/burmese.js', 'js/speak.js', 'js/speak-data.js', 'js/speak-audio.js',
-  'js/app-audio.js', 'js/offline.js', 'js/edition.js', 'js/offline-vocabulary.js', 'audio/app/clips.json',
+  'js/app-audio.js', 'js/offline.js', 'js/edition.js', 'js/offline-vocabulary.js', 'js/offline-flags.js', 'audio/app/clips.json',
   'audio/speak/clips.json',
   'https://celeritas7.github.io/language-utils/burmese.js?v=8',
   'https://celeritas7.github.io/language-utils/burmese.js?v=9'

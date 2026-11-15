@@ -5,6 +5,7 @@ import { renderAccountMarkup } from './account-ui.js';
 import { checkAppOffline, downloadAppOffline } from './offline.js';
 import { isOfflineEdition } from './edition.js';
 import { VOCABULARY_SOURCES, listVocabularyPacks } from './offline-vocabulary.js';
+import { exportOfflineFlags, listOfflineFlags } from './offline-flags.js';
 
 const STORAGE_KEY = 'burmese_app_settings';
 
@@ -204,12 +205,12 @@ export class SettingsPage {
             <div class="settings-action-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">
               <div style="min-width:0;">
                 <div style="font-size:14px;font-weight:600;color:var(--text);">Back up device data</div>
-                <div style="font-size:11px;color:var(--text-muted);">Download settings, Speak and Course progress, dialogue voices, saved songs, and this device's song reviews as JSON.</div>
+            <div style="font-size:11px;color:var(--text-muted);">Download settings, Speak and Course progress, dialogue voices, saved songs, and this device's song reviews as JSON.</div>
               </div>
               <button id="btn-export" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
                 background:var(--green);border:none;color:var(--bg);font-family:var(--font);flex-shrink:0;">Download</button>
             </div>
-            <div style="font-size:11px;color:var(--yellow);line-height:1.5;margin-bottom:6px;">Partial backup only. Does not include ${isOfflineEdition ? 'downloaded vocabulary or device-only Study/SRS ratings,' : 'regular Study/SRS progress,'} server events, cloud-only reviews, or offline media. Store the JSON privately. Restore is not yet available.</div>
+            <div style="font-size:11px;color:var(--yellow);line-height:1.5;margin-bottom:6px;">Partial backup only. Does not include ${isOfflineEdition ? 'downloaded vocabulary, device-only Study/SRS ratings or pending word flags,' : 'regular Study/SRS progress,'} server events, cloud-only reviews, or offline media. ${isOfflineEdition ? 'Export word flags separately under Offline.' : ''} Store JSON privately. Restore is not yet available.</div>
             <div id="export-status" style="font-size:11px;color:var(--text-muted);"></div>
           </div>
 
@@ -282,6 +283,16 @@ export class SettingsPage {
                 background:var(--purple);border:none;color:#fff;font-family:var(--font);">Download all</button>
           </div>
           <div class="offline-info">Previously saved audio stays on this device across app updates. Unavailable recordings and online-only videos cannot be downloaded here.</div>
+          ${isOfflineEdition ? `
+          <div class="settings-row" style="display:block;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);">🚩 Word issue flags</div>
+            <div id="offline-flags-status" role="status" aria-live="polite" style="font-size:12px;color:var(--text-muted);margin:6px 0;">Checking device reports…</div>
+            <div style="font-size:11px;color:var(--yellow);line-height:1.5;margin-bottom:10px;">Saved reports are <strong>not delivered to a server</strong>. Download or copy them to share manually. Keep this app installed and do not clear site data before exporting. Learning progress is not synced.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button id="btn-export-flags" type="button" class="offline-pack-button" disabled>Download flag reports</button>
+              <button id="btn-copy-flags" type="button" class="offline-pack-button" disabled>Copy reports</button>
+            </div>
+          </div>` : ''}
           </div>
           </div>
         </details>
@@ -308,6 +319,7 @@ export class SettingsPage {
     // Check SW status
     this.checkServiceWorker(container);
     if (isOfflineEdition) this.bindVocabularyPacks(container);
+    if (isOfflineEdition) this.bindOfflineFlags(container);
 
     // Audio for offline (Phase 12): N of M saved + retryable Download all.
     import('./app-audio.js?v=1').then(A => {
@@ -469,6 +481,57 @@ export class SettingsPage {
           label.textContent = `Download failed: ${error.message}`;
           button.textContent = 'Retry';
         } finally { button.disabled = false; }
+      });
+    });
+  }
+
+  async bindOfflineFlags(container) {
+    const status = container.querySelector('#offline-flags-status');
+    const download = container.querySelector('#btn-export-flags');
+    const copy = container.querySelector('#btn-copy-flags');
+    if (!status || !download || !copy) return;
+    let flags;
+    try {
+      flags = await listOfflineFlags();
+      if (!status.isConnected) return;
+      status.textContent = flags.length
+        ? `${flags.length} flag${flags.length === 1 ? '' : 's'} saved on this device · ${flags.length} pending delivery`
+        : 'No flagged words saved on this device yet.';
+      download.disabled = copy.disabled = flags.length === 0;
+    } catch (error) {
+      status.textContent = `Could not read saved flags: ${error.message}`;
+      status.style.color = 'var(--pink)';
+      return;
+    }
+    download.addEventListener('click', () => {
+      try {
+        const blob = new Blob([exportOfflineFlags(flags)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `burmese_word_flags_${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        status.style.color = 'var(--green)';
+        status.textContent = `Downloaded ${flags.length} pending flag report(s). Reports remain saved on this device.`;
+      } catch (error) {
+        status.style.color = 'var(--pink)';
+        status.textContent = `Could not export reports: ${error.message}`;
+      }
+    });
+    copy.addEventListener('click', () => {
+      if (!navigator.clipboard?.writeText) {
+        status.style.color = 'var(--pink)';
+        status.textContent = 'Clipboard unavailable. Use Download flag reports instead.';
+        return;
+      }
+      // Keep clipboard invocation inside the tap gesture for mobile Safari.
+      navigator.clipboard.writeText(exportOfflineFlags(flags)).then(() => {
+        status.style.color = 'var(--green)';
+        status.textContent = `Copied ${flags.length} pending reports. Paste them where you want to send them; no server submission occurred.`;
+      }).catch(error => {
+        status.style.color = 'var(--pink)';
+        status.textContent = `Could not copy: ${error.message}. Try Download flag reports.`;
       });
     });
   }
