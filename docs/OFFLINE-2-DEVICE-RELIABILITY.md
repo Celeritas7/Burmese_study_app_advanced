@@ -22,7 +22,7 @@ Read-only source audit and a separate live Chrome test session on 2026-11-15:
 | Recorded audio | Cache fix merged via PR #16; physical device check remains | Pending |
 | Interrupted downloads | Automated unit test passes for previous-pack retention | Pending |
 | Cloudflare version upgrade | PR #16 merged; device update behavior not yet verified | Pending |
-| Word issue flags | New local outbox fix in review: not yet on deployed app | Pending |
+| Word issue flags | PR #18 merged and deployed; local save and export available | Physical acceptance in progress |
 
 The table is **not** a claim that airplane mode or Safari works yet.
 
@@ -60,7 +60,7 @@ The table is **not** a claim that airplane mode or Safari works yet.
    records were **not** overwritten. Sharing progress between apps is not yet
    supported.
 
-### Word issue flags (after the flag-outbox PR is approved and deployed)
+### Word issue flags (PR #18 deployed; physical checks still required)
 
 1. Still in **Airplane mode**, open Study, start a downloaded vocabulary pack,
    reveal a word and tap **🚩 Flag**. Select **Wrong meaning**, add a brief

@@ -75,8 +75,68 @@ export async function listOfflineFlags() {
   } finally { db.close(); }
 }
 
+// Offline-2C foundation: callers can retry these exact, stable client IDs.
+// Reading this list never changes delivery state or contacts a server.
+export async function listPendingOfflineFlags() {
+  return (await listOfflineFlags()).filter(flag => flag.status === 'pending');
+}
+
+// Only a future authenticated delivery client may call this after verifying a
+// successful response from the reviewed receiving endpoint. A transport error,
+// timeout or merely being online is not a receipt and must leave the row pending.
+// No uploader or receiving endpoint is enabled in Offline-2C-A.
+export async function recordOfflineFlagServerReceipt(receipt) {
+  const clientId = String(receipt?.client_id ?? '').trim();
+  const serverId = String(receipt?.server_report_id ?? '').trim();
+  const receivedAt = String(receipt?.received_at ?? '').trim();
+  if (!clientId || clientId.length > 128 || !serverId || serverId.length > 128 ||
+      receipt?.status !== 'received' ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(receivedAt) ||
+      !Number.isFinite(Date.parse(receivedAt))) {
+    throw new Error('Invalid server receipt. The flag remains pending on this device.');
+  }
+
+  const db = await openFlagsDatabase();
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      let result;
+      let error;
+      tx.oncomplete = () => error ? reject(error) : resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Could not record the server receipt.'));
+      tx.onabort = () => reject(tx.error || new Error('Recording the server receipt was interrupted.'));
+      const store = tx.objectStore(STORE);
+      const request = store.get(clientId);
+      request.onerror = () => { error = request.error || new Error('Could not find the saved flag.'); };
+      request.onsuccess = () => {
+        const existing = request.result;
+        if (!existing) {
+          error = new Error('The server confirmed an unknown flag. No local report was changed.');
+          return;
+        }
+        if (existing.status === 'received') {
+          if (existing.server_report_id !== serverId) {
+            error = new Error('Conflicting receipt for an already received flag.');
+          } else result = existing; // Duplicate response; preserve the original receipt.
+          return;
+        }
+        if (existing.status !== 'pending') {
+          error = new Error('Unexpected local flag status. No report was changed.');
+          return;
+        }
+        result = { ...existing, status: 'received', server_report_id: serverId,
+          server_received_at: receivedAt };
+        store.put(result);
+      };
+    });
+  } finally { db.close(); }
+}
+
 export function exportOfflineFlags(flags) {
   if (!Array.isArray(flags)) throw new Error('Cannot export an invalid flag list.');
+  const deliveryStatus = flags.length && flags.every(flag => flag.status === 'received')
+    ? 'all-received'
+    : flags.some(flag => flag.status === 'received') ? 'partially-received' : 'not-confirmed';
   return JSON.stringify({ format: 'burmese-study-offline-flags', version: 1,
-    exported_at: new Date().toISOString(), delivery_status: 'not-confirmed', flags }, null, 2);
+    exported_at: new Date().toISOString(), delivery_status: deliveryStatus, flags }, null, 2);
 }
