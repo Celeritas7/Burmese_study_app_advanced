@@ -1,0 +1,4 @@
+# A prepared function, not a deployment instruction.
+# Never disable JWT verification to work around a browser login problem.
+[functions.submit-word-flags]
+verify_jwt = true
